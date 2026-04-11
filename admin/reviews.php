@@ -84,7 +84,7 @@ include __DIR__ . '/includes/header.php';
 let currentPage = 1;
 
 async function loadStats() {
-    const res = await fetch('/backend/reviews.php', {
+    const res = await fetch(BASE_URL + '/backend/reviews.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: 'action=get_stats'
@@ -110,7 +110,7 @@ async function loadReviews(page = 1) {
         rating: document.getElementById('rating-filter').value
     });
 
-    const res = await fetch('/backend/reviews.php', { method: 'POST', body: params });
+    const res = await fetch(BASE_URL + '/backend/reviews.php', { method: 'POST', body: params });
     const json = await res.json();
     if (!json.success) { Toast.error(json.message); return; }
 
@@ -153,7 +153,7 @@ async function loadReviews(page = 1) {
 }
 
 async function updateStatus(id, status) {
-    const res = await fetch('/backend/reviews.php', {
+    const res = await fetch(BASE_URL + '/backend/reviews.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: `action=update_status&id=${id}&status=${status}`
@@ -165,7 +165,7 @@ async function updateStatus(id, status) {
 
 async function deleteReview(id) {
     if (!confirm('Delete this review?')) return;
-    const res = await fetch('/backend/reviews.php', {
+    const res = await fetch(BASE_URL + '/backend/reviews.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: `action=delete_review&id=${id}`
@@ -185,14 +185,14 @@ async function applyBulkAction() {
         if (!confirm(`Delete ${ids.length} review(s)?`)) return;
         const params = new URLSearchParams({ action: 'bulk_delete' });
         ids.forEach(id => params.append('review_ids[]', id));
-        const res = await fetch('/backend/reviews.php', { method: 'POST', body: params });
+        const res = await fetch(BASE_URL + '/backend/reviews.php', { method: 'POST', body: params });
         const json = await res.json();
         if (json.success) { Toast.success(`${json.deleted} review(s) deleted.`); loadReviews(currentPage); loadStats(); }
         else Toast.error(json.message);
     } else {
         const params = new URLSearchParams({ action: 'bulk_update_status', status: action });
         ids.forEach(id => params.append('review_ids[]', id));
-        const res = await fetch('/backend/reviews.php', { method: 'POST', body: params });
+        const res = await fetch(BASE_URL + '/backend/reviews.php', { method: 'POST', body: params });
         const json = await res.json();
         if (json.success) { Toast.success(`${json.updated} review(s) updated.`); loadReviews(currentPage); loadStats(); }
         else Toast.error(json.message);

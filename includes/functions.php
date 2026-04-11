@@ -388,4 +388,30 @@ function get_settings() {
         return [];
     }
 }
+
+/**
+ * Get all categories from the database
+ */
+function get_categories() {
+    global $pdo;
+    try {
+        $stmt = $pdo->query("SELECT * FROM categories ORDER BY name ASC");
+        return $stmt->fetchAll();
+    } catch (PDOException $e) {
+        return [];
+    }
+}
+
+/**
+ * Get total number of categories
+ */
+function get_categories_count() {
+    global $pdo;
+    try {
+        $stmt = $pdo->query("SELECT COUNT(*) FROM categories");
+        return $stmt->fetchColumn();
+    } catch (PDOException $e) {
+        return 0;
+    }
+}
 ?>

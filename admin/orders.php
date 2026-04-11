@@ -96,7 +96,7 @@ async function loadOrders(page = 1) {
         payment_status: document.getElementById('payment-filter').value
     });
 
-    const res = await fetch('/backend/orders.php', { method: 'POST', body: params });
+    const res = await fetch(BASE_URL + '/backend/orders.php', { method: 'POST', body: params });
     const json = await res.json();
     if (!json.success) { Toast.error(json.message); return; }
 
@@ -137,7 +137,7 @@ async function viewOrder(id) {
     document.getElementById('order-modal-body').innerHTML = '<div style="text-align:center;padding:40px;"><div class="spinner"></div></div>';
     document.getElementById('order-modal').classList.add('open');
 
-    const res = await fetch('/backend/orders.php', {
+    const res = await fetch(BASE_URL + '/backend/orders.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: `action=get_order_details&order_id=${id}`
@@ -215,12 +215,12 @@ async function saveOrderStatus() {
     const location = document.getElementById('update-location').value;
 
     const [r1, r2] = await Promise.all([
-        fetch('/backend/orders.php', {
+        fetch(BASE_URL + '/backend/orders.php', {
             method: 'POST',
             headers: {'Content-Type': 'application/x-www-form-urlencoded'},
             body: `action=update_order_status&order_id=${currentOrderId}&status=${encodeURIComponent(deliveryStatus)}&current_location=${encodeURIComponent(location)}`
         }),
-        fetch('/backend/orders.php', {
+        fetch(BASE_URL + '/backend/orders.php', {
             method: 'POST',
             headers: {'Content-Type': 'application/x-www-form-urlencoded'},
             body: `action=update_payment_status&order_id=${currentOrderId}&payment_status=${encodeURIComponent(paymentStatus)}`

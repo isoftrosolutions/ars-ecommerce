@@ -17,6 +17,7 @@ $admin_initial = strtoupper(substr($admin_name, 0, 1));
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<?php echo $csrf_token; ?>">
+    <script>window.BASE_URL = '<?php echo rtrim(url(''), '/'); ?>';</script>
     <title><?php echo $page_title ?? 'Admin Dashboard'; ?> - Easy Shopping A.R.S</title>
     
     <!-- Google Fonts: Inter -->

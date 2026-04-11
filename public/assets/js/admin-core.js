@@ -54,22 +54,110 @@ class Sidebar {
         this.sidebar = document.querySelector('.sidebar');
         this.main = document.querySelector('.main-content');
         this.toggleBtn = document.getElementById('sidebar-toggle');
+        this.overlay = this._createOverlay();
         this.isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+        this.isMobileOpen = false;
+
         if (this.sidebar && this.main) {
             this.init();
         }
     }
 
+    _createOverlay() {
+        const el = document.createElement('div');
+        el.className = 'sidebar-overlay';
+        document.body.appendChild(el);
+        el.addEventListener('click', () => this.closeMobile());
+        return el;
+    }
+
+    isMobile() { return window.innerWidth <= 768; }
+    isTablet() { return window.innerWidth <= 1024 && window.innerWidth > 768; }
+
     init() {
-        if (this.isCollapsed) this.collapse();
+        // Desktop: restore collapsed state
+        if (!this.isMobile() && this.isCollapsed) {
+            this.sidebar.classList.add('collapsed');
+            this.main.classList.add('expanded');
+        }
+
+        // Tablet: auto-collapse on first visit
+        if (this.isTablet() && localStorage.getItem('sidebar-collapsed') === null) {
+            this.sidebar.classList.add('collapsed');
+            this.main.classList.add('expanded');
+            this.isCollapsed = true;
+        }
+
         if (this.toggleBtn) {
-            this.toggleBtn.addEventListener('click', () => this.toggle());
+            this.toggleBtn.addEventListener('click', () => {
+                this.isMobile() ? this.toggleMobile() : this.toggle();
+            });
+        }
+
+        // Close drawer when a nav link is tapped on mobile
+        this.sidebar.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                if (this.isMobile()) this.closeMobile();
+            });
+        });
+
+        // Handle orientation change / resize
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => this._onResize(), 150);
+        });
+    }
+
+    _onResize() {
+        if (!this.isMobile()) {
+            // Switched away from mobile — tear down mobile state
+            this.sidebar.classList.remove('open');
+            this.overlay.classList.remove('visible');
+            this.overlay.style.display = 'none';
+            document.body.style.overflow = '';
+            this.isMobileOpen = false;
+
+            // Re-apply desktop collapsed state
+            if (this.isCollapsed) {
+                this.sidebar.classList.add('collapsed');
+                this.main.classList.add('expanded');
+            } else {
+                this.sidebar.classList.remove('collapsed');
+                this.main.classList.remove('expanded');
+            }
+        } else {
+            // Switched to mobile — remove desktop collapse classes
+            this.sidebar.classList.remove('collapsed');
+            this.main.classList.remove('expanded');
         }
     }
 
-    toggle() {
-        this.isCollapsed ? this.expand() : this.collapse();
+    /* ---- Mobile drawer ---- */
+    toggleMobile() {
+        this.isMobileOpen ? this.closeMobile() : this.openMobile();
     }
+
+    openMobile() {
+        this.isMobileOpen = true;
+        this.sidebar.classList.add('open');
+        this.overlay.style.display = 'block';
+        requestAnimationFrame(() => this.overlay.classList.add('visible'));
+        document.body.style.overflow = 'hidden';
+    }
+
+    closeMobile() {
+        this.isMobileOpen = false;
+        this.sidebar.classList.remove('open');
+        this.overlay.classList.remove('visible');
+        document.body.style.overflow = '';
+        setTimeout(() => {
+            if (!this.isMobileOpen) this.overlay.style.display = 'none';
+        }, 300);
+    }
+
+    /* ---- Desktop collapse ---- */
+    toggle() { this.isCollapsed ? this.expand() : this.collapse(); }
 
     collapse() {
         this.isCollapsed = true;

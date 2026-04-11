@@ -100,9 +100,9 @@ try {
     unset($user['password']); // Don't store password in session
     unset($_SESSION['temp_otp']); // Clean up temp OTP
 
-    // Reset OTP attempts
-    $stmt = $pdo->prepare("UPDATE users SET otp_attempts = 0 WHERE email = ?");
-    $stmt->execute([$email]);
+    // Reset OTP attempts using user ID (email may be empty if mobile was used)
+    $stmt = $pdo->prepare("UPDATE users SET otp_attempts = 0 WHERE id = ?");
+    $stmt->execute([$user['id']]);
 
     $_SESSION['user'] = $user;
 

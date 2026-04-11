@@ -7,8 +7,15 @@ require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/functions.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $login_id = h($_POST['login_id']); // This can be email or mobile
-    $password = $_POST['password'];
+    // CSRF validation
+    if (!validate_csrf_token()) {
+        $_SESSION['error'] = "Invalid request. Please try again.";
+        header("Location: ../auth/login.php");
+        exit();
+    }
+
+    $login_id = trim($_POST['login_id'] ?? '');
+    $password = $_POST['password'] ?? '';
 
     if (empty($login_id) || empty($password)) {
         $_SESSION['error'] = "Both fields are required.";
@@ -33,18 +40,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt = $pdo->prepare("UPDATE users SET remember_token = ? WHERE id = ?");
                 $stmt->execute([$hashed_token, $user['id']]);
 
-                // Set cookie for 30 days
-                setcookie('remember_token', $remember_token, time() + (30 * 24 * 60 * 60), '/', '', false, true);
+                // Set cookie for 30 days (HTTPS-only in production)
+                $secure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
+                setcookie('remember_token', $remember_token, time() + (30 * 24 * 60 * 60), '/', '', $secure, true);
             }
 
             // Success: Set session
             unset($user['password']); // Don't store password in session
             $_SESSION['user'] = $user;
 
+            // Transfer any guest cart items to the newly logged-in user
+            transfer_guest_cart_to_user($user['id']);
+
             if ($user['role'] === 'admin') {
                 header("Location: ../admin/dashboard.php");
             } else {
-                header("Location: ../profile.php");
+                header("Location: ../index.php");
             }
             exit();
         } else {

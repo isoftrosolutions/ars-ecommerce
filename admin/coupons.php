@@ -140,7 +140,7 @@ let currentPage = 1;
 let deleteTargetId = null;
 
 async function loadStats() {
-    const res = await fetch('/backend/coupons.php', {
+    const res = await fetch(BASE_URL + '/backend/coupons.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: 'action=get_stats'
@@ -165,7 +165,7 @@ async function loadCoupons(page = 1) {
         type: document.getElementById('type-filter').value
     });
 
-    const res = await fetch('/backend/coupons.php', { method: 'POST', body: params });
+    const res = await fetch(BASE_URL + '/backend/coupons.php', { method: 'POST', body: params });
     const json = await res.json();
     if (!json.success) { Toast.error(json.message); return; }
 
@@ -216,7 +216,7 @@ function openModal() {
 }
 
 async function editCoupon(id) {
-    const res = await fetch('/backend/coupons.php', {
+    const res = await fetch(BASE_URL + '/backend/coupons.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: `action=get_coupon&id=${id}`
@@ -250,14 +250,14 @@ async function saveCoupon() {
     params.append('coupon[expiry_date]', document.getElementById('coupon-expiry').value);
     params.append('coupon[status]', document.getElementById('coupon-status').value);
 
-    const res = await fetch('/backend/coupons.php', { method: 'POST', body: params });
+    const res = await fetch(BASE_URL + '/backend/coupons.php', { method: 'POST', body: params });
     const json = await res.json();
     if (json.success) { Toast.success(id ? 'Coupon updated!' : 'Coupon added!'); closeModal(); loadCoupons(currentPage); loadStats(); }
     else Toast.error(json.message);
 }
 
 async function toggleStatus(id, newStatus) {
-    const res = await fetch('/backend/coupons.php', {
+    const res = await fetch(BASE_URL + '/backend/coupons.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: `action=toggle_status&id=${id}&status=${newStatus}`
@@ -273,7 +273,7 @@ function closeModal() { document.getElementById('coupon-modal').classList.remove
 
 async function confirmDelete() {
     if (!deleteTargetId) return;
-    const res = await fetch('/backend/coupons.php', {
+    const res = await fetch(BASE_URL + '/backend/coupons.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: `action=delete_coupon&id=${deleteTargetId}`

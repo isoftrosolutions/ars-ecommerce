@@ -173,7 +173,7 @@ let productImages = [];
 
 // Load categories for dropdowns
 async function loadCategories() {
-    const res = await fetch('/backend/products.php', {
+    const res = await fetch(BASE_URL + '/backend/products.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: 'action=get_categories'
@@ -199,7 +199,7 @@ async function loadProducts(page = 1) {
         category_id: document.getElementById('category-filter').value
     });
 
-    const res = await fetch('/backend/products.php', { method: 'POST', body: params });
+    const res = await fetch(BASE_URL + '/backend/products.php', { method: 'POST', body: params });
     const json = await res.json();
 
     if (!json.success) { Toast.error(json.message); return; }
@@ -336,7 +336,7 @@ function openProductModal() {
 }
 
 async function editProduct(id) {
-    const res = await fetch('/backend/products.php', {
+    const res = await fetch(BASE_URL + '/backend/products.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: `action=get_product&id=${id}`
@@ -404,7 +404,7 @@ async function saveProduct() {
     });
 
     try {
-        const res = await fetch('/backend/products.php', { method: 'POST', body: formData });
+        const res = await fetch(BASE_URL + '/backend/products.php', { method: 'POST', body: formData });
         const json = await res.json();
         if (json.success) {
             Toast.success(id ? 'Product updated!' : 'Product added!');
@@ -422,7 +422,7 @@ async function saveProduct() {
 }
 
 async function toggleFeatured(id, featured) {
-    const res = await fetch('/backend/products.php', {
+    const res = await fetch(BASE_URL + '/backend/products.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: `action=toggle_featured&id=${id}&featured=${featured}`
@@ -443,7 +443,7 @@ function closeDeleteModal() {
 
 async function confirmDelete() {
     if (!deleteTargetId) return;
-    const res = await fetch('/backend/products.php', {
+    const res = await fetch(BASE_URL + '/backend/products.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: `action=delete_product&id=${deleteTargetId}`
@@ -476,7 +476,7 @@ async function applyBulkAction() {
 
     if (action === 'delete' && confirm(`Delete ${ids.length} product(s)?`)) {
         for (const id of ids) {
-            await fetch('/backend/products.php', {
+            await fetch(BASE_URL + '/backend/products.php', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                 body: `action=delete_product&id=${id}`

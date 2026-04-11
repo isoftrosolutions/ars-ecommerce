@@ -32,7 +32,7 @@ include_once __DIR__ . '/../includes/header-bootstrap.php';
             <?php if (isset($_SESSION['error'])): ?>
                 <div class="auth-alert auth-alert-error">
                     <i class="bi bi-exclamation-circle-fill"></i>
-                    <span><?php echo $_SESSION['error']; unset($_SESSION['error']); ?></span>
+                    <span><?php echo h($_SESSION['error']); unset($_SESSION['error']); ?></span>
                 </div>
             <?php endif; ?>
 
@@ -42,6 +42,7 @@ include_once __DIR__ . '/../includes/header-bootstrap.php';
             </div>
 
             <form action="<?php echo url('/backend/signup.php'); ?>" method="POST" class="auth-form" id="signupForm">
+                <input type="hidden" name="csrf_token" value="<?php echo h(generate_csrf_token()); ?>">
                 <div class="row">
                     <div class="col-md-12 mb-3">
                         <label for="full_name" class="form-label">Full Name</label>

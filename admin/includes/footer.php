@@ -9,7 +9,7 @@
 </div> <!-- End of .app-container -->
 
 <!-- Core Scripts -->
-<script src="/public/assets/js/admin-core.js"></script>
+<script src="<?php echo url('/public/assets/js/admin-core.js'); ?>"></script>
 
 </body>
 </html>

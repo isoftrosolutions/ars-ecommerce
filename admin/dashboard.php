@@ -82,7 +82,7 @@ function trend_label(int $pct, string $context = 'from last month'): string {
 
 <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
     <h1>Overview</h1>
-    <a href="/admin/products" class="btn btn-primary">+ Add New Product</a>
+    <a href="<?php echo url('/admin/products.php'); ?>" class="btn btn-primary">+ Add New Product</a>
 </div>
 
 <?php if (isset($db_error)): ?>
@@ -141,12 +141,12 @@ function trend_label(int $pct, string $context = 'from last month'): string {
     </div>
 </div>
 
-<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+<div class="dashboard-grid">
     <!-- Recent Orders -->
     <div class="card">
         <div class="card-header">
             <h3 class="card-title">Recent Orders</h3>
-            <a href="/admin/orders" class="btn btn-ghost btn-sm">View All</a>
+            <a href="<?php echo url('/admin/orders.php'); ?>" class="btn btn-ghost btn-sm">View All</a>
         </div>
         <div class="table-container">
             <table class="table">

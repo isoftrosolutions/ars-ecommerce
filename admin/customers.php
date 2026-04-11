@@ -73,7 +73,7 @@ include __DIR__ . '/includes/header.php';
 let currentPage = 1;
 
 async function loadStats() {
-    const res = await fetch('/backend/customers.php', {
+    const res = await fetch(BASE_URL + '/backend/customers.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: 'action=get_customer_stats'
@@ -98,7 +98,7 @@ async function loadCustomers(page = 1) {
         search: document.getElementById('search-input').value
     });
 
-    const res = await fetch('/backend/customers.php', { method: 'POST', body: params });
+    const res = await fetch(BASE_URL + '/backend/customers.php', { method: 'POST', body: params });
     const json = await res.json();
     if (!json.success) { Toast.error(json.message); return; }
 
@@ -145,7 +145,7 @@ async function viewCustomer(id) {
     document.getElementById('cust-modal-body').innerHTML = '<div style="text-align:center;padding:40px;"><div class="spinner"></div></div>';
     document.getElementById('cust-modal').classList.add('open');
 
-    const res = await fetch('/backend/customers.php', {
+    const res = await fetch(BASE_URL + '/backend/customers.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: `action=get_customer_details&customer_id=${id}`

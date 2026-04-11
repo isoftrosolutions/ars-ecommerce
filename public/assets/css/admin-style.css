@@ -109,12 +109,7 @@ body {
     margin-left: 80px;
 }
 
-@media (max-width: 768px) {
-    .main-content {
-        margin-left: 0;
-        padding: 16px;
-    }
-}
+/* Mobile main-content handled in the full responsive block below */
 
 /* Typography */
 h1 { font-size: 32px; font-weight: 700; margin-bottom: 16px; color: var(--text-primary); }
@@ -478,10 +473,177 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 /* Star rating */
 .stars { color: var(--warning); letter-spacing: 2px; }
 
-/* Responsive table */
+/* =============================================
+   RESPONSIVE — Sidebar Overlay Backdrop
+   ============================================= */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 150;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.sidebar-overlay.visible { opacity: 1; }
+
+/* =============================================
+   Layout Grid Helpers (replaces inline styles)
+   ============================================= */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 24px;
+}
+
+.settings-layout {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 24px;
+    align-items: start;
+}
+
+/* =============================================
+   Tablet  769px – 1024px  (icon-only sidebar)
+   ============================================= */
+@media (max-width: 1024px) {
+    .sidebar {
+        width: 80px;
+        overflow: hidden;
+    }
+    .sidebar .nav-text { display: none; }
+    .sidebar .nav-item { justify-content: center; padding: 14px; }
+    .sidebar-logo { justify-content: center; padding: 0; }
+    .sidebar-logo .nav-text { display: none; }
+
+    .main-content { margin-left: 80px; }
+    .main-content.expanded { margin-left: 80px; }
+}
+
+/* =============================================
+   Mobile  ≤768px  (off-canvas drawer)
+   ============================================= */
 @media (max-width: 768px) {
+
+    /* --- Sidebar: off-canvas drawer --- */
+    .sidebar {
+        left: -280px;
+        width: 260px;
+        z-index: 200;
+        overflow-y: auto;
+        transition: left 0.3s ease, width 0.3s ease;
+    }
+    .sidebar.open {
+        left: 0;
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.25);
+    }
+    /* Restore full text inside the drawer */
+    .sidebar .nav-text { display: inline !important; }
+    .sidebar .nav-item { justify-content: flex-start !important; padding: 13px 20px !important; }
+    .sidebar-logo { justify-content: flex-start !important; padding: 0 20px !important; }
+    .sidebar-logo .nav-text { display: inline !important; }
+
+    /* --- Main content: full width --- */
+    .main-content {
+        margin-left: 0 !important;
+        padding: 12px;
+    }
+
+    /* --- Header --- */
+    .header { padding: 0 12px; }
+    .page-header { margin-bottom: 16px; }
+    .page-header h1 { font-size: 22px; }
+
+    /* --- KPI grid: 2-col override (beats inline styles) --- */
+    .kpi-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+    .kpi-card { padding: 14px; }
+    .kpi-value { font-size: 22px; }
+
+    /* --- Dashboard two-column → single column --- */
+    .dashboard-grid { grid-template-columns: 1fr; }
+
+    /* --- Settings layout → single column --- */
+    .settings-layout { grid-template-columns: 1fr; }
+    .settings-nav-card { position: static !important; padding: 0 !important; }
+
+    /* Settings nav: horizontal scrollable strip */
+    #settings-nav {
+        display: flex;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 4px 8px 0;
+        gap: 2px;
+        scrollbar-width: none;
+    }
+    #settings-nav::-webkit-scrollbar { display: none; }
+    .settings-nav-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+        flex-shrink: 0;
+        border-left: none !important;
+        border-bottom: 3px solid transparent;
+        padding: 8px 10px !important;
+        border-radius: 6px 6px 0 0;
+        font-size: 12px;
+    }
+    .settings-nav-item.active {
+        border-left: none !important;
+        padding-left: 10px !important;
+        border-bottom-color: var(--primary) !important;
+    }
+
+    /* --- Forms & grids --- */
     .form-row { grid-template-columns: 1fr; }
     .detail-grid { grid-template-columns: 1fr; }
     .filters-bar { flex-direction: column; align-items: stretch; }
-    .filters-bar .form-control { width: 100%; }
+    .filters-bar .form-control { width: 100%; min-width: unset; }
+
+    /* --- Cards --- */
+    .card { padding: 12px; margin-bottom: 16px; }
+    .card-header { flex-wrap: wrap; gap: 8px; }
+
+    /* --- Modals: slide up from bottom --- */
+    .modal-overlay { padding: 0; align-items: flex-end; }
+    .modal {
+        max-width: 100% !important;
+        border-radius: 16px 16px 0 0;
+        max-height: 92vh;
+    }
+
+    /* --- Toasts: bottom of screen --- */
+    .toast-container {
+        top: auto;
+        bottom: 16px;
+        right: 12px;
+        left: 12px;
+        max-width: none;
+    }
+
+    /* --- Pagination --- */
+    .pagination { justify-content: center; gap: 4px; }
+    .pagination-info { margin-right: 0; width: 100%; text-align: center; margin-bottom: 4px; }
+
+    /* --- Tables --- */
+    .table-container { -webkit-overflow-scrolling: touch; }
+
+    /* --- Typography --- */
+    h1 { font-size: 24px; }
+    h3 { font-size: 16px; }
+}
+
+/* =============================================
+   Very small  ≤480px
+   ============================================= */
+@media (max-width: 480px) {
+    .kpi-value { font-size: 20px; }
+    .kpi-label { font-size: 11px; }
+    .kpi-card { padding: 10px 12px; }
+    .btn { padding: 9px 12px; font-size: 13px; }
+    .btn-sm { padding: 6px 10px; font-size: 12px; }
 }

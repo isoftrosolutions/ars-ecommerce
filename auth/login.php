@@ -38,14 +38,14 @@ include_once __DIR__ . '/../includes/header-bootstrap.php';
             <?php if (isset($_SESSION['error'])): ?>
                 <div class="auth-alert auth-alert-error">
                     <i class="bi bi-exclamation-circle-fill"></i>
-                    <span><?php echo $_SESSION['error']; unset($_SESSION['error']); ?></span>
+                    <span><?php echo h($_SESSION['error']); unset($_SESSION['error']); ?></span>
                 </div>
             <?php endif; ?>
 
             <?php if (isset($_SESSION['success'])): ?>
                 <div class="auth-alert auth-alert-success">
                     <i class="bi bi-check-circle-fill"></i>
-                    <span><?php echo $_SESSION['success']; unset($_SESSION['success']); ?></span>
+                    <span><?php echo h($_SESSION['success']); unset($_SESSION['success']); ?></span>
                 </div>
             <?php endif; ?>
 
@@ -53,6 +53,7 @@ include_once __DIR__ . '/../includes/header-bootstrap.php';
 
             <!-- Password Login Form -->
             <form action="<?php echo url('/backend/login.php'); ?>" method="POST" class="auth-form" id="passwordForm">
+                <input type="hidden" name="csrf_token" value="<?php echo h(generate_csrf_token()); ?>">
                 <div class="mb-3">
                     <label for="login_id" class="form-label">Email or Mobile Number</label>
                     <input type="text" name="login_id" id="login_id" class="form-control" placeholder="example@mail.com or 98XXXXXXXX" required autofocus>

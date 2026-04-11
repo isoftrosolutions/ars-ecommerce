@@ -14,10 +14,10 @@ include __DIR__ . '/includes/header.php';
     </button>
 </div>
 
-<div style="display: grid; grid-template-columns: 220px 1fr; gap: 24px; align-items: start;">
+<div class="settings-layout">
 
     <!-- Settings Navigation -->
-    <div class="card" style="position: sticky; top: 88px; padding: 8px 0;">
+    <div class="card settings-nav-card" style="position: sticky; top: 88px; padding: 8px 0;">
         <nav id="settings-nav">
             <a href="#general" class="settings-nav-item active" onclick="showTab('general', this)"><i class="fa-solid fa-sliders"></i> General</a>
             <a href="#company" class="settings-nav-item" onclick="showTab('company', this)"><i class="fa-solid fa-building"></i> Company</a>
@@ -188,7 +188,7 @@ include __DIR__ . '/includes/header.php';
 let currentSettings = {};
 
 async function loadSettings() {
-    const res = await fetch('/backend/settings.php', {
+    const res = await fetch(BASE_URL + '/backend/settings.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: 'action=get_settings'
@@ -199,7 +199,7 @@ async function loadSettings() {
     // If DB is empty, fetch defaults
     let settings = json.data;
     if (Object.keys(settings).length === 0) {
-        const defRes = await fetch('/backend/settings.php', {
+        const defRes = await fetch(BASE_URL + '/backend/settings.php', {
             method: 'POST',
             headers: {'Content-Type': 'application/x-www-form-urlencoded'},
             body: 'action=get_default_settings'
@@ -238,7 +238,7 @@ async function saveAllSettings() {
     const params = new URLSearchParams({ action: 'bulk_update' });
     Object.entries(updates).forEach(([k, v]) => params.append(`settings[${k}]`, v));
 
-    const res = await fetch('/backend/settings.php', { method: 'POST', body: params });
+    const res = await fetch(BASE_URL + '/backend/settings.php', { method: 'POST', body: params });
     const json = await res.json();
 
     if (json.success) {

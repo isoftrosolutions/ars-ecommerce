@@ -96,7 +96,7 @@ let allCategories = [];
 let deleteTargetId = null;
 
 async function loadStats() {
-    const res = await fetch('/backend/categories.php', {
+    const res = await fetch(BASE_URL + '/backend/categories.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: 'action=get_category_stats'
@@ -111,7 +111,7 @@ async function loadStats() {
 }
 
 async function loadCategories() {
-    const res = await fetch('/backend/categories.php', {
+    const res = await fetch(BASE_URL + '/backend/categories.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: 'action=get_categories'
@@ -159,7 +159,7 @@ function autoSlug() {
 async function generateSlug() {
     const name = document.getElementById('cat-name').value.trim();
     if (!name) return;
-    const res = await fetch('/backend/categories.php', {
+    const res = await fetch(BASE_URL + '/backend/categories.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: `action=generate_slug&name=${encodeURIComponent(name)}`
@@ -177,7 +177,7 @@ function openModal() {
 }
 
 async function editCategory(id) {
-    const res = await fetch('/backend/categories.php', {
+    const res = await fetch(BASE_URL + '/backend/categories.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: `action=get_category&id=${id}`
@@ -203,7 +203,7 @@ async function saveCategory() {
     params.append('category[name]', name);
     params.append('category[slug]', slug);
 
-    const res = await fetch('/backend/categories.php', { method: 'POST', body: params });
+    const res = await fetch(BASE_URL + '/backend/categories.php', { method: 'POST', body: params });
     const json = await res.json();
 
     if (json.success) {
@@ -228,7 +228,7 @@ function closeModal() { document.getElementById('cat-modal').classList.remove('o
 
 async function confirmDelete() {
     if (!deleteTargetId) return;
-    const res = await fetch('/backend/categories.php', {
+    const res = await fetch(BASE_URL + '/backend/categories.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: `action=delete_category&id=${deleteTargetId}`

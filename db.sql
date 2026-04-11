@@ -16,6 +16,28 @@ CREATE DATABASE /*!32312 IF NOT EXISTS*/`ars_ecommerce` /*!40100 DEFAULT CHARACT
 
 USE `ars_ecommerce`;
 
+/*Table structure for table `cart_items` */
+
+DROP TABLE IF EXISTS `cart_items`;
+
+CREATE TABLE `cart_items` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) DEFAULT NULL,
+  `session_id` varchar(128) DEFAULT NULL,
+  `product_id` int(11) NOT NULL,
+  `quantity` int(11) NOT NULL DEFAULT 1,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_user_product` (`user_id`,`product_id`),
+  UNIQUE KEY `unique_session_product` (`session_id`,`product_id`),
+  KEY `product_id` (`product_id`),
+  CONSTRAINT `cart_items_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `cart_items_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+/*Data for the table `cart_items` */
+
 /*Table structure for table `categories` */
 
 DROP TABLE IF EXISTS `categories`;
@@ -48,6 +70,7 @@ CREATE TABLE `contact_submissions` (
   `email` varchar(100) NOT NULL,
   `subject` varchar(200) DEFAULT NULL,
   `message` text NOT NULL,
+  `admin_reply` text DEFAULT NULL,
   `status` enum('new','read','replied') DEFAULT 'new',
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`)
@@ -163,7 +186,7 @@ CREATE TABLE `orders` (
   `discount_amount` decimal(10,2) DEFAULT 0.00,
   `payment_method` enum('COD','eSewa','BankQR') NOT NULL,
   `payment_status` enum('Pending','Paid','Failed') DEFAULT 'Pending',
-  `delivery_status` enum('Pending','Confirmed','Shipped','Delivered','Cancelled') DEFAULT 'Pending',
+  `delivery_status` enum('Pending','Confirmed','Shipped','Out for Delivery','Delivered','Cancelled') DEFAULT 'Pending',
   `current_location` varchar(255) DEFAULT 'Preparing for shipment',
   `location_updated_at` timestamp NULL DEFAULT NULL,
   `transaction_id` varchar(100) DEFAULT NULL,
@@ -254,41 +277,6 @@ insert  into `products`(`id`,`name`,`slug`,`description`,`price`,`discount_price
 (7,'Natural Face Serum','face-serum','Glow with organic ingredients.',1800.00,NULL,4,60,'serum.jpg','BEAU-001',0,'2026-04-11 13:16:17'),
 (8,'Yoga Mat Pro','yoga-mat-pro','Non-slip high density foam.',2200.00,1950.00,5,25,'yoga-mat.jpg','SPOR-001',0,'2026-04-11 13:16:17');
 
-/*Table structure for table `reviews` */
-
-DROP TABLE IF EXISTS `reviews`;
-
-CREATE TABLE `reviews` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `product_id` int(11) NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `rating` tinyint(4) NOT NULL CHECK (`rating` >= 1 and `rating` <= 5),
-  `comment` text DEFAULT NULL,
-  `status` enum('pending','approved','rejected') DEFAULT 'pending',
-  `created_at` timestamp NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`),
-  KEY `product_id` (`product_id`),
-  KEY `user_id` (`user_id`),
-  CONSTRAINT `reviews_ibfk_1` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `reviews_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
-
-/*Data for the table `reviews` */
-
-/*Table structure for table `settings` */
-
-DROP TABLE IF EXISTS `settings`;
-
-CREATE TABLE `settings` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `setting_key` varchar(100) NOT NULL,
-  `setting_value` text DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `setting_key` (`setting_key`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
-
-/*Data for the table `settings` */
-
 /*Table structure for table `site_settings` */
 
 DROP TABLE IF EXISTS `site_settings`;
@@ -349,12 +337,13 @@ CREATE TABLE `users` (
   UNIQUE KEY `email` (`email`),
   KEY `idx_users_reset_expires` (`reset_expires`),
   KEY `idx_users_remember_token` (`remember_token`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 /*Data for the table `users` */
 
 insert  into `users`(`id`,`full_name`,`email`,`mobile`,`password`,`address`,`role`,`reset_token`,`reset_expires`,`reset_token_used_at`,`otp_attempts`,`otp_issued_at`,`email_verified_at`,`verification_token`,`remember_token`,`created_at`) values 
-(1,'Admin','easyshoppinga.r.s1@gmail.com','9820210361','$2y$12$h8F1x.7kwgQhM4OGkRcUF.wjKSPoSY1ZV/xy6aTSeuZ9TNBQKDajq',NULL,'admin',NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,'2026-04-11 10:54:28');
+(1,'Admin','easyshoppinga.r.s1@gmail.com','9820210361','$2y$12$h8F1x.7kwgQhM4OGkRcUF.wjKSPoSY1ZV/xy6aTSeuZ9TNBQKDajq',NULL,'admin',NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,'2026-04-11 10:54:28'),
+(2,'Devbarat Prasad Patel','mind59024@gmail.com','9811144402','$2y$12$/XO8F5H067pvMCXky2r.HuQ467AohDD.kHUMuw5LX468wDra3cBA.','Bahudramai-07, Phulkaul, Parsa','customer',NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,'2026-04-11 15:04:48');
 
 /*Table structure for table `wishlist` */
 
@@ -373,28 +362,6 @@ CREATE TABLE `wishlist` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 /*Data for the table `wishlist` */
-
-/*Table structure for table `cart_items` */
-
-DROP TABLE IF EXISTS `cart_items`;
-
-CREATE TABLE `cart_items` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `user_id` int(11) DEFAULT NULL,
-  `session_id` varchar(128) DEFAULT NULL,
-  `product_id` int(11) NOT NULL,
-  `quantity` int(11) NOT NULL DEFAULT 1,
-  `created_at` timestamp NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `unique_user_product` (`user_id`,`product_id`),
-  UNIQUE KEY `unique_session_product` (`session_id`,`product_id`),
-  KEY `product_id` (`product_id`),
-  CONSTRAINT `cart_items_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `cart_items_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
-
-/*Data for the table `cart_items` */
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;

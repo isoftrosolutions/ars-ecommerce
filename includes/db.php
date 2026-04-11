@@ -60,7 +60,8 @@ if (!isset($_SESSION['user']) && isset($_COOKIE['remember_token'])) {
             $stmt = $pdo->prepare("UPDATE users SET remember_token = ? WHERE id = ?");
             $stmt->execute([$new_hashed_token, $user['id']]);
 
-            setcookie('remember_token', $new_token, time() + (30 * 24 * 60 * 60), '/', '', false, true);
+            $secure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
+            setcookie('remember_token', $new_token, time() + (30 * 24 * 60 * 60), '/', '', $secure, true);
         } else {
             // Invalid token, clear cookie
             setcookie('remember_token', '', time() - 3600, '/');

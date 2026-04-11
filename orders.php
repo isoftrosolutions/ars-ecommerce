@@ -4,9 +4,12 @@
  * Easy Shopping A.R.S
  */
 
+require_once 'includes/db.php';
+require_once 'includes/functions.php';
+
 // Check if user is logged in
 if (!isset($_SESSION['user'])) {
-    header('Location: ' . url('/auth/login'));
+    header('Location: ' . url('/auth/login.php'));
     exit;
 }
 
@@ -29,206 +32,161 @@ try {
     ");
     $stmt->execute([$user['id'], $user['email']]);
     $orders = $stmt->fetchAll();
-} catch (Exception $e) {
-    $orders = [];
-}
+} catch (Exception $e) { $orders = []; }
 ?>
 
-<div class="container py-5">
+<style>
+/* ═══ Orders Responsiveness ═══ */
+.profile-nav-mobile {
+    display: none;
+    background: white;
+    margin-bottom: 20px;
+    border-radius: 12px;
+    padding: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+.profile-nav-mobile a {
+    flex: 1;
+    text-align: center;
+    color: #64748b;
+    text-decoration: none;
+    font-size: 0.75rem;
+    padding: 8px 0;
+}
+.profile-nav-mobile a.active {
+    color: var(--primary-color);
+    font-weight: 700;
+}
+.profile-nav-mobile i {
+    display: block;
+    font-size: 1.25rem;
+    margin-bottom: 2px;
+}
+
+@media (max-width: 991px) {
+    .profile-sidebar-desktop { display: none; }
+    .profile-nav-mobile { display: flex; }
+    .order-header { flex-direction: column; align-items: flex-start !important; }
+    .order-header .btn { width: 100%; margin-top: 10px; }
+}
+
+.order-card {
+    border-radius: 12px;
+    transition: all 0.2s;
+    border: 1px solid #eee !important;
+}
+.order-card:hover { border-color: var(--primary-color) !important; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+
+.status-grid .card { border-radius: 12px; border: none; background: #f8fafc; }
+</style>
+
+<div class="container py-4">
+    <!-- Mobile Nav -->
+    <div class="profile-nav-mobile shadow-sm border">
+        <a href="<?php echo url('/profile'); ?>">
+            <i class="bi bi-person"></i> Profile
+        </a>
+        <a href="<?php echo url('/orders'); ?>" class="active">
+            <i class="bi bi-bag-check-fill"></i> Orders
+        </a>
+        <a href="<?php echo url('/wishlist'); ?>">
+            <i class="bi bi-heart"></i> Wishlist
+        </a>
+        <a href="<?php echo url('/backend/logout.php'); ?>" class="text-danger">
+            <i class="bi bi-box-arrow-right"></i> Exit
+        </a>
+    </div>
+
     <div class="row">
-        <div class="col-lg-3">
-            <!-- Orders Sidebar -->
-            <div class="card border-0 shadow-sm">
-                <div class="card-body text-center">
-                    <div class="profile-avatar mb-3">
-                        <div class="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center text-white" style="width: 80px; height: 80px; font-size: 2rem;">
-                            <?php echo strtoupper(substr($user['name'], 0, 1)); ?>
+        <!-- Desktop Sidebar -->
+        <div class="col-lg-3 profile-sidebar-desktop">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+                <div class="card-body text-center py-4 bg-light">
+                    <div class="mb-3">
+                        <div class="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center text-white" style="width: 70px; height: 70px; font-size: 1.8rem; font-weight:700;">
+                            <?php echo strtoupper(substr($user['full_name'] ?? 'U', 0, 1)); ?>
                         </div>
                     </div>
-                    <h5><?php echo h($user['name']); ?></h5>
-                    <p class="text-muted small"><?php echo h($user['email']); ?></p>
+                    <h6 class="mb-1 fw-bold"><?php echo h($user['full_name']); ?></h6>
+                    <p class="text-muted small mb-0"><?php echo h($user['email']); ?></p>
                 </div>
-                <div class="list-group list-group-flush">
-                    <a href="<?php echo url('/profile'); ?>" class="list-group-item list-group-item-action">
-                        <i class="bi bi-person me-2"></i>Profile Settings
+                <div class="list-group list-group-flush small">
+                    <a href="<?php echo url('/profile'); ?>" class="list-group-item list-group-item-action py-3 border-0">
+                        <i class="bi bi-person me-2"></i> Account Settings
                     </a>
-                    <a href="<?php echo url('/orders'); ?>" class="list-group-item list-group-item-action active">
-                        <i class="bi bi-receipt me-2"></i>My Orders
+                    <a href="<?php echo url('/orders'); ?>" class="list-group-item list-group-item-action py-3 active border-0">
+                        <i class="bi bi-bag-check me-2"></i> Order History
                     </a>
-                    <a href="<?php echo url('/wishlist'); ?>" class="list-group-item list-group-item-action">
-                        <i class="bi bi-heart me-2"></i>Wishlist
+                    <a href="<?php echo url('/wishlist'); ?>" class="list-group-item list-group-item-action py-3 border-0">
+                        <i class="bi bi-heart me-2"></i> My Wishlist
                     </a>
-                    <a href="<?php echo url('/backend/logout'); ?>" class="list-group-item list-group-item-action text-danger">
-                        <i class="bi bi-box-arrow-right me-2"></i>Logout
+                    <a href="<?php echo url('/backend/logout.php'); ?>" class="list-group-item list-group-item-action py-3 border-0 text-danger">
+                        <i class="bi bi-box-arrow-right me-2"></i> Logout
                     </a>
                 </div>
             </div>
         </div>
 
+        <!-- Orders Main -->
         <div class="col-lg-9">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <div>
-                        <h4 class="mb-0">My Orders</h4>
-                        <small class="text-muted"><?php echo count($orders); ?> orders found</small>
-                    </div>
-                    <a href="<?php echo url('/shop'); ?>" class="btn btn-primary">
-                        <i class="bi bi-shop me-2"></i>Continue Shopping
-                    </a>
+            <div class="d-flex justify-content-between align-items-center mb-4 order-header">
+                <div>
+                    <h4 class="fw-bold mb-0">My Orders</h4>
+                    <span class="text-muted small">Manage your recent purchases</span>
                 </div>
-
-                <div class="card-body">
-                    <?php if (empty($orders)): ?>
-                        <div class="text-center py-5">
-                            <i class="bi bi-receipt text-muted display-1"></i>
-                            <h3 class="mt-3">No orders yet</h3>
-                            <p class="text-muted">You haven't placed any orders yet. Start shopping to see your orders here.</p>
-                            <a href="<?php echo url('/shop'); ?>" class="btn btn-primary">Start Shopping</a>
-                        </div>
-                    <?php else: ?>
-                        <div class="orders-list">
-                            <?php foreach ($orders as $order): ?>
-                                <div class="order-card card border mb-3">
-                                    <div class="card-body">
-                                        <div class="row align-items-center">
-                                            <div class="col-md-8">
-                                                <div class="d-flex align-items-center mb-2">
-                                                    <h5 class="mb-0 me-3">Order #<?php echo $order['id']; ?></h5>
-                                                    <?php
-                                                    $status_class = 'secondary';
-                                                    switch ($order['status']) {
-                                                        case 'pending': $status_class = 'warning'; break;
-                                                        case 'processing': $status_class = 'info'; break;
-                                                        case 'shipped': $status_class = 'primary'; break;
-                                                        case 'delivered': $status_class = 'success'; break;
-                                                        case 'cancelled': $status_class = 'danger'; break;
-                                                    }
-                                                    ?>
-                                                    <span class="badge bg-<?php echo $status_class; ?>"><?php echo ucfirst($order['status']); ?></span>
-                                                </div>
-
-                                                <p class="text-muted small mb-1">
-                                                    <i class="bi bi-calendar me-1"></i><?php echo date('F j, Y \a\t g:i A', strtotime($order['created_at'])); ?>
-                                                </p>
-
-                                                <p class="mb-1">
-                                                    <strong><?php echo $order['item_count']; ?> item<?php echo $order['item_count'] > 1 ? 's' : ''; ?>:</strong>
-                                                    <?php echo h(substr($order['product_names'], 0, 100)); ?>
-                                                    <?php if (strlen($order['product_names']) > 100): ?>...<?php endif; ?>
-                                                </p>
-
-                                                <p class="mb-0 small text-muted">
-                                                    <i class="bi bi-geo-alt me-1"></i><?php echo h($order['shipping_address']); ?>, <?php echo h($order['shipping_city']); ?>
-                                                </p>
-                                            </div>
-
-                                            <div class="col-md-4 text-end">
-                                                <div class="mb-2">
-                                                    <div class="fw-bold fs-5 text-primary">Rs. <?php echo format_price($order['total_amount']); ?></div>
-                                                </div>
-
-                                                <div class="mb-2">
-                                                    <?php if ($order['payment_method'] === 'cod'): ?>
-                                                        <small class="text-success"><i class="bi bi-cash me-1"></i>Cash on Delivery</small>
-                                                    <?php elseif ($order['payment_method'] === 'esewa'): ?>
-                                                        <small class="text-primary"><i class="bi bi-credit-card me-1"></i>eSewa</small>
-                                                    <?php endif; ?>
-                                                </div>
-
-                                                <div>
-                                                    <a href="<?php echo url('/order/' . $order['id']); ?>" class="btn btn-outline-primary btn-sm">
-                                                        <i class="bi bi-eye me-1"></i>View Details
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-
-                        <!-- Order Statistics -->
-                        <div class="row mt-4">
-                            <?php
-                            try {
-                                $stats = [];
-
-                                // Count orders by status
-                                $stmt = $pdo->prepare("SELECT status, COUNT(*) as count FROM orders WHERE user_id = ? OR customer_email = ? GROUP BY status");
-                                $stmt->execute([$user['id'], $user['email']]);
-                                $status_counts = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
-
-                                $stats['pending'] = $status_counts['pending'] ?? 0;
-                                $stats['processing'] = $status_counts['processing'] ?? 0;
-                                $stats['shipped'] = $status_counts['shipped'] ?? 0;
-                                $stats['delivered'] = $status_counts['delivered'] ?? 0;
-                                $stats['cancelled'] = $status_counts['cancelled'] ?? 0;
-
-                                // Total spent
-                                $stmt = $pdo->prepare("SELECT SUM(total_amount) as total FROM orders WHERE (user_id = ? OR customer_email = ?) AND status != 'cancelled'");
-                                $stmt->execute([$user['id'], $user['email']]);
-                                $stats['total_spent'] = $stmt->fetch()['total'] ?? 0;
-
-                            } catch (Exception $e) {
-                                $stats = ['pending' => 0, 'processing' => 0, 'shipped' => 0, 'delivered' => 0, 'cancelled' => 0, 'total_spent' => 0];
-                            }
-                            ?>
-
-                            <div class="col-md-3">
-                                <div class="card border-0 bg-light text-center">
-                                    <div class="card-body">
-                                        <div class="fs-4 fw-bold text-warning"><?php echo $stats['pending']; ?></div>
-                                        <small class="text-muted">Pending</small>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="card border-0 bg-light text-center">
-                                    <div class="card-body">
-                                        <div class="fs-4 fw-bold text-info"><?php echo $stats['processing']; ?></div>
-                                        <small class="text-muted">Processing</small>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="card border-0 bg-light text-center">
-                                    <div class="card-body">
-                                        <div class="fs-4 fw-bold text-primary"><?php echo $stats['shipped']; ?></div>
-                                        <small class="text-muted">Shipped</small>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="card border-0 bg-light text-center">
-                                    <div class="card-body">
-                                        <div class="fs-4 fw-bold text-success"><?php echo $stats['delivered']; ?></div>
-                                        <small class="text-muted">Delivered</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="text-center mt-3">
-                            <div class="text-muted">
-                                Total spent: <strong class="text-success">Rs. <?php echo format_price($stats['total_spent']); ?></strong>
-                            </div>
-                        </div>
-                    <?php endif; ?>
-                </div>
+                <a href="<?php echo url('/shop'); ?>" class="btn btn-outline-dark rounded-pill px-4 btn-sm">
+                    <i class="bi bi-plus-lg me-1"></i> New Order
+                </a>
             </div>
+
+            <?php if (empty($orders)): ?>
+                <div class="text-center py-5 bg-white rounded-4 shadow-sm">
+                    <i class="bi bi-bag-x display-1 text-muted opacity-25"></i>
+                    <h5 class="mt-3 fw-bold">No orders found</h5>
+                    <p class="text-muted mb-4">Looks like you haven't placed any orders yet.</p>
+                    <a href="<?php echo url('/shop'); ?>" class="btn btn-primary px-5 rounded-pill">Start Shopping</a>
+                </div>
+            <?php else: ?>
+                <?php foreach($orders as $order): ?>
+                    <div class="card order-card mb-3 shadow-none">
+                        <div class="card-body">
+                            <div class="row align-items-center g-3">
+                                <div class="col-6 col-md-3">
+                                    <div class="small text-muted mb-1">Order ID</div>
+                                    <div class="fw-bold fs-6">#<?php echo $order['id']; ?></div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="small text-muted mb-1">Date</div>
+                                    <div class="fw-bold small"><?php echo date('M d, Y', strtotime($order['created_at'])); ?></div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <?php
+                                        $s = $order['status'];
+                                        $c = ($s=='delivered')?'success':(($s=='cancelled')?'danger':'warning');
+                                    ?>
+                                    <div class="small text-muted mb-1">Status</div>
+                                    <span class="badge rounded-pill bg-<?php echo $c; ?>-soft text-<?php echo $c; ?> px-3" style="background:rgba(var(--bs-<?php echo $c; ?>-rgb), 0.1); border:1px solid rgba(var(--bs-<?php echo $c; ?>-rgb), 0.2);">
+                                        <?php echo ucfirst($s); ?>
+                                    </span>
+                                </div>
+                                <div class="col-6 col-md-3 text-md-end">
+                                    <div class="small text-muted mb-1">Total</div>
+                                    <div class="fw-bold fs-5 text-dark">Rs. <?php echo number_format($order['total_amount'], 0); ?></div>
+                                </div>
+                            </div>
+                            <hr class="my-3 opacity-50">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="text-muted text-truncate small" style="max-width: 70%;">
+                                    <i class="bi bi-box-seam me-1"></i> <?php echo h($order['product_names']); ?>
+                                </div>
+                                <a href="<?php echo url('/order.php?id=' . $order['id']); ?>" class="btn btn-light btn-sm rounded-pill px-3 fw-bold">Details</a>
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
         </div>
     </div>
 </div>
-
-<style>
-.order-card {
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.order-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
-}
-</style>
 
 <?php include 'includes/footer-bootstrap.php'; ?>
