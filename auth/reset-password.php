@@ -17,10 +17,11 @@ if (empty($token)) {
     exit();
 }
 
-// Verify token
+// Verify token — hash the raw URL token and look up the stored hash
 try {
+    $hashed_token = hash('sha256', $token);
     $stmt = $pdo->prepare("SELECT id, full_name, email FROM users WHERE reset_token = ? AND reset_expires > NOW()");
-    $stmt->execute([$token]);
+    $stmt->execute([$hashed_token]);
     $user = $stmt->fetch();
 
     if (!$user) {
@@ -48,11 +49,17 @@ include_once __DIR__ . '/../includes/header-bootstrap.php';
             <?php if (isset($_SESSION['error'])): ?>
                 <div class="auth-alert auth-alert-error">
                     <i class="bi bi-exclamation-circle-fill"></i>
-                    <span><?php echo $_SESSION['error']; unset($_SESSION['error']); ?></span>
+                    <span><?php echo h($_SESSION['error']); unset($_SESSION['error']); ?></span>
                 </div>
             <?php endif; ?>
 
+            <div id="js-error" class="auth-alert auth-alert-error" style="display:none;">
+                <i class="bi bi-exclamation-circle-fill"></i>
+                <span id="js-error-msg"></span>
+            </div>
+
             <form action="<?php echo url('/backend/reset-password.php'); ?>" method="POST" class="auth-form" id="resetForm">
+                <input type="hidden" name="csrf_token" value="<?php echo h(generate_csrf_token()); ?>">
                 <input type="hidden" name="token" value="<?php echo h($token); ?>">
 
                 <div class="mb-3">
@@ -87,21 +94,26 @@ include_once __DIR__ . '/../includes/header-bootstrap.php';
 <script src="<?php echo url('/public/assets/js/auth.js'); ?>"></script>
 
 <script>
-// Form validation
+function showError(msg) {
+    const box = document.getElementById('js-error');
+    document.getElementById('js-error-msg').textContent = msg;
+    box.style.display = 'flex';
+    box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
 document.getElementById('resetForm').addEventListener('submit', function(e) {
-    const password = document.getElementById('password').value;
+    const password        = document.getElementById('password').value;
     const confirmPassword = document.getElementById('confirm_password').value;
 
     if (password.length < 8) {
         e.preventDefault();
-        alert('Password must be at least 8 characters long.');
-        return false;
+        showError('Password must be at least 8 characters long.');
+        return;
     }
 
     if (password !== confirmPassword) {
         e.preventDefault();
-        alert('Passwords do not match. Please check and try again.');
-        return false;
+        showError('Passwords do not match. Please check and try again.');
     }
 });
 </script>

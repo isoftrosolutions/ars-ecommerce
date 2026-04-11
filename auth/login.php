@@ -82,8 +82,6 @@ include_once __DIR__ . '/../includes/header-bootstrap.php';
                 </button>
             </form>
 
-
-
             <div class="auth-footer">
                 Don't have an account? <a href="<?php echo url('/auth/signup'); ?>" class="auth-link">Create Account</a>
             </div>

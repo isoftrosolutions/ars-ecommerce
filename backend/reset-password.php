@@ -5,11 +5,19 @@
  */
 require_once '../includes/db.php';
 require_once '../includes/functions.php';
+require_once '../includes/email-service.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $token = $_POST['token'];
-    $password = $_POST['password'];
-    $confirm_password = $_POST['confirm_password'];
+    // CSRF validation
+    if (!validate_csrf_token()) {
+        $_SESSION['error'] = "Invalid request. Please try again.";
+        header("Location: ../auth/login.php");
+        exit();
+    }
+
+    $token            = $_POST['token'] ?? '';
+    $password         = $_POST['password'] ?? '';
+    $confirm_password = $_POST['confirm_password'] ?? '';
 
     if (empty($token) || empty($password) || empty($confirm_password)) {
         $_SESSION['error'] = "All fields are required.";
@@ -30,9 +38,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
-        // Verify token and get user
-        $stmt = $pdo->prepare("SELECT id FROM users WHERE reset_token = ? AND reset_expires > NOW()");
-        $stmt->execute([$token]);
+        // Hash the incoming raw token and compare against the stored hash
+        $hashed_token = hash('sha256', $token);
+        $stmt = $pdo->prepare("SELECT id, full_name, email FROM users WHERE reset_token = ? AND reset_expires > NOW()");
+        $stmt->execute([$hashed_token]);
         $user = $stmt->fetch();
 
         if (!$user) {
@@ -52,6 +61,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             reset_token_used_at = NOW()
             WHERE id = ?");
         $stmt->execute([$hashed_password, $user['id']]);
+
+        // Send security confirmation email (non-blocking — failure doesn't stop the reset)
+        try {
+            $emailService = getEmailService();
+            $emailService->sendPasswordResetSuccess($user['email'], $user['full_name']);
+        } catch (Exception $e) {
+            error_log('[ARS] Password reset success email failed: ' . $e->getMessage());
+        }
 
         $_SESSION['success'] = "Password has been reset successfully. Please login with your new password.";
         header("Location: ../auth/login.php");

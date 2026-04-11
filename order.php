@@ -86,8 +86,8 @@ try {
                                 <div class="text-muted small">Placed on <?php echo date('M d, Y', strtotime($order['created_at'])); ?></div>
                             </div>
                             <?php
-                                $s = $order['status'];
-                                $c = ($s=='delivered')?'success':(($s=='cancelled')?'danger':'warning');
+                                $s = $order['delivery_status'] ?? 'Pending';
+                                $c = (strtolower($s) == 'delivered') ? 'success' : ((strtolower($s) == 'cancelled') ? 'danger' : 'warning');
                             ?>
                             <span class="badge rounded-pill bg-<?php echo $c; ?> px-3 py-2"><?php echo ucfirst($s); ?></span>
                         </div>
@@ -117,17 +117,17 @@ try {
                             <div class="fw-bold small">Order Placed</div>
                             <div class="text-muted x-small"><?php echo date('M d, Y', strtotime($order['created_at'])); ?></div>
                         </div>
-                        <div class="timeline-item <?php echo in_array($order['status'], ['processing','shipped','delivered'])?'active':''; ?>">
+                        <div class="timeline-item <?php echo in_array(strtolower($order['delivery_status']), ['confirmed', 'shipped', 'out for delivery', 'delivered']) ? 'active' : ''; ?>">
                             <span class="timeline-dot"></span>
-                            <div class="fw-bold small">Processing</div>
+                            <div class="fw-bold small">Confirmed</div>
                             <div class="text-muted x-small">Your order is being prepared.</div>
                         </div>
-                        <div class="timeline-item <?php echo in_array($order['status'], ['shipped','delivered'])?'active':''; ?>">
+                        <div class="timeline-item <?php echo in_array(strtolower($order['delivery_status']), ['shipped', 'out for delivery', 'delivered']) ? 'active' : ''; ?>">
                             <span class="timeline-dot"></span>
                             <div class="fw-bold small">Shipped</div>
                             <div class="text-muted x-small">Package has left our facility.</div>
                         </div>
-                        <div class="timeline-item <?php echo ($order['status']=='delivered')?'active':''; ?>">
+                        <div class="timeline-item <?php echo (strtolower($order['delivery_status']) == 'delivered') ? 'active' : ''; ?>">
                             <span class="timeline-dot"></span>
                             <div class="fw-bold small">Delivered</div>
                             <div class="text-muted x-small">Successfully reached your doorstep.</div>

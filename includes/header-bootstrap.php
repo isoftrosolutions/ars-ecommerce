@@ -296,7 +296,7 @@ require_once __DIR__ . '/functions.php';
                     <a href="<?php echo url('/cart.php'); ?>" class="meta-link ms-2">
                         <div class="cart-wrapper">
                             <i class="bi bi-cart3"></i>
-                            <span class="cart-badge cart-count"><?php echo isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0; ?></span>
+                            <span class="cart-badge cart-count"><?php echo get_cart_count(); ?></span>
                         </div>
                         <div class="meta-text">
                             <span class="meta-label">Shopping</span>
@@ -318,7 +318,7 @@ require_once __DIR__ . '/functions.php';
                     <a href="<?php echo url('/shop'); ?>" class="nav-link-custom active">Shop</a>
                     <a href="<?php echo url('/categories'); ?>" class="nav-link-custom">Categories</a>
                     <a href="<?php echo url('/orders'); ?>" class="nav-link-custom">My Orders</a>
-                    <a href="<?php echo url('/deals'); ?>" class="nav-link-custom d-none d-md-inline">Today's Deals</a>
+                    <a href="<?php echo url('/todays-deal'); ?>" class="nav-link-custom d-none d-md-inline">Today's Deal</a>
                     <a href="<?php echo url('/support'); ?>" class="nav-link-custom d-none d-lg-inline">Service</a>
                 </nav>
             </div>

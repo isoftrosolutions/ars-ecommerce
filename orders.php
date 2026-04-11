@@ -161,8 +161,8 @@ try {
                                 </div>
                                 <div class="col-6 col-md-3">
                                     <?php
-                                        $s = $order['status'];
-                                        $c = ($s=='delivered')?'success':(($s=='cancelled')?'danger':'warning');
+                                        $s = $order['status'] ?? 'Pending';
+                                        $c = (strtolower($s) == 'delivered') ? 'success' : ((strtolower($s) == 'cancelled') ? 'danger' : 'warning');
                                     ?>
                                     <div class="small text-muted mb-1">Status</div>
                                     <span class="badge rounded-pill bg-<?php echo $c; ?>-soft text-<?php echo $c; ?> px-3" style="background:rgba(var(--bs-<?php echo $c; ?>-rgb), 0.1); border:1px solid rgba(var(--bs-<?php echo $c; ?>-rgb), 0.2);">

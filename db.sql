@@ -34,9 +34,12 @@ CREATE TABLE `cart_items` (
   KEY `product_id` (`product_id`),
   CONSTRAINT `cart_items_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   CONSTRAINT `cart_items_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 /*Data for the table `cart_items` */
+
+insert  into `cart_items`(`id`,`user_id`,`session_id`,`product_id`,`quantity`,`created_at`,`updated_at`) values 
+(1,2,'5c727c4d58a0934b7c8fde4509ae88cb',1,2,'2026-04-11 17:51:50','2026-04-11 17:56:38');
 
 /*Table structure for table `categories` */
 
@@ -48,17 +51,9 @@ CREATE TABLE `categories` (
   `slug` varchar(100) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `slug` (`slug`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 /*Data for the table `categories` */
-
-insert  into `categories`(`id`,`name`,`slug`) values 
-(1,'Electronics','electronics'),
-(2,'Fashion','fashion'),
-(3,'Home & Garden','home-garden'),
-(4,'Beauty','beauty'),
-(5,'Sports','sports'),
-(6,'Accessories','accessories');
 
 /*Table structure for table `contact_submissions` */
 
@@ -165,6 +160,7 @@ CREATE TABLE `order_items` (
   `product_id` int(11) DEFAULT NULL,
   `quantity` int(11) NOT NULL,
   `price` decimal(10,2) NOT NULL,
+  `discount_price` decimal(10,2) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `order_id` (`order_id`),
   KEY `product_id` (`product_id`),
@@ -181,6 +177,11 @@ DROP TABLE IF EXISTS `orders`;
 CREATE TABLE `orders` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `user_id` int(11) DEFAULT NULL,
+  `customer_name` varchar(255) DEFAULT NULL,
+  `customer_email` varchar(255) DEFAULT NULL,
+  `customer_phone` varchar(20) DEFAULT NULL,
+  `shipping_address` text DEFAULT NULL,
+  `shipping_city` varchar(100) DEFAULT NULL,
   `total_amount` decimal(10,2) NOT NULL,
   `coupon_code` varchar(50) DEFAULT NULL,
   `discount_amount` decimal(10,2) DEFAULT 0.00,
@@ -213,9 +214,12 @@ CREATE TABLE `product_images` (
   PRIMARY KEY (`id`),
   KEY `product_id` (`product_id`),
   CONSTRAINT `product_images_ibfk_1` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 /*Data for the table `product_images` */
+
+insert  into `product_images`(`id`,`product_id`,`image_path`,`is_primary`) values 
+(1,1,'prod_69da394fcafc95.38973015.png',1);
 
 /*Table structure for table `product_reviews` */
 
@@ -263,19 +267,12 @@ CREATE TABLE `products` (
   UNIQUE KEY `sku` (`sku`),
   KEY `category_id` (`category_id`),
   CONSTRAINT `products_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 /*Data for the table `products` */
 
 insert  into `products`(`id`,`name`,`slug`,`description`,`price`,`discount_price`,`category_id`,`stock`,`image`,`sku`,`is_featured`,`created_at`) values 
-(1,'Premium Wireless Headphones','premium-wireless-headphones','Immersive sound with noise cancellation.',15000.00,12500.00,1,50,'headphones.jpg','ELEC-001',1,'2026-04-11 13:16:17'),
-(2,'Designer Leather Bag','designer-leather-bag','Handcrafted genuine leather bag.',8500.00,NULL,2,20,'leather-bag.jpg','FASH-001',1,'2026-04-11 13:16:17'),
-(3,'Smart Watch Series 7','smart-watch-7','Stay connected on the go.',4500.00,3999.00,1,30,'smartwatch.jpg','ELEC-002',1,'2026-04-11 13:16:17'),
-(4,'Cotton Summer Dress','cotton-summer-dress','Light and breathable cotton dress.',2500.00,NULL,2,40,'dress.jpg','FASH-002',0,'2026-04-11 13:16:17'),
-(5,'Modern Desk Lamp','modern-desk-lamp','Sleek design for your workspace.',1200.00,999.00,3,100,'lamp.jpg','HOME-001',0,'2026-04-11 13:16:17'),
-(6,'Mechanical Gaming Keyboard','mechanical-keyboard','RGB backlit mechanical keys.',5500.00,4800.00,1,15,'keyboard.jpg','ELEC-003',1,'2026-04-11 13:16:17'),
-(7,'Natural Face Serum','face-serum','Glow with organic ingredients.',1800.00,NULL,4,60,'serum.jpg','BEAU-001',0,'2026-04-11 13:16:17'),
-(8,'Yoga Mat Pro','yoga-mat-pro','Non-slip high density foam.',2200.00,1950.00,5,25,'yoga-mat.jpg','SPOR-001',0,'2026-04-11 13:16:17');
+(1,'Apple','apple','this is a  test project ',100.00,10.00,NULL,100,'prod_69da394fcafc95.38973015.png','APPLE123',1,'2026-04-11 17:51:39');
 
 /*Table structure for table `site_settings` */
 
@@ -288,6 +285,16 @@ CREATE TABLE `site_settings` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 /*Data for the table `site_settings` */
+
+insert  into `site_settings`(`key`,`value`) values 
+('admin_email','easyshoppinga.r.s1@gmail.com'),
+('site_name','Easy Shopping A.R.S'),
+('smtp_encryption','tls'),
+('smtp_host','smtp.gmail.com'),
+('smtp_password','vobx mgfp fstc zlhx'),
+('smtp_port','587'),
+('smtp_username','easyshoppinga.r.s1@gmail.com'),
+('support_email','easyshoppinga.r.s1@gmail.com');
 
 /*Table structure for table `user_sessions` */
 
@@ -319,8 +326,8 @@ CREATE TABLE `users` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `full_name` varchar(255) NOT NULL,
   `email` varchar(255) DEFAULT NULL,
-  `mobile` varchar(15) NOT NULL,
-  `password` varchar(255) NOT NULL,
+  `mobile` varchar(15) DEFAULT NULL,
+  `password` varchar(255) DEFAULT NULL,
   `address` text DEFAULT NULL,
   `role` enum('admin','customer') DEFAULT 'customer',
   `reset_token` varchar(255) DEFAULT NULL,
@@ -328,22 +335,27 @@ CREATE TABLE `users` (
   `reset_token_used_at` datetime DEFAULT NULL,
   `otp_attempts` tinyint(4) NOT NULL DEFAULT 0,
   `otp_issued_at` datetime DEFAULT NULL,
+  `otp_hash` varchar(255) DEFAULT NULL,
   `email_verified_at` timestamp NULL DEFAULT NULL,
   `verification_token` varchar(255) DEFAULT NULL,
   `remember_token` varchar(64) DEFAULT NULL COMMENT 'SHA-256 hash of the persistent remember-me cookie token',
+  `oauth_provider` varchar(20) DEFAULT NULL,
+  `oauth_provider_id` varchar(255) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   UNIQUE KEY `mobile` (`mobile`),
   UNIQUE KEY `email` (`email`),
   KEY `idx_users_reset_expires` (`reset_expires`),
-  KEY `idx_users_remember_token` (`remember_token`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+  KEY `idx_users_remember_token` (`remember_token`),
+  KEY `idx_oauth` (`oauth_provider`,`oauth_provider_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 /*Data for the table `users` */
 
-insert  into `users`(`id`,`full_name`,`email`,`mobile`,`password`,`address`,`role`,`reset_token`,`reset_expires`,`reset_token_used_at`,`otp_attempts`,`otp_issued_at`,`email_verified_at`,`verification_token`,`remember_token`,`created_at`) values 
-(1,'Admin','easyshoppinga.r.s1@gmail.com','9820210361','$2y$12$h8F1x.7kwgQhM4OGkRcUF.wjKSPoSY1ZV/xy6aTSeuZ9TNBQKDajq',NULL,'admin',NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,'2026-04-11 10:54:28'),
-(2,'Devbarat Prasad Patel','mind59024@gmail.com','9811144402','$2y$12$/XO8F5H067pvMCXky2r.HuQ467AohDD.kHUMuw5LX468wDra3cBA.','Bahudramai-07, Phulkaul, Parsa','customer',NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,'2026-04-11 15:04:48');
+insert  into `users`(`id`,`full_name`,`email`,`mobile`,`password`,`address`,`role`,`reset_token`,`reset_expires`,`reset_token_used_at`,`otp_attempts`,`otp_issued_at`,`otp_hash`,`email_verified_at`,`verification_token`,`remember_token`,`oauth_provider`,`oauth_provider_id`,`created_at`) values 
+(1,'Admin','easyshoppinga.r.s1@gmail.com','9820210361','$2y$12$h8F1x.7kwgQhM4OGkRcUF.wjKSPoSY1ZV/xy6aTSeuZ9TNBQKDajq',NULL,'admin',NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-11 10:54:28'),
+(2,'Devbarat Prasad Patel','mind59024@gmail.com','9811144402','$2y$12$VPBoIR19Sf70449AXW8D/eO4BWAUX03RSjDF1nRMIz0c/JR0m4C.u','Bahudramai-07, Phulkaul, Parsa','customer',NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-11 15:04:48'),
+(3,'Admin (pdewbrath)','pdewbrath@gmail.com','9800000000','$2y$12$RTKZfH6MghcesA4zgNCI1.JZYSIlPPx8/nU4o9Na6WXzseITGRNS.','Admin Office','admin','33c45f4e5d8a34ec8d6e7cb874a1542244891e5f83707c1e9f671f73756875de','2026-04-11 12:41:39',NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-11 16:57:00');
 
 /*Table structure for table `wishlist` */
 

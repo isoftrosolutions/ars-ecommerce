@@ -33,17 +33,11 @@ if (!preg_match('/^\d{6}$/', $otp)) {
 }
 
 try {
-    // Check if OTP exists in session and is valid
-    if (!isset($_SESSION['temp_otp']) ||
-        $_SESSION['temp_otp']['email'] !== $email ||
-        $_SESSION['temp_otp']['expires'] < time()) {
-        echo json_encode(['success' => false, 'message' => 'OTP has expired or was not sent']);
-        exit;
-    }
+    // Use centralized helper to verify OTP
+    $result = verify_otp($email, $otp);
 
-    // Verify OTP
-    if (!password_verify($otp, $_SESSION['temp_otp']['otp'])) {
-        echo json_encode(['success' => false, 'message' => 'Invalid OTP']);
+    if (!$result['success']) {
+        echo json_encode(['success' => false, 'message' => $result['message']]);
         exit;
     }
 

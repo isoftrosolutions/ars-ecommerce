@@ -61,8 +61,12 @@ if (!$order) {
                                 <p class="mb-1"><strong>Order ID:</strong> #<?php echo $order['id']; ?></p>
                                 <p class="mb-1"><strong>Date:</strong> <?php echo date('F j, Y \a\t g:i A', strtotime($order['created_at'])); ?></p>
                                 <p class="mb-1"><strong>Status:</strong>
-                                    <span class="badge bg-warning">Pending</span>
-                                </p>
+                                     <?php
+                                         $s = $order['delivery_status'] ?? 'Pending';
+                                         $c = (strtolower($s) == 'delivered') ? 'success' : ((strtolower($s) == 'cancelled') ? 'danger' : 'warning');
+                                     ?>
+                                     <span class="badge bg-<?php echo $c; ?>"><?php echo ucfirst($s); ?></span>
+                                 </p>
                             </div>
                             <div class="col-md-6">
                                 <p class="mb-1"><strong>Customer:</strong> <?php echo h($order['customer_name']); ?></p>

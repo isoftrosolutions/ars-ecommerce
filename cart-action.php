@@ -34,9 +34,6 @@ try {
 
             $result = add_to_cart($product_id, $add_quantity);
             $response = $result;
-            if ($result['success']) {
-                $response['cart_count'] = get_cart_count();
-            }
             break;
 
         case 'update':
@@ -65,11 +62,15 @@ try {
             break;
 
         case 'count':
-            $response = ['success' => true, 'count' => get_cart_count()];
+            $response = ['success' => true];
             break;
 
         default:
             $response = ['success' => false, 'message' => 'Unknown action'];
+    }
+
+    if ($response['success']) {
+        $response['cart_count'] = get_cart_count();
     }
 } catch (Exception $e) {
     $response = ['success' => false, 'message' => 'An error occurred'];

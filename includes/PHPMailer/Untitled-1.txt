@@ -1,39 +1,39 @@
 # Online Shopping in Nepal | Buy Electronics, Fashion & More | Easy Shopping A.R.S
 
-[ARS Shopping](http://localhost/ARS/)
-- [Home](http://localhost/ARS/)
-- [Shop](http://localhost/ARS/shop)
-- [Categories](http://localhost/ARS/categories)
-- [About Us](http://localhost/ARS/about)
-[Home](http://localhost/ARS/)
-[Shop](http://localhost/ARS/shop)
-[Categories](http://localhost/ARS/categories)
-[About Us](http://localhost/ARS/about)
-[Cart (0)](http://localhost/ARS/cart)
-[Login](http://localhost/ARS/auth/login)
-[Sign Up](http://localhost/ARS/auth/signup)
+[ARS Shopping](http://localhost/ars/)
+- [Home](http://localhost/ars/)
+- [Shop](http://localhost/ars/shop)
+- [Categories](http://localhost/ars/categories)
+- [About Us](http://localhost/ars/about)
+[Home](http://localhost/ars/)
+[Shop](http://localhost/ars/shop)
+[Categories](http://localhost/ars/categories)
+[About Us](http://localhost/ars/about)
+[Cart (0)](http://localhost/ars/cart)
+[Login](http://localhost/ars/auth/login)
+[Sign Up](http://localhost/ars/auth/signup)
 
 # Shop Beyond Limits.
 Your destination for curated products delivered across Nepal — Birgunj, Parsa and beyond. eSewa & COD accepted.
-[Explore Shop](http://localhost/ARS/shop)
-[View Deals](http://localhost/ARS/shop?q=)
+[Explore Shop](http://localhost/ars/shop)
+[View Deals](http://localhost/ars/shop?q=)
 
 ### Premium Essentials
 Handpicked quality for your lifestyle.
-[→](http://localhost/ARS/shop)
+[→](http://localhost/ars/shop)
 
 ## Shop byCategory
 Every need, one place
-[All Categories](http://localhost/ARS/shop)
+[All Categories](http://localhost/ars/shop)
 
 ## FeaturedProducts
 The hottest items people are buying right now
-[All Products](http://localhost/ARS/shop)
+[All Products](http://localhost/ars/shop)
 Awaiting our latest arrivals. Check back soon!
 
 ## Experience Premium Shopping in Nepal.
 Join 10,000+ satisfied customers. Exclusive deals, fast delivery, and 24/7 support.
-[Create Account](http://localhost/ARS/auth/signup)
+[Create Account](http://localhost/ars/auth/signup)
 [Easy Shopping A.R.S](http://localhost/)
 Your premier destination for quality products and exceptional service. We bridge the gap between premium global trends and the local heart of Nepal, delivering excellence to your doorstep.
 

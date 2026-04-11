@@ -2,8 +2,8 @@
 /**
  * Email Service Class
  * Easy Shopping A.R.S
- *
- * Integrated with PHPMailer and Database Settings.
+ * 
+ * Dynamically uses templates from config/email_templates.php
  */
 
 require_once __DIR__ . '/PHPMailer/Exception.php';
@@ -17,6 +17,7 @@ use PHPMailer\PHPMailer\SMTP;
 class EmailService {
 
     private static $instance = null;
+    private $templates = null;
 
     public static function getInstance() {
         if (self::$instance === null) {
@@ -25,75 +26,112 @@ class EmailService {
         return self::$instance;
     }
 
+    private function __construct() {
+        $templatePath = __DIR__ . '/../config/email_templates.php';
+        if (file_exists($templatePath)) {
+            $this->templates = include $templatePath;
+        }
+    }
+
     /**
-     * Send a custom email (public wrapper)
+     * Send OTP email
+     */
+    public function sendOTP($email, $otp, $name = 'Valued Customer') {
+        return $this->processAndSend('otp_email', $email, [
+            'otp' => $otp,
+            'name' => $name
+        ]);
+    }
+
+    /**
+     * Send SMS OTP
+     */
+    public function sendSMSOTP($mobile, $otp) {
+        $message = "Your ARS verification code is: $otp. Valid for 5 minutes.";
+        
+        // In dev, log to emails.log
+        $log = "[".date('Y-m-d H:i:s')."] SMS to: $mobile\n";
+        $log .= "Message: $message\n";
+        $log .= str_repeat("-", 50) . "\n\n";
+        error_log($log, 3, __DIR__ . '/../logs/emails.log');
+        
+        // For production, integrate with SMS gateway like Twilio, Sparrow SMS, etc.
+        return true; 
+    }
+
+    /**
+     * Send Welcome email
+     */
+    public function sendWelcome($email, $name) {
+        return $this->processAndSend('welcome_email', $email, [
+            'name' => $name,
+            'shop_url' => url('/shop')
+        ]);
+    }
+
+    /**
+     * Send Password Reset email
+     */
+    public function sendPasswordReset($email, $name, $reset_url) {
+        return $this->processAndSend('password_reset', $email, [
+            'name' => $name,
+            'reset_url' => $reset_url
+        ]);
+    }
+
+    /**
+     * Send Custom/Public Email
      */
     public function sendCustomEmail($to, $subject, $body) {
         return $this->sendEmail($to, $subject, $body);
     }
 
     /**
-     * Send OTP email
+     * Core logic to fetch, parse and send a template
      */
-    public function sendOTP($email, $otp) {
-        $subject = "Your OTP for ARS Login";
-        $body = $this->getOTPEmailTemplate($otp);
+    private function processAndSend($templateKey, $to, $replacements) {
+        if (!$this->templates || !isset($this->templates[$templateKey])) {
+            return false;
+        }
 
-        return $this->sendEmail($email, $subject, $body);
+        $template = $this->templates[$templateKey];
+        $subject = $template['subject'];
+        $body = $template['content_html'];
+
+        // Replace placeholders {{key}} with value
+        foreach ($replacements as $key => $value) {
+            $subject = str_replace('{{' . $key . '}}', $value, $subject);
+            $body = str_replace('{{' . $key . '}}', $value, $body);
+        }
+
+        return $this->sendEmail($to, $subject, $body);
     }
 
     /**
-     * Send password reset email
-     */
-    public function sendPasswordReset($email, $reset_link) {
-        $subject = "Reset Your ARS Password";
-        $body = $this->getPasswordResetEmailTemplate($reset_link);
-
-        return $this->sendEmail($email, $subject, $body);
-    }
-
-    /**
-     * Send welcome email
-     */
-    public function sendWelcome($email, $name) {
-        $subject = "Welcome to ARS!";
-        $body = $this->getWelcomeEmailTemplate($name);
-
-        return $this->sendEmail($email, $subject, $body);
-    }
-
-    /**
-     * Send email using PHPMailer and Database SMTP settings
+     * Native PHPMailer logic
      */
     private function sendEmail($to, $subject, $body) {
-        // Fetch SMTP settings from database
-        // These are added to includes/functions.php
         $smtp_host = get_setting('smtp_host');
         $smtp_port = get_setting('smtp_port', 587);
         $smtp_user = get_setting('smtp_username');
         $smtp_pass = get_setting('smtp_password');
         $smtp_enc  = get_setting('smtp_encryption', 'tls');
         
-        $from_email = get_setting('support_email', get_setting('admin_email', 'noreply@easyshoppingars.com'));
+        $from_email = get_setting('support_email', 'noreply@easyshoppingars.com');
         $site_name  = get_setting('site_name', 'Easy Shopping A.R.S');
 
-        // If no SMTP host is configured, fallback to logging for development
         if (empty($smtp_host)) {
-            $log_message = sprintf(
-                "[%s] [DEV-LOG] Email to: %s\nSubject: %s\nBody: %s\nNote: SMTP not configured. Set 'smtp_host' in Settings.\n\n",
-                date('Y-m-d H:i:s'),
-                $to,
-                $subject,
-                $body
-            );
-            error_log($log_message, 3, __DIR__ . '/../logs/emails.log');
-            return true; 
+            // Dev logging
+            $log = "[".date('Y-m-d H:i:s')."] Email to: $to\n";
+            $log .= "Subject: $subject\n";
+            $log .= "Body: $body\n";
+            $log .= str_repeat("-", 50) . "\n\n";
+            error_log($log, 3, __DIR__ . '/../logs/emails.log');
+            return true;
         }
 
         $mail = new PHPMailer(true);
-
         try {
-            // Server settings
             $mail->isSMTP();
             $mail->Host       = $smtp_host;
             $mail->SMTPAuth   = true;
@@ -102,103 +140,22 @@ class EmailService {
             $mail->SMTPSecure = ($smtp_enc === 'ssl') ? PHPMailer::ENCRYPTION_SMTPS : PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Port       = $smtp_port;
 
-            // Recipients
             $mail->setFrom($from_email, $site_name);
             $mail->addAddress($to);
 
-            // Content
             $mail->isHTML(true);
             $mail->Subject = $subject;
             $mail->Body    = $body;
             $mail->AltBody = strip_tags($body);
 
-            $mail->send();
-            return true;
+            return $mail->send();
         } catch (Exception $e) {
-            error_log("[" . date('Y-m-d H:i:s') . "] Mailer Error: {$mail->ErrorInfo}\n", 3, __DIR__ . '/../logs/emails.log');
+            error_log("Mailer Error: " . $mail->ErrorInfo);
             return false;
         }
     }
-
-    /**
-     * Send SMS OTP (for mobile OTP)
-     */
-    public function sendSMSOTP($mobile, $otp) {
-        // In production, integrate with SMS service like Twilio, Nexmo, etc.
-
-        $log_message = sprintf(
-            "[%s] SMS to: %s\nOTP: %s\n\n",
-            date('Y-m-d H:i:s'),
-            $mobile,
-            $otp
-        );
-
-        error_log($log_message, 3, __DIR__ . '/../logs/sms.log');
-
-        // Simulate sending delay
-        usleep(300000); // 0.3 seconds
-
-        return true; // Return success for demo
-    }
-
-    private function getOTPEmailTemplate($otp) {
-        return "
-        <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
-            <h2 style='color: #ea6c00;'>Your OTP for ARS Login</h2>
-            <p>Hello,</p>
-            <p>Your One-Time Password (OTP) for logging into your ARS account is:</p>
-            <div style='background: #f8f9fa; padding: 20px; text-align: center; margin: 20px 0;'>
-                <span style='font-size: 24px; font-weight: bold; color: #ea6c00;'>{$otp}</span>
-            </div>
-            <p>This OTP will expire in 5 minutes.</p>
-            <p>If you didn't request this OTP, please ignore this email.</p>
-            <br>
-            <p>Best regards,<br>ARS Team</p>
-        </div>
-        ";
-    }
-
-    private function getPasswordResetEmailTemplate($reset_link) {
-        return "
-        <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
-            <h2 style='color: #ea6c00;'>Reset Your Password</h2>
-            <p>Hello,</p>
-            <p>You have requested to reset your password for your ARS account.</p>
-            <p>Click the link below to reset your password:</p>
-            <div style='background: #f8f9fa; padding: 20px; text-align: center; margin: 20px 0;'>
-                <a href='{$reset_link}' style='background: #ea6c00; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;'>Reset Password</a>
-            </div>
-            <p>This link will expire in 1 hour.</p>
-            <p>If you didn't request this password reset, please ignore this email.</p>
-            <br>
-            <p>Best regards,<br>ARS Team</p>
-        </div>
-        ";
-    }
-
-    private function getWelcomeEmailTemplate($name) {
-        return "
-        <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
-            <h2 style='color: #ea6c00;'>Welcome to ARS!</h2>
-            <p>Hello {$name},</p>
-            <p>Thank you for joining ARS! Your account has been successfully created.</p>
-            <p>You can now:</p>
-            <ul>
-                <li>Browse our products</li>
-                <li>Place orders online</li>
-                <li>Track your order status</li>
-                <li>Manage your wishlist</li>
-            </ul>
-            <p>Start shopping now: <a href='" . url('/') . "'>" . url('/') . "</a></p>
-            <br>
-            <p>Best regards,<br>ARS Team</p>
-        </div>
-        ";
-    }
 }
 
-// Helper function to get email service instance
 function getEmailService() {
     return EmailService::getInstance();
 }
-?>

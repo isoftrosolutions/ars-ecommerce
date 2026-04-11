@@ -74,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     // General Settings
                     'site_name' => 'Easy Shopping A.R.S',
                     'site_description' => 'Professional product showcase and online ordering platform',
-                    'site_url' => 'http://localhost/ARS',
+                    'site_url' => 'http://localhost/ars',
                     'admin_email' => 'admin@easyshoppingars.com',
                     'support_email' => 'support@easyshoppingars.com',
 
@@ -152,7 +152,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 $defaults = [
                     'site_name' => 'Easy Shopping A.R.S',
                     'site_description' => 'Professional product showcase and online ordering platform',
-                    'site_url' => 'http://localhost/ARS',
+                    'site_url' => 'http://localhost/ars',
                     'admin_email' => 'admin@easyshoppingars.com',
                     'support_email' => 'support@easyshoppingars.com',
                     'company_name' => 'Easy Shopping A.R.S',

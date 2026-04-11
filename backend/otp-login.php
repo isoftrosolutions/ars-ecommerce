@@ -46,28 +46,11 @@ if (!preg_match('/^\d{6}$/', $otp)) {
 }
 
 try {
-    // Check if OTP was sent and is still valid
-    if (!isset($_SESSION['temp_otp']) ||
-        $_SESSION['temp_otp']['expires'] < time()) {
-        $_SESSION['error'] = "OTP has expired or was not sent. Please request a new one.";
-        header("Location: ../auth/login.php");
-        exit;
-    }
+    $identifier = !empty($email) ? $email : $mobile;
+    $result = verify_otp($identifier, $otp);
 
-    // Verify the contact method matches
-    $session_email = $_SESSION['temp_otp']['email'] ?? '';
-    $session_mobile = $_SESSION['temp_otp']['mobile'] ?? '';
-
-    if ((!empty($email) && $session_email !== $email) ||
-        (!empty($mobile) && $session_mobile !== $mobile)) {
-        $_SESSION['error'] = "OTP was sent to a different contact method.";
-        header("Location: ../auth/login.php");
-        exit;
-    }
-
-    // Verify OTP
-    if (!password_verify($otp, $_SESSION['temp_otp']['otp'])) {
-        $_SESSION['error'] = "Invalid OTP. Please check and try again.";
+    if (!$result['success']) {
+        $_SESSION['error'] = $result['message'];
         header("Location: ../auth/login.php");
         exit;
     }

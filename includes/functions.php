@@ -414,4 +414,119 @@ function get_categories_count() {
         return 0;
     }
 }
+/**
+ * Generate, Store and Send OTP for a user
+ * @param string $identifier Email or Mobile
+ * @param string $action 'password_reset', 'login', 'signup_verify'
+ * @return array ['success' => bool, 'message' => string]
+ */
+function send_otp($identifier, $action = 'login') {
+    global $pdo;
+    
+    // Identify user
+    $is_email = filter_var($identifier, FILTER_VALIDATE_EMAIL);
+    $column = $is_email ? 'email' : 'mobile';
+    
+    try {
+        $stmt = $pdo->prepare("SELECT id, full_name, email, mobile, otp_attempts, otp_issued_at FROM users WHERE $column = ?");
+        $stmt->execute([$identifier]);
+        $user = $stmt->fetch();
+        
+        if (!$user) {
+            return ['success' => false, 'message' => 'No account found with this ' . ($is_email ? 'email' : 'mobile number')];
+        }
+        
+        // Rate limiting: max 3 attempts per hour
+        $one_hour_ago = date('Y-m-d H:i:s', strtotime('-1 hour'));
+        if ($user['otp_attempts'] >= 5 && $user['otp_issued_at'] > $one_hour_ago) {
+            return ['success' => false, 'message' => 'Too many OTP requests. Please try again later.'];
+        }
+        
+        // Generate 6-digit OTP
+        $otp = sprintf('%06d', mt_rand(100000, 999999));
+        $hashed_otp = password_hash($otp, PASSWORD_DEFAULT);
+        $current_time = date('Y-m-d H:i:s');
+        
+        // Update database
+        $stmt = $pdo->prepare("UPDATE users SET otp_hash = ?, otp_attempts = otp_attempts + 1, otp_issued_at = ? WHERE id = ?");
+        $stmt->execute([$hashed_otp, $current_time, $user['id']]);
+        
+        // Also store in session for backward compatibility and fast access
+        $_SESSION['temp_otp'] = [
+            'id' => $user['id'],
+            'email' => $user['email'],
+            'mobile' => $user['mobile'],
+            'otp' => $hashed_otp,
+            'expires' => strtotime('+10 minutes'),
+            'action' => $action
+        ];
+        
+        // Send via Email Service
+        require_once __DIR__ . '/email-service.php';
+        $emailService = getEmailService();
+        $sendSuccess = false;
+        
+        if ($is_email) {
+            $sendSuccess = $emailService->sendOTP($user['email'], $otp, $user['full_name']);
+        } else {
+            $sendSuccess = $emailService->sendSMSOTP($user['mobile'], $otp);
+        }
+        
+        if ($sendSuccess) {
+            return ['success' => true, 'message' => 'OTP sent successfully!'];
+        } else {
+            return ['success' => false, 'message' => 'Failed to deliver OTP.'];
+        }
+        
+    } catch (PDOException $e) {
+        error_log('send_otp error: ' . $e->getMessage());
+        return ['success' => false, 'message' => 'Internal server error.'];
+    }
+}
+
+/**
+ * Verify OTP for a user
+ * @param string $identifier Email or Mobile
+ * @param string $otp 6-digit code
+ * @return array ['success' => bool, 'message' => string]
+ */
+function verify_otp($identifier, $otp) {
+    global $pdo;
+    
+    $is_email = filter_var($identifier, FILTER_VALIDATE_EMAIL);
+    $column = $is_email ? 'email' : 'mobile';
+    
+    try {
+        $stmt = $pdo->prepare("SELECT id, otp_hash, otp_issued_at FROM users WHERE $column = ?");
+        $stmt->execute([$identifier]);
+        $user = $stmt->fetch();
+        
+        if (!$user || empty($user['otp_hash'])) {
+            return ['success' => false, 'message' => 'No active OTP found.'];
+        }
+        
+        // Check expiration (10 minutes)
+        if (strtotime($user['otp_issued_at']) < strtotime('-10 minutes')) {
+            return ['success' => false, 'message' => 'OTP has expired.'];
+        }
+        
+        // Verify code
+        if (!password_verify($otp, $user['otp_hash'])) {
+            return ['success' => false, 'message' => 'Invalid OTP.'];
+        }
+        
+        // Success! Clear OTP from DB
+        $stmt = $pdo->prepare("UPDATE users SET otp_hash = NULL, otp_attempts = 0 WHERE id = ?");
+        $stmt->execute([$user['id']]);
+        
+        // Clear from session too
+        unset($_SESSION['temp_otp']);
+        
+        return ['success' => true, 'message' => 'OTP verified.'];
+        
+    } catch (PDOException $e) {
+        error_log('verify_otp error: ' . $e->getMessage());
+        return ['success' => false, 'message' => 'Verification failed.'];
+    }
+}
 ?>

@@ -8,7 +8,16 @@ require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/email-service.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = h($_POST['email']);
+    // CSRF validation
+    if (!validate_csrf_token()) {
+        $_SESSION['error'] = "Invalid request. Please try again.";
+        header("Location: ../auth/forgot-password.php");
+        exit();
+    }
+
+    // Use raw trim — h() is for HTML output only, not DB queries
+    $email = trim($_POST['email'] ?? '');
+    $reset_method = trim($_POST['reset_method'] ?? 'email-otp');
 
     if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $_SESSION['error'] = "Please enter a valid email address.";
@@ -16,44 +25,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
 
+    if ($reset_method !== 'email-otp') {
+        $_SESSION['error'] = "Invalid reset method.";
+        header("Location: ../auth/forgot-password.php");
+        exit();
+    }
+
+    // Same success message regardless of outcome (anti-enumeration)
+    $generic_success = "If an account with that email exists, we've sent an OTP to reset your password.";
+
     try {
-        // Check if user exists
-        $stmt = $pdo->prepare("SELECT id, full_name FROM users WHERE email = ?");
-        $stmt->execute([$email]);
-        $user = $stmt->fetch();
+        // Use centralized helper to generate and send OTP
+        $result = send_otp($email, 'password_reset');
 
-        if (!$user) {
-            // Don't reveal if email exists or not for security
-            $_SESSION['success'] = "If an account with that email exists, we've sent a password reset link.";
-            header("Location: ../auth/forgot-password.php");
-            exit();
+        if (!$result['success']) {
+            // We still redirect to avoid enumeration, but log the error
+            error_log("Failed to send password reset OTP: " . $result['message']);
         }
 
-        // Generate secure reset token
-        $reset_token = bin2hex(random_bytes(32));
-        $reset_expires = date('Y-m-d H:i:s', strtotime('+1 hour'));
-
-        // Store reset token in database
-        $stmt = $pdo->prepare("UPDATE users SET reset_token = ?, reset_expires = ? WHERE email = ?");
-        $stmt->execute([$reset_token, $reset_expires, $email]);
-
-        // Construct reset link
-        $reset_link = url("/auth/reset-password.php?token=$reset_token&email=" . urlencode($email));
-
-        // Send password reset email
-        $emailService = getEmailService();
-        $sendSuccess = $emailService->sendPasswordReset($email, $reset_link);
-
-        if (!$sendSuccess) {
-            $_SESSION['error'] = "Failed to send password reset email. Please try again.";
-            header("Location: ../auth/forgot-password.php");
-            exit();
-        }
-
-        $_SESSION['success'] = "Password reset link has been sent to your email address.";
+        header("Location: ../auth/otp-reset-password.php?email=" . urlencode($email));
+        exit();
 
     } catch (PDOException $e) {
-        $_SESSION['error'] = "Database error. Please try again.";
+        error_log('Forgot Password Error: ' . $e->getMessage());
+        $_SESSION['error'] = "An error occurred. Please try again.";
     }
 
     header("Location: ../auth/forgot-password.php");
