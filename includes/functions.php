@@ -43,7 +43,7 @@ function is_admin() {
  */
 function protect_admin_page() {
     if (!is_admin()) {
-        header('Location: /auth/login.php');
+        header('Location: ' . url('/auth/login.php'));
         exit();
     }
 }

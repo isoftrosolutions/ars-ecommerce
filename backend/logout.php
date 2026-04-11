@@ -3,7 +3,7 @@
  * User Logout Backend
  * Easy Shopping A.R.S
  */
-require_once '../includes/db.php';
+require_once __DIR__ . '/../includes/db.php';
 
 // If session exists, destroy it
 if (session_status() === PHP_SESSION_NONE) {

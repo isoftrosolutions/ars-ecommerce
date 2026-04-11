@@ -3,9 +3,9 @@
  * Forgot Password Backend
  * Easy Shopping A.R.S
  */
-require_once '../includes/db.php';
-require_once '../includes/functions.php';
-require_once '../includes/email-service.php';
+require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/email-service.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = h($_POST['email']);

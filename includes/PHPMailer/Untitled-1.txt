@@ -1,0 +1,66 @@
+# Online Shopping in Nepal | Buy Electronics, Fashion & More | Easy Shopping A.R.S
+
+[ARS Shopping](http://localhost/ARS/)
+- [Home](http://localhost/ARS/)
+- [Shop](http://localhost/ARS/shop)
+- [Categories](http://localhost/ARS/categories)
+- [About Us](http://localhost/ARS/about)
+[Home](http://localhost/ARS/)
+[Shop](http://localhost/ARS/shop)
+[Categories](http://localhost/ARS/categories)
+[About Us](http://localhost/ARS/about)
+[Cart (0)](http://localhost/ARS/cart)
+[Login](http://localhost/ARS/auth/login)
+[Sign Up](http://localhost/ARS/auth/signup)
+
+# Shop Beyond Limits.
+Your destination for curated products delivered across Nepal — Birgunj, Parsa and beyond. eSewa & COD accepted.
+[Explore Shop](http://localhost/ARS/shop)
+[View Deals](http://localhost/ARS/shop?q=)
+
+### Premium Essentials
+Handpicked quality for your lifestyle.
+[→](http://localhost/ARS/shop)
+
+## Shop byCategory
+Every need, one place
+[All Categories](http://localhost/ARS/shop)
+
+## FeaturedProducts
+The hottest items people are buying right now
+[All Products](http://localhost/ARS/shop)
+Awaiting our latest arrivals. Check back soon!
+
+## Experience Premium Shopping in Nepal.
+Join 10,000+ satisfied customers. Exclusive deals, fast delivery, and 24/7 support.
+[Create Account](http://localhost/ARS/auth/signup)
+[Easy Shopping A.R.S](http://localhost/)
+Your premier destination for quality products and exceptional service. We bridge the gap between premium global trends and the local heart of Nepal, delivering excellence to your doorstep.
+
+###### Contact Details
+- 
+                                    Email Support
+                                    [easyshoppinga.r.s1@gmail.com](mailto:easyshoppinga.r.s1@gmail.com)
+                                
+[easyshoppinga.r.s1@gmail.com](mailto:easyshoppinga.r.s1@gmail.com)
+- 
+                                    Support Contact
+                                    [+977 982-0210361](tel:+9779820210361)
+                                
+- 
+                                    Head Office
+                                    [+977 9812231441](tel:+9779812231441)
+                                
+[+977 982-0210361](tel:+9779820210361)
+[+977 9812231441](tel:+9779812231441)
+- 
+                                    Asst. Head Office
+                                    [+977 9706800854](tel:+9779706800854)
+                                
+[+977 9706800854](tel:+9779706800854)
+
+###### Follow Us
+
+###### Get Our App
+App installed!
+© 2026 Easy Shopping A.R.S. All rights reserved.

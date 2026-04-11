@@ -46,6 +46,7 @@ function route($url) {
         'admin/coupons' => 'admin/coupons.php',
         'admin/contact' => 'admin/contact.php',
         'admin/settings' => 'admin/settings.php',
+        'backend/logout' => 'backend/logout.php',
     ];
 
     // 3. Match Static Routes

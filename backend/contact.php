@@ -3,8 +3,8 @@
  * Contact Submissions Management Backend Logic
  * Easy Shopping A.R.S eCommerce Platform
  */
-require_once '../includes/db.php';
-require_once '../includes/functions.php';
+require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/functions.php';
 
 protect_admin_page();
 

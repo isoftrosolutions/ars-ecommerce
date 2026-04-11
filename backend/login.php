@@ -3,8 +3,8 @@
  * User Login Backend
  * Easy Shopping A.R.S
  */
-require_once '../includes/db.php';
-require_once '../includes/functions.php';
+require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/functions.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $login_id = h($_POST['login_id']); // This can be email or mobile

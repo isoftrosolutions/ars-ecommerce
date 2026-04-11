@@ -3,8 +3,8 @@
  * Settings Management Backend Logic
  * Easy Shopping A.R.S eCommerce Platform
  */
-require_once '../includes/db.php';
-require_once '../includes/functions.php';
+require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/functions.php';
 
 // Protect admin page
 protect_admin_page();
