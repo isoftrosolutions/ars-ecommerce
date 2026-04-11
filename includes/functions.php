@@ -25,6 +25,13 @@ function url($path = '') {
 }
 
 /**
+ * Check if the user is logged in
+ */
+function is_logged_in() {
+    return isset($_SESSION['user']);
+}
+
+/**
  * Check if the user is logged in as an admin
  */
 function is_admin() {
@@ -352,6 +359,33 @@ function transfer_guest_cart_to_user($user_id) {
         return ['success' => true];
     } catch (PDOException $e) {
         return ['success' => false, 'message' => 'Failed to transfer cart'];
+    }
+}
+/**
+ * Get a specific site setting by key
+ */
+function get_setting($key, $default = null) {
+    global $pdo;
+    try {
+        $stmt = $pdo->prepare("SELECT `value` FROM site_settings WHERE `key` = ?");
+        $stmt->execute([$key]);
+        $result = $stmt->fetch();
+        return $result ? $result['value'] : $default;
+    } catch (PDOException $e) {
+        return $default;
+    }
+}
+
+/**
+ * Get all site settings as an associative array
+ */
+function get_settings() {
+    global $pdo;
+    try {
+        $stmt = $pdo->query("SELECT `key`, `value` FROM site_settings");
+        return $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+    } catch (PDOException $e) {
+        return [];
     }
 }
 ?>

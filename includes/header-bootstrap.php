@@ -83,8 +83,23 @@ require_once __DIR__ . '/functions.php';
                     <i class="bi bi-cart3"></i>
                     <span class="ms-1">Cart (<span class="cart-count"><?php echo get_cart_count(); ?></span>)</span>
                 </a>
-                <a href="<?php echo url('/auth/login'); ?>" class="btn text-dark fw-medium">Login</a>
-                <a href="<?php echo url('/auth/signup'); ?>" class="btn btn-dark px-4" style="background: var(--secondary-color); border-radius: 50px;">Sign Up</a>
+                <?php if (is_logged_in()): ?>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person-circle me-2"></i><?php echo h($_SESSION['user']['full_name']); ?>
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="userDropdown">
+                            <li><a class="dropdown-item" href="<?php echo url('/profile'); ?>"><i class="bi bi-person me-2"></i>Profile</a></li>
+                            <li><a class="dropdown-item" href="<?php echo url('/orders'); ?>"><i class="bi bi-receipt me-2"></i>My Orders</a></li>
+                            <li><a class="dropdown-item" href="<?php echo url('/wishlist'); ?>"><i class="bi bi-heart me-2"></i>Wishlist</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="<?php echo url('/backend/logout'); ?>"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                        </ul>
+                    </div>
+                <?php else: ?>
+                    <a href="<?php echo url('/auth/login'); ?>" class="btn text-dark fw-medium">Login</a>
+                    <a href="<?php echo url('/auth/signup'); ?>" class="btn btn-dark px-4" style="background: var(--secondary-color); border-radius: 50px;">Sign Up</a>
+                <?php endif; ?>
             </div>
         </div>
     </div>

@@ -85,7 +85,7 @@ try {
                     <a href="<?php echo url('/wishlist'); ?>" class="list-group-item list-group-item-action active">
                         <i class="bi bi-heart me-2"></i>Wishlist
                     </a>
-                    <a href="<?php echo url('/auth/logout'); ?>" class="list-group-item list-group-item-action text-danger">
+                    <a href="<?php echo url('/backend/logout'); ?>" class="list-group-item list-group-item-action text-danger">
                         <i class="bi bi-box-arrow-right me-2"></i>Logout
                     </a>
                 </div>

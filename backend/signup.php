@@ -14,7 +14,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $address   = h($_POST['address'] ?? '');
     $password  = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
-    $email_verified = $_POST['email_verified'] ?? '0';
 
     // Basic Validation
     if (empty($full_name) || empty($email) || empty($mobile) || empty($password)) {
@@ -23,12 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
 
-    // Check email verification
-    if ($email_verified !== '1' || !isset($_SESSION['email_verified']) || $_SESSION['email_verified'] !== $email) {
-        $_SESSION['error'] = "Please verify your email address with OTP before signing up.";
-        header("Location: ../auth/signup.php");
-        exit();
-    }
+
 
     if ($password !== $confirm_password) {
         $_SESSION['error'] = "Passwords do not match.";

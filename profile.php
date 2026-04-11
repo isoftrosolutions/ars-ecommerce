@@ -4,6 +4,9 @@
  * Easy Shopping A.R.S
  */
 
+require_once 'includes/db.php';
+require_once 'includes/functions.php';
+
 // Check if user is logged in
 if (!isset($_SESSION['user'])) {
     header('Location: ' . url('/auth/login'));
@@ -19,11 +22,10 @@ $errors = [];
 $success = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = trim($_POST['name'] ?? '');
+    $name = trim($_POST['full_name'] ?? '');
     $email = trim($_POST['email'] ?? '');
-    $phone = trim($_POST['phone'] ?? '');
+    $mobile = trim($_POST['mobile'] ?? '');
     $address = trim($_POST['address'] ?? '');
-    $city = trim($_POST['city'] ?? '');
     $current_password = $_POST['current_password'] ?? '';
     $new_password = $_POST['new_password'] ?? '';
     $confirm_password = $_POST['confirm_password'] ?? '';
@@ -39,6 +41,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([$email, $user['id']]);
         if ($stmt->fetch()) {
             $errors[] = "Email is already taken";
+        }
+    }
+
+    // Check if mobile is already taken by another user
+    if ($mobile !== $user['mobile']) {
+        $stmt = $pdo->prepare("SELECT id FROM users WHERE mobile = ? AND id != ?");
+        $stmt->execute([$mobile, $user['id']]);
+        if ($stmt->fetch()) {
+            $errors[] = "Mobile number is already taken";
         }
     }
 
@@ -59,11 +70,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             // Update user profile
             $update_fields = [
-                'name' => $name,
+                'full_name' => $name,
                 'email' => $email,
-                'phone' => $phone,
-                'address' => $address,
-                'city' => $city
+                'mobile' => $mobile,
+                'address' => $address
             ];
 
             $set_clause = [];
@@ -85,11 +95,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute($params);
 
             // Update session data
-            $_SESSION['user']['name'] = $name;
+            $_SESSION['user']['full_name'] = $name;
             $_SESSION['user']['email'] = $email;
-            $_SESSION['user']['phone'] = $phone;
+            $_SESSION['user']['mobile'] = $mobile;
             $_SESSION['user']['address'] = $address;
-            $_SESSION['user']['city'] = $city;
 
             $user = $_SESSION['user']; // Refresh local variable
             $success = true;
@@ -107,12 +116,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <!-- Profile Sidebar -->
             <div class="card border-0 shadow-sm">
                 <div class="card-body text-center">
-                    <div class="profile-avatar mb-3">
+                        <div class="profile-avatar mb-3">
                         <div class="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center text-white" style="width: 80px; height: 80px; font-size: 2rem;">
-                            <?php echo strtoupper(substr($user['name'], 0, 1)); ?>
+                            <?php echo strtoupper(substr($user['full_name'], 0, 1)); ?>
                         </div>
                     </div>
-                    <h5><?php echo h($user['name']); ?></h5>
+                    <h5><?php echo h($user['full_name']); ?></h5>
                     <p class="text-muted small"><?php echo h($user['email']); ?></p>
                     <p class="badge bg-primary"><?php echo ucfirst($user['role']); ?></p>
                 </div>
@@ -126,7 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <a href="<?php echo url('/wishlist'); ?>" class="list-group-item list-group-item-action">
                         <i class="bi bi-heart me-2"></i>Wishlist
                     </a>
-                    <a href="<?php echo url('/auth/logout'); ?>" class="list-group-item list-group-item-action text-danger">
+                    <a href="<?php echo url('/backend/logout'); ?>" class="list-group-item list-group-item-action text-danger">
                         <i class="bi bi-box-arrow-right me-2"></i>Logout
                     </a>
                 </div>
@@ -158,8 +167,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <form method="POST">
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="name" class="form-label">Full Name *</label>
-                                <input type="text" class="form-control" id="name" name="name" value="<?php echo h($user['name']); ?>" required>
+                                <label for="full_name" class="form-label">Full Name *</label>
+                                <input type="text" class="form-control" id="full_name" name="full_name" value="<?php echo h($user['full_name']); ?>" required>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="email" class="form-label">Email Address *</label>
@@ -169,19 +178,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="phone" class="form-label">Phone Number</label>
-                                <input type="tel" class="form-control" id="phone" name="phone" value="<?php echo h($user['phone'] ?? ''); ?>">
+                                <label for="mobile" class="form-label">Mobile Number *</label>
+                                <input type="tel" class="form-control" id="mobile" name="mobile" value="<?php echo h($user['mobile']); ?>" required>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="city" class="form-label">City</label>
-                                <input type="text" class="form-control" id="city" name="city" value="<?php echo h($user['city'] ?? ''); ?>">
+                                <label for="address" class="form-label">Address</label>
+                                <input type="text" class="form-control" id="address" name="address" value="<?php echo h($user['address'] ?? ''); ?>" placeholder="Street, City, Country">
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="address" class="form-label">Address</label>
-                            <textarea class="form-control" id="address" name="address" rows="3"><?php echo h($user['address'] ?? ''); ?></textarea>
-                        </div>
+
 
                         <hr>
                         <h5 class="mb-3">Change Password</h5>

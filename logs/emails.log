@@ -1,0 +1,20 @@
+[2026-04-11 09:19:48] Email to: mind59024@gmail.com
+Subject: Welcome to ARS!
+Body: 
+        <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+            <h2 style='color: #ea6c00;'>Welcome to ARS!</h2>
+            <p>Hello Devbarat Prasad Patel,</p>
+            <p>Thank you for joining ARS! Your account has been successfully created.</p>
+            <p>You can now:</p>
+            <ul>
+                <li>Browse our products</li>
+                <li>Place orders online</li>
+                <li>Track your order status</li>
+                <li>Manage your wishlist</li>
+            </ul>
+            <p>Start shopping now: <a href='/ARS/'>/ARS/</a></p>
+            <br>
+            <p>Best regards,<br>ARS Team</p>
+        </div>
+        
+

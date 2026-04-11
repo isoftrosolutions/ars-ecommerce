@@ -3,9 +3,16 @@
  * Email Service Class
  * Easy Shopping A.R.S
  *
- * This is a basic email service implementation.
- * In production, replace with services like SendGrid, Mailgun, etc.
+ * Integrated with PHPMailer and Database Settings.
  */
+
+require_once __DIR__ . '/PHPMailer/Exception.php';
+require_once __DIR__ . '/PHPMailer/PHPMailer.php';
+require_once __DIR__ . '/PHPMailer/SMTP.php';
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+use PHPMailer\PHPMailer\SMTP;
 
 class EmailService {
 
@@ -16,6 +23,13 @@ class EmailService {
             self::$instance = new self();
         }
         return self::$instance;
+    }
+
+    /**
+     * Send a custom email (public wrapper)
+     */
+    public function sendCustomEmail($to, $subject, $body) {
+        return $this->sendEmail($to, $subject, $body);
     }
 
     /**
@@ -49,26 +63,61 @@ class EmailService {
     }
 
     /**
-     * Basic email sending (replace with real service)
+     * Send email using PHPMailer and Database SMTP settings
      */
     private function sendEmail($to, $subject, $body) {
-        // For development/demo purposes - log to file
-        // In production, use mail(), PHPMailer, or email service API
+        // Fetch SMTP settings from database
+        // These are added to includes/functions.php
+        $smtp_host = get_setting('smtp_host');
+        $smtp_port = get_setting('smtp_port', 587);
+        $smtp_user = get_setting('smtp_username');
+        $smtp_pass = get_setting('smtp_password');
+        $smtp_enc  = get_setting('smtp_encryption', 'tls');
+        
+        $from_email = get_setting('support_email', get_setting('admin_email', 'noreply@easyshoppingars.com'));
+        $site_name  = get_setting('site_name', 'Easy Shopping A.R.S');
 
-        $log_message = sprintf(
-            "[%s] Email to: %s\nSubject: %s\nBody: %s\n\n",
-            date('Y-m-d H:i:s'),
-            $to,
-            $subject,
-            $body
-        );
+        // If no SMTP host is configured, fallback to logging for development
+        if (empty($smtp_host)) {
+            $log_message = sprintf(
+                "[%s] [DEV-LOG] Email to: %s\nSubject: %s\nBody: %s\nNote: SMTP not configured. Set 'smtp_host' in Settings.\n\n",
+                date('Y-m-d H:i:s'),
+                $to,
+                $subject,
+                $body
+            );
+            error_log($log_message, 3, __DIR__ . '/../logs/emails.log');
+            return true; 
+        }
 
-        error_log($log_message, 3, __DIR__ . '/../logs/emails.log');
+        $mail = new PHPMailer(true);
 
-        // Simulate sending delay
-        usleep(200000); // 0.2 seconds
+        try {
+            // Server settings
+            $mail->isSMTP();
+            $mail->Host       = $smtp_host;
+            $mail->SMTPAuth   = true;
+            $mail->Username   = $smtp_user;
+            $mail->Password   = $smtp_pass;
+            $mail->SMTPSecure = ($smtp_enc === 'ssl') ? PHPMailer::ENCRYPTION_SMTPS : PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port       = $smtp_port;
 
-        return true; // Return success for demo
+            // Recipients
+            $mail->setFrom($from_email, $site_name);
+            $mail->addAddress($to);
+
+            // Content
+            $mail->isHTML(true);
+            $mail->Subject = $subject;
+            $mail->Body    = $body;
+            $mail->AltBody = strip_tags($body);
+
+            $mail->send();
+            return true;
+        } catch (Exception $e) {
+            error_log("[" . date('Y-m-d H:i:s') . "] Mailer Error: {$mail->ErrorInfo}\n", 3, __DIR__ . '/../logs/emails.log');
+            return false;
+        }
     }
 
     /**

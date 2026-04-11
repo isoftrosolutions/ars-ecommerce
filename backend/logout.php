@@ -12,7 +12,6 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Clear remember me token if exists
 if (isset($_SESSION['user']['id'])) {
-    require_once '../includes/db.php';
     try {
         $stmt = $pdo->prepare("UPDATE users SET remember_token = NULL WHERE id = ?");
         $stmt->execute([$_SESSION['user']['id']]);

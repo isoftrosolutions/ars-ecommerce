@@ -52,33 +52,11 @@ include_once __DIR__ . '/../includes/header-bootstrap.php';
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="email" class="form-label">Email Address</label>
-                        <div class="input-group">
-                            <input type="email" name="email" id="email" class="form-control" placeholder="john@example.com" required>
-                            <button type="button" class="btn btn-outline-secondary" id="verifyEmailBtn" onclick="sendEmailOTP()">
-                                <i class="bi bi-envelope"></i> Verify
-                            </button>
-                        </div>
-                        <div class="form-text">We'll send an OTP to verify your email address</div>
+                        <input type="email" name="email" id="email" class="form-control" placeholder="john@example.com" required>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label for="mobile" class="form-label">Mobile Number</label>
                         <input type="tel" name="mobile" id="mobile" class="form-control" placeholder="98XXXXXXXX" pattern="9[78]\d{8}" required>
-                    </div>
-                </div>
-
-                <!-- OTP Verification Section -->
-                <div id="otpVerification" class="mb-3" style="display: none;">
-                    <label for="email_otp" class="form-label">Enter Email OTP</label>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <input type="text" name="email_otp" id="email_otp" class="form-control text-center" placeholder="000000" maxlength="6" pattern="\d{6}">
-                            <div class="form-text" id="emailOtpTimer">OTP expires in 5:00</div>
-                        </div>
-                        <div class="col-md-6 d-flex align-items-end">
-                            <button type="button" class="btn btn-outline-success" id="verifyOtpBtn" onclick="verifyEmailOTP()">
-                                <i class="bi bi-check-circle"></i> Verify OTP
-                            </button>
-                        </div>
                     </div>
                 </div>
 
@@ -104,7 +82,7 @@ include_once __DIR__ . '/../includes/header-bootstrap.php';
                     </div>
                 </div>
 
-                <input type="hidden" name="email_verified" id="email_verified" value="0">
+
 
                 <div class="form-check mb-4">
                     <input class="form-check-input" type="checkbox" id="terms" required>
@@ -128,117 +106,8 @@ include_once __DIR__ . '/../includes/header-bootstrap.php';
 <script src="<?php echo url('/public/assets/js/auth.js'); ?>"></script>
 
 <script>
-// Email OTP functionality for signup
-let emailOtpTimer;
-let emailTimeLeft = 300;
-
-function sendEmailOTP() {
-    const email = document.getElementById('email').value;
-    const btn = document.getElementById('verifyEmailBtn');
-
-    if (!email || !email.includes('@')) {
-        alert('Please enter a valid email address');
-        return;
-    }
-
-    btn.disabled = true;
-    btn.innerHTML = '<i class="bi bi-hourglass-split"></i>';
-
-    fetch('<?php echo url("/backend/send-otp.php"); ?>', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: 'email=' + encodeURIComponent(email) + '&action=verify_signup'
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            document.getElementById('otpVerification').style.display = 'block';
-            startEmailOTPTimer();
-            alert('OTP sent to your email address');
-        } else {
-            alert(data.message || 'Failed to send OTP');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred while sending OTP');
-    })
-    .finally(() => {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-envelope"></i> Verify';
-    });
-}
-
-function verifyEmailOTP() {
-    const email = document.getElementById('email').value;
-    const otp = document.getElementById('email_otp').value;
-
-    if (!otp.match(/^\d{6}$/)) {
-        alert('Please enter a valid 6-digit OTP');
-        return;
-    }
-
-    fetch('<?php echo url("/backend/verify-email-otp.php"); ?>', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: 'email=' + encodeURIComponent(email) + '&otp=' + encodeURIComponent(otp) + '&action=signup_verify'
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            document.getElementById('email_verified').value = '1';
-            document.getElementById('otpVerification').style.display = 'none';
-            document.getElementById('verifyEmailBtn').innerHTML = '<i class="bi bi-check-circle-fill text-success"></i> Verified';
-            document.getElementById('verifyEmailBtn').disabled = true;
-            document.getElementById('email').readOnly = true;
-            alert('Email verified successfully!');
-            clearInterval(emailOtpTimer);
-        } else {
-            alert(data.message || 'OTP verification failed');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred during verification');
-    });
-}
-
-function startEmailOTPTimer() {
-    emailTimeLeft = 300;
-    updateEmailTimerDisplay();
-
-    emailOtpTimer = setInterval(() => {
-        emailTimeLeft--;
-        updateEmailTimerDisplay();
-
-        if (emailTimeLeft <= 0) {
-            clearInterval(emailOtpTimer);
-            document.getElementById('emailOtpTimer').textContent = 'OTP expired. Please request a new one.';
-            document.getElementById('otpVerification').style.display = 'none';
-        }
-    }, 1000);
-}
-
-function updateEmailTimerDisplay() {
-    const minutes = Math.floor(emailTimeLeft / 60);
-    const seconds = emailTimeLeft % 60;
-    document.getElementById('emailOtpTimer').textContent = `OTP expires in ${minutes}:${seconds.toString().padStart(2, '0')}`;
-}
-
 // Form validation
 document.getElementById('signupForm').addEventListener('submit', function(e) {
-    const emailVerified = document.getElementById('email_verified').value;
-
-    if (emailVerified !== '1') {
-        e.preventDefault();
-        alert('Please verify your email address with OTP before signing up.');
-        return false;
-    }
-
     const password = document.getElementById('password').value;
     const confirmPassword = document.getElementById('confirm_password').value;
 
@@ -247,11 +116,6 @@ document.getElementById('signupForm').addEventListener('submit', function(e) {
         document.getElementById('password-match-error').style.display = 'block';
         return false;
     }
-});
-
-// Auto-format OTP input
-document.getElementById('email_otp').addEventListener('input', function(e) {
-    this.value = this.value.replace(/\D/g, '').substring(0, 6);
 });
 </script>
 

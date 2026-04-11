@@ -111,12 +111,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     WHERE id = ?
                 ")->execute([$reply_message, $submission_id]);
 
-                // TOD: Send actual email via SMTP
-                // mail($submission['email'], 'Re: ' . $submission['subject'], $reply_message);
+                // Send actual email via SMTP
+                require_once '../includes/email-service.php';
+                $emailService = getEmailService();
+                $sent = $emailService->sendCustomEmail(
+                    $submission['email'], 
+                    'Re: ' . $submission['subject'], 
+                    nl2br(h($reply_message))
+                );
 
                 echo json_encode([
                     'success' => true,
-                    'message' => 'Reply saved. Email sending is not yet configured — set up SMTP in Settings to send real emails.'
+                    'message' => $sent ? 'Reply sent successfully via email.' : 'Reply saved, but email sending failed. Check SMTP settings.'
                 ]);
                 break;
 

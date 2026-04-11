@@ -37,6 +37,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = $pdo->prepare("UPDATE users SET reset_token = ?, reset_expires = ? WHERE email = ?");
         $stmt->execute([$reset_token, $reset_expires, $email]);
 
+        // Construct reset link
+        $reset_link = url("/auth/reset-password.php?token=$reset_token&email=" . urlencode($email));
+
         // Send password reset email
         $emailService = getEmailService();
         $sendSuccess = $emailService->sendPasswordReset($email, $reset_link);
