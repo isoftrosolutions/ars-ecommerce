@@ -3,7 +3,8 @@
  * Contact Us Page
  * Easy Shopping A.R.S
  */
-$page_title = "Contact Us";
+$page_title     = 'Contact Us | Easy Shopping A.R.S Nepal';
+$page_meta_desc = 'Get in touch with Easy Shopping A.R.S. We are here to help with orders, returns, and any queries. Reach us by email or visit our store in Nepal.';
 include 'includes/header-bootstrap.php';
 
 $success_msg = "";

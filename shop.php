@@ -3,8 +3,8 @@
  * Shop Page
  * Easy Shopping A.R.S
  */
-$page_title = "Shop All Products";
-include 'includes/header-bootstrap.php';
+require_once 'includes/db.php';
+require_once 'includes/functions.php';
 
 // Enhanced Filtering and Pagination Logic
 $category_id = isset($_GET['category']) ? (int)$_GET['category'] : null;
@@ -96,6 +96,27 @@ try {
     $total_products = 0;
     $total_pages = 0;
 }
+
+// ── SEO meta — set BEFORE header include ─────────────────────
+$_active_cat = null;
+if ($category_id) {
+    foreach ($all_categories as $c) {
+        if ($c['id'] == $category_id) { $_active_cat = $c['name']; break; }
+    }
+}
+
+if ($search) {
+    $page_title     = 'Search Results for "' . $search . '" — ARS Nepal';
+    $page_meta_desc = 'Shop ' . $total_products . ' results for "' . $search . '" at Easy Shopping A.R.S — Nepal\'s trusted online store.';
+} elseif ($_active_cat) {
+    $page_title     = 'Buy ' . $_active_cat . ' Online in Nepal | Easy Shopping A.R.S';
+    $page_meta_desc = 'Shop the best ' . $_active_cat . ' products online at Easy Shopping A.R.S Nepal. Fast delivery, eSewa & COD accepted.';
+} else {
+    $page_title     = 'Online Shop Nepal — Electronics, Fashion & More | Easy Shopping A.R.S';
+    $page_meta_desc = 'Browse ' . $total_products . '+ products at Easy Shopping A.R.S. Shop electronics, fashion, home goods with fast delivery across Nepal.';
+}
+
+include 'includes/header-bootstrap.php';
 ?>
 
 <style>

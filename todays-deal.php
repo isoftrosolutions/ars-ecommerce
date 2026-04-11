@@ -3,7 +3,8 @@
  * Today's Deal Page
  * Easy Shopping A.R.S
  */
-$page_title = "Today's Deal";
+$page_title     = "Today's Deal — Best Prices in Nepal | Easy Shopping A.R.S";
+$page_meta_desc = "Shop today's featured deal at Easy Shopping A.R.S Nepal. Massive discounts updated daily. Pay with eSewa or Cash on Delivery. Limited time offers!";
 include 'includes/header-bootstrap.php';
 
 // Get today's featured deal (product with highest discount)

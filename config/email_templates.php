@@ -136,6 +136,9 @@ return [
                             <span style="color: #a89688;">Status:</span>
                             <span style="color: #ea580c; font-weight: bold;">Processing</span>
                         </div>
+                        <div style="text-align: center; margin-top: 20px;">
+                            <a href="{{invoice_url}}" style="background: #130c06; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px; display: inline-block;">View Detailed Invoice</a>
+                        </div>
                     </div>
 
                     <p style="color: #a89688; font-size: 14px;">If you have any questions, reply to this email or visit our support portal.</p>

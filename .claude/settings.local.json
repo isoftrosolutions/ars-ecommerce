@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/c/Program Files/MariaDB 12.0/bin/mysql.exe:*)"
+    ]
+  }
+}

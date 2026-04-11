@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+
+# Block admin and backend from crawlers
+Disallow: /admin/
+Disallow: /backend/
+Disallow: /config/
+Disallow: /includes/
+Disallow: /cart-action
+Disallow: /checkout
+Disallow: /account/
+Disallow: /auth/
+
+# Block query-string-only duplicate content
+Disallow: /shop?*sort=
+Disallow: /shop?*page=
+
+Sitemap: https://easyshoppingars.com/sitemap.xml

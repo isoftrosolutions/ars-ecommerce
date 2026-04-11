@@ -91,6 +91,11 @@ try {
                             ?>
                             <span class="badge rounded-pill bg-<?php echo $c; ?> px-3 py-2"><?php echo ucfirst($s); ?></span>
                         </div>
+                        <div class="mb-3">
+                            <a href="<?php echo url('/invoice?id=' . $order['id']); ?>" target="_blank" class="btn btn-outline-dark btn-sm rounded-pill">
+                                <i class="bi bi-file-earmark-pdf me-1"></i> Download Invoice
+                            </a>
+                        </div>
 
                         <hr class="my-4">
 

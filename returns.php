@@ -3,7 +3,8 @@
  * Returns Policy Page
  * Easy Shopping A.R.S
  */
-$page_title = "Returns & Refund Policy";
+$page_title     = 'Returns & Refund Policy | Easy Shopping A.R.S Nepal';
+$page_meta_desc = 'Learn about Easy Shopping A.R.S returns and refund policy. Easy 7-day returns on most products. Fast refunds via eSewa or bank transfer in Nepal.';
 include 'includes/header-bootstrap.php';
 ?>
 

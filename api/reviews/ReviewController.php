@@ -1,0 +1,1 @@
+<?php class ReviewController extends BaseController { public function handleRequest($method, $action) { AuthMiddleware::authenticate(); Response::success([], 'Reviews endpoint - implementation pending'); } }?>

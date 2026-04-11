@@ -6,13 +6,42 @@
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/functions.php';
 ?>
+<?php
+// ── SEO meta resolution ───────────────────────────────────────
+$_seo_title    = isset($page_title)    ? h($page_title) . ' | Easy Shopping A.R.S' : "Nepal's Trusted Online Store | Easy Shopping A.R.S";
+$_seo_desc     = isset($page_meta_desc) ? h($page_meta_desc) : 'Shop electronics, fashion, and home goods with fast delivery in Nepal. eSewa & COD accepted.';
+$_seo_image    = isset($page_og_image)  ? $page_og_image : $base_url . '/public/assets/img/og-default.jpg';
+$_seo_canonical= isset($page_canonical) ? $page_canonical : $base_url . '/' . ltrim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
+// Strip the project prefix from canonical so it's clean
+$_seo_canonical = rtrim($_seo_canonical, '?&');
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $page_title ?? "Nepal's Trusted Online Store"; ?> | Easy Shopping A.R.S</title>
-    <meta name="description" content="<?php echo $page_meta_desc ?? 'Shop electronics, fashion, and home goods with fast delivery in Nepal.'; ?>">
+
+    <!-- Primary SEO -->
+    <title><?php echo $_seo_title; ?></title>
+    <meta name="description" content="<?php echo $_seo_desc; ?>">
+    <link rel="canonical" href="<?php echo h($_seo_canonical); ?>">
+
+    <!-- Open Graph (Facebook, WhatsApp, LinkedIn) -->
+    <meta property="og:type"        content="<?php echo isset($page_og_type) ? h($page_og_type) : 'website'; ?>">
+    <meta property="og:title"       content="<?php echo $_seo_title; ?>">
+    <meta property="og:description" content="<?php echo $_seo_desc; ?>">
+    <meta property="og:url"         content="<?php echo h($_seo_canonical); ?>">
+    <meta property="og:image"       content="<?php echo h($_seo_image); ?>">
+    <meta property="og:site_name"   content="Easy Shopping A.R.S">
+    <meta property="og:locale"      content="ne_NP">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card"        content="summary_large_image">
+    <meta name="twitter:title"       content="<?php echo $_seo_title; ?>">
+    <meta name="twitter:description" content="<?php echo $_seo_desc; ?>">
+    <meta name="twitter:image"       content="<?php echo h($_seo_image); ?>">
+
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛒</text></svg>">
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -345,6 +374,9 @@ require_once __DIR__ . '/functions.php';
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+window.BASE_URL = '<?php echo rtrim(url(''), '/'); ?>';
+</script>
+<script>
 // Dynamic login status synchronization logic
 (function() {
     let currentLoginStatus = <?php echo is_logged_in() ? 'true' : 'false'; ?>;
@@ -384,4 +416,86 @@ require_once __DIR__ . '/functions.php';
 
     setInterval(checkLoginStatus, 8000);
 })();
+
+/**
+ * Global Cart Function
+ */
+async function addToCart(productId, quantity = 1) {
+    // Show loading state if button exists
+    const btn = event?.currentTarget;
+    const originalContent = btn ? btn.innerHTML : null;
+    if (btn) btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+    try {
+        const response = await fetch(`${window.BASE_URL}/cart-action?action=add&id=${productId}&quantity=${quantity}`);
+        const data = await response.json();
+
+        if (data.success) {
+            // Update all cart count bubbles in the UI
+            document.querySelectorAll('.cart-count').forEach(el => {
+                el.textContent = data.cart_count;
+                el.classList.add('bump');
+                setTimeout(() => el.classList.remove('bump'), 300);
+            });
+            
+            // Show Success Notification
+            showToast('Success', 'Item added to your cart!', 'success');
+        } else {
+            showToast('Notice', data.message || 'Could not add item', 'warning');
+        }
+    } catch (error) {
+        console.error('Cart Error:', error);
+        showToast('Error', 'Something went wrong. Please try again.', 'danger');
+    } finally {
+        if (btn) btn.innerHTML = originalContent;
+    }
+}
+
+/**
+ * Simple Toast/Notification Helper
+ */
+function showToast(title, message, type = 'success') {
+    // Using simple alert if no custom toast system is present, 
+    // but we can easily add a Bootstrap Toast container here
+    const toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) {
+        const container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+        container.style.zIndex = '3000';
+        document.body.appendChild(container);
+    }
+    
+    const id = 'toast-' + Date.now();
+    const html = `
+        <div id="${id}" class="toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <strong>${title}:</strong> ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('toast-container').insertAdjacentHTML('beforeend', html);
+    const toastEl = document.getElementById(id);
+    const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+    toast.show();
+    
+    // Auto remove from DOM after hidden
+    toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+}
 </script>
+
+<style>
+/* Cart Bump Animation */
+@keyframes bump {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.4); }
+    100% { transform: scale(1); }
+}
+.cart-count.bump {
+    animation: bump 0.3s ease-out;
+}
+</style>

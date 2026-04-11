@@ -144,9 +144,9 @@ if (!$order) {
                         <a href="<?php echo url('/orders'); ?>" class="btn btn-outline-primary">
                             <i class="bi bi-receipt me-2"></i>View My Orders
                         </a>
-                        <button onclick="window.print()" class="btn btn-outline-secondary">
-                            <i class="bi bi-printer me-2"></i>Print Receipt
-                        </button>
+                        <a href="<?php echo url('/invoice?id=' . $order_id); ?>" target="_blank" class="btn btn-dark">
+                            <i class="bi bi-file-earmark-pdf me-2"></i>Download Invoice
+                        </a>
                     </div>
                 </div>
             </div>

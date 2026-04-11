@@ -3,7 +3,8 @@
  * Special Deals Page
  * Easy Shopping A.R.S
  */
-$page_title = "Special Deals & Offers";
+$page_title     = 'Special Deals & Offers — Discounts in Nepal | Easy Shopping A.R.S';
+$page_meta_desc = 'Grab the best deals and discounts at Easy Shopping A.R.S Nepal. Save big on electronics, fashion, and more. eSewa & Cash on Delivery available.';
 include 'includes/header-bootstrap.php';
 
 try {

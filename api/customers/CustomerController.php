@@ -1,0 +1,1 @@
+<?php class CustomerController extends BaseController { public function handleRequest($method, $action) { AuthMiddleware::authenticate(); Response::success([], 'Customers endpoint - implementation pending'); } }?>

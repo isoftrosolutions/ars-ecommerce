@@ -96,11 +96,7 @@ let allCategories = [];
 let deleteTargetId = null;
 
 async function loadStats() {
-    const res = await fetch(BASE_URL + '/backend/categories.php', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: 'action=get_category_stats'
-    });
+    const res = await fetch(BASE_URL + '/api/categories/stats');
     const json = await res.json();
     if (json.success) {
         const s = json.data;
@@ -111,11 +107,7 @@ async function loadStats() {
 }
 
 async function loadCategories() {
-    const res = await fetch(BASE_URL + '/backend/categories.php', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: 'action=get_categories'
-    });
+    const res = await fetch(BASE_URL + '/api/categories/list');
     const json = await res.json();
     if (!json.success) { Toast.error(json.message); return; }
     allCategories = json.data;
@@ -159,13 +151,13 @@ function autoSlug() {
 async function generateSlug() {
     const name = document.getElementById('cat-name').value.trim();
     if (!name) return;
-    const res = await fetch(BASE_URL + '/backend/categories.php', {
+    const res = await fetch(BASE_URL + '/api/categories/generate-slug', {
         method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: `action=generate_slug&name=${encodeURIComponent(name)}`
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ name })
     });
     const json = await res.json();
-    if (json.success) document.getElementById('cat-slug').value = json.slug;
+    if (json.success) document.getElementById('cat-slug').value = json.data.slug;
 }
 
 function openModal() {
@@ -177,11 +169,7 @@ function openModal() {
 }
 
 async function editCategory(id) {
-    const res = await fetch(BASE_URL + '/backend/categories.php', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: `action=get_category&id=${id}`
-    });
+    const res = await fetch(BASE_URL + `/api/categories/detail?id=${id}`);
     const json = await res.json();
     if (!json.success) { Toast.error(json.message); return; }
     const c = json.data;
@@ -197,13 +185,14 @@ async function saveCategory() {
     const slug = document.getElementById('cat-slug').value.trim();
     if (!name || !slug) { Toast.error('Name and Slug are required.'); return; }
 
-    const params = new URLSearchParams({ action: 'save_category' });
     const id = document.getElementById('cat-id').value;
-    if (id) params.append('category[id]', id);
-    params.append('category[name]', name);
-    params.append('category[slug]', slug);
+    const action = id ? 'update' : 'create';
 
-    const res = await fetch(BASE_URL + '/backend/categories.php', { method: 'POST', body: params });
+    const res = await fetch(BASE_URL + `/api/categories/${action}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ id, name, slug })
+    });
     const json = await res.json();
 
     if (json.success) {
@@ -228,10 +217,10 @@ function closeModal() { document.getElementById('cat-modal').classList.remove('o
 
 async function confirmDelete() {
     if (!deleteTargetId) return;
-    const res = await fetch(BASE_URL + '/backend/categories.php', {
+    const res = await fetch(BASE_URL + '/api/categories/delete', {
         method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: `action=delete_category&id=${deleteTargetId}`
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ id: deleteTargetId })
     });
     const json = await res.json();
     closeDeleteModal();

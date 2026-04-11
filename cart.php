@@ -3,7 +3,8 @@
  * Shopping Cart Page
  * Easy Shopping A.R.S
  */
-$page_title = "Shopping Cart";
+$page_title     = 'Shopping Cart | Easy Shopping A.R.S Nepal';
+$page_meta_desc = 'Review your cart and checkout securely at Easy Shopping A.R.S Nepal. Pay with eSewa or Cash on Delivery. Fast delivery across Nepal.';
 include 'includes/header-bootstrap.php';
 
 // Get cart items

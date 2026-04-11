@@ -8,8 +8,5 @@
     </main> <!-- End of .main-content -->
 </div> <!-- End of .app-container -->
 
-<!-- Core Scripts -->
-<script src="<?php echo url('/public/assets/js/admin-core.js'); ?>"></script>
-
 </body>
 </html>

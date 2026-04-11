@@ -1,0 +1,1 @@
+<?php class UploadController extends BaseController { public function handleRequest($method, $action) { AuthMiddleware::authenticate(); Response::success([], 'Upload endpoint - implementation pending'); } }?>

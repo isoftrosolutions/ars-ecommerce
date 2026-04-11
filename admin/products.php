@@ -173,11 +173,7 @@ let productImages = [];
 
 // Load categories for dropdowns
 async function loadCategories() {
-    const res = await fetch(BASE_URL + '/backend/products.php', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: 'action=get_categories'
-    });
+    const res = await fetch(BASE_URL + '/api/categories/list');
     const json = await res.json();
     if (json.success) {
         const opts = json.data.map(c => `<option value="${c.id}">${escHtml(c.name)}</option>`).join('');
@@ -192,14 +188,13 @@ async function loadProducts(page = 1) {
     tbody.innerHTML = '<tr class="loading-row"><td colspan="8"><div class="spinner"></div></td></tr>';
 
     const params = new URLSearchParams({
-        action: 'get_products',
         page,
         limit: 10,
         search: document.getElementById('search-input').value,
         category_id: document.getElementById('category-filter').value
     });
 
-    const res = await fetch(BASE_URL + '/backend/products.php', { method: 'POST', body: params });
+    const res = await fetch(BASE_URL + '/api/products/list?' + params.toString());
     const json = await res.json();
 
     if (!json.success) { Toast.error(json.message); return; }
@@ -239,7 +234,7 @@ async function loadProducts(page = 1) {
             </td>
             <td>
                 <button class="btn btn-ghost btn-sm" onclick="toggleFeatured(${p.id}, ${p.is_featured ? 0 : 1})">
-                    <i class="fa-solid fa-star" style="color:${p.is_featured ? 'var(--warning)' : 'var(--gray-300)'}"></i>
+                    <i class="fa-solid fa-star" style="color:${p.is_featured == 1 ? 'var(--warning)' : 'var(--gray-300)'}"></i>
                 </button>
             </td>
             <td>
@@ -336,11 +331,7 @@ function openProductModal() {
 }
 
 async function editProduct(id) {
-    const res = await fetch(BASE_URL + '/backend/products.php', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: `action=get_product&id=${id}`
-    });
+    const res = await fetch(BASE_URL + `/api/products/detail?id=${id}`);
     const json = await res.json();
     if (!json.success) { Toast.error(json.message); return; }
     const p = json.data;
@@ -404,7 +395,8 @@ async function saveProduct() {
     });
 
     try {
-        const res = await fetch(BASE_URL + '/backend/products.php', { method: 'POST', body: formData });
+        const action = id ? 'update' : 'create';
+        const res = await fetch(BASE_URL + `/api/products/${action}`, { method: 'POST', body: formData });
         const json = await res.json();
         if (json.success) {
             Toast.success(id ? 'Product updated!' : 'Product added!');
@@ -422,10 +414,10 @@ async function saveProduct() {
 }
 
 async function toggleFeatured(id, featured) {
-    const res = await fetch(BASE_URL + '/backend/products.php', {
+    const res = await fetch(BASE_URL + '/api/products/toggle-featured', {
         method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: `action=toggle_featured&id=${id}&featured=${featured}`
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ id, featured: !!featured })
     });
     const json = await res.json();
     if (json.success) loadProducts(currentPage);
@@ -443,10 +435,10 @@ function closeDeleteModal() {
 
 async function confirmDelete() {
     if (!deleteTargetId) return;
-    const res = await fetch(BASE_URL + '/backend/products.php', {
+    const res = await fetch(BASE_URL + '/api/products/delete', {
         method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: `action=delete_product&id=${deleteTargetId}`
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ id: deleteTargetId })
     });
     const json = await res.json();
     closeDeleteModal();
@@ -475,15 +467,18 @@ async function applyBulkAction() {
     if (!ids.length) { Toast.error('Select at least one product.'); return; }
 
     if (action === 'delete' && confirm(`Delete ${ids.length} product(s)?`)) {
-        for (const id of ids) {
-            await fetch(BASE_URL + '/backend/products.php', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                body: `action=delete_product&id=${id}`
-            });
+        const res = await fetch(BASE_URL + '/api/products/bulk-delete', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ product_ids: ids })
+        });
+        const json = await res.json();
+        if (json.success) {
+            Toast.success(`${ids.length} product(s) deleted.`);
+            loadProducts(currentPage);
+        } else {
+            Toast.error(json.message);
         }
-        Toast.success(`${ids.length} product(s) deleted.`);
-        loadProducts(currentPage);
     }
 }
 

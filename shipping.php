@@ -3,7 +3,8 @@
  * Shipping Info Page
  * Easy Shopping A.R.S
  */
-$page_title = "Shipping & Delivery Information";
+$page_title     = 'Shipping & Delivery Information | Easy Shopping A.R.S Nepal';
+$page_meta_desc = 'Easy Shopping A.R.S delivers fast across Nepal. Free shipping on eligible orders. Track your order and learn about our delivery timelines and coverage areas.';
 include 'includes/header-bootstrap.php';
 ?>
 

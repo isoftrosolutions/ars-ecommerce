@@ -3,9 +3,58 @@
  * Support & Help Center Page
  * Easy Shopping A.R.S
  */
-$page_title = "Support & Help Center";
+$page_title     = 'Support & Help Center | Easy Shopping A.R.S Nepal';
+$page_meta_desc = 'Get help with your orders, returns, payments, and more at Easy Shopping A.R.S Nepal. Find answers to FAQs or contact our support team.';
 include 'includes/header-bootstrap.php';
 ?>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How do I place an order?",
+      "acceptedAnswer": {"@type": "Answer", "text": "Browse our products, add items to your cart, and proceed to checkout. You can pay using eSewa, bank transfer, or cash on delivery."}
+    },
+    {
+      "@type": "Question",
+      "name": "What payment methods do you accept?",
+      "acceptedAnswer": {"@type": "Answer", "text": "We accept eSewa payments, bank transfers, and cash on delivery (COD) for orders within Nepal."}
+    },
+    {
+      "@type": "Question",
+      "name": "How long does delivery take?",
+      "acceptedAnswer": {"@type": "Answer", "text": "Delivery typically takes 3-5 business days within Nepal. You will receive tracking information once your order ships."}
+    },
+    {
+      "@type": "Question",
+      "name": "What is your return policy?",
+      "acceptedAnswer": {"@type": "Answer", "text": "We offer returns within 7 days of delivery for unused items in original packaging. Contact our support team to initiate a return."}
+    },
+    {
+      "@type": "Question",
+      "name": "When will I receive my refund?",
+      "acceptedAnswer": {"@type": "Answer", "text": "Refunds are processed within 3-5 business days after we receive the returned item. Amount will be credited to your original payment method."}
+    },
+    {
+      "@type": "Question",
+      "name": "Do you ship outside Nepal?",
+      "acceptedAnswer": {"@type": "Answer", "text": "Currently, we only ship within Nepal, primarily to Birgunj, Parsa, and surrounding areas."}
+    },
+    {
+      "@type": "Question",
+      "name": "What are the shipping charges?",
+      "acceptedAnswer": {"@type": "Answer", "text": "Free shipping on orders over Rs. 2,000. Orders under Rs. 2,000 have a flat shipping rate of Rs. 100."}
+    },
+    {
+      "@type": "Question",
+      "name": "Can I track my order?",
+      "acceptedAnswer": {"@type": "Answer", "text": "Yes, you'll receive tracking information via email and SMS once your order is shipped."}
+    }
+  ]
+}
+</script>
 
 <div class="container py-5">
     <div class="row mb-5">

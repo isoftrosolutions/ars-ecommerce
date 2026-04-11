@@ -1,0 +1,1 @@
+<?php class CouponController extends BaseController { public function handleRequest($method, $action) { AuthMiddleware::authenticate(); Response::success([], 'Coupons endpoint - implementation pending'); } }?>

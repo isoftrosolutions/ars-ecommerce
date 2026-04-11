@@ -13,6 +13,24 @@ if ($target_file && $target_file !== 'index.php') {
     }
 }
 
+// 404 — no route matched and this isn't the homepage
+$_routed_path = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
+if ($_routed_path !== '' && $target_file === null) {
+    http_response_code(404);
+    $page_title     = 'Page Not Found | Easy Shopping A.R.S Nepal';
+    $page_meta_desc = 'Sorry, the page you were looking for does not exist. Browse our shop or return to the homepage.';
+    include __DIR__ . '/includes/header-bootstrap.php';
+    echo '<div class="container py-5 text-center">';
+    echo '<i class="bi bi-exclamation-circle text-muted" style="font-size:5rem;"></i>';
+    echo '<h1 class="mt-4 fw-bold">404 — Page Not Found</h1>';
+    echo '<p class="text-muted mb-4">The page you\'re looking for doesn\'t exist or has been moved.</p>';
+    echo '<a href="' . url('/') . '" class="btn btn-primary me-2"><i class="bi bi-house me-2"></i>Go Home</a>';
+    echo '<a href="' . url('/shop') . '" class="btn btn-outline-primary"><i class="bi bi-shop me-2"></i>Browse Shop</a>';
+    echo '</div>';
+    include __DIR__ . '/includes/footer-bootstrap.php';
+    exit;
+}
+
 // Proceed with Homepage (Index) content
 $page_title    = 'Online Shopping in Nepal | Buy Electronics, Fashion & More';
 $page_meta_desc= 'Easy Shopping A.R.S — Nepal\'s trusted online store. Shop electronics, fashion, home goods & more with fast delivery to Birgunj, Parsa and across Nepal. eSewa & COD accepted.';
@@ -20,6 +38,53 @@ $page_meta_desc= 'Easy Shopping A.R.S — Nepal\'s trusted online store. Shop el
 // Load Header
 require_once __DIR__ . '/includes/header-bootstrap.php';
 ?>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "<?php echo $base_url; ?>/#organization",
+      "name": "Easy Shopping A.R.S",
+      "url": "<?php echo $base_url; ?>",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "<?php echo $base_url; ?>/public/assets/img/og-default.jpg"
+      },
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+977-9820210361",
+        "contactType": "customer service",
+        "areaServed": "NP",
+        "availableLanguage": ["English", "Nepali"]
+      },
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Birgunj",
+        "addressRegion": "Parsa",
+        "addressCountry": "NP"
+      },
+      "sameAs": []
+    },
+    {
+      "@type": "WebSite",
+      "@id": "<?php echo $base_url; ?>/#website",
+      "url": "<?php echo $base_url; ?>",
+      "name": "Easy Shopping A.R.S",
+      "description": "Nepal's trusted online store for electronics, fashion, and home goods.",
+      "publisher": {"@id": "<?php echo $base_url; ?>/#organization"},
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "<?php echo $base_url; ?>/shop?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    }
+  ]
+}
+</script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
@@ -510,7 +575,7 @@ img { display: block; }
                     <div>
                       <div class="p-price"><?= formatPrice($p['discount_price'] ?: $p['price']) ?></div>
                     </div>
-                    <button class="p-add" onclick="event.preventDefault(); window.location.href='<?php echo url('/cart-action?action=add&id=' . $p['id']); ?>'">
+                    <button class="p-add" onclick="event.preventDefault(); addToCart(<?= $p['id'] ?>)">
                       <i class="bi bi-plus"></i>
                     </button>
                   </div>

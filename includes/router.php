@@ -44,7 +44,13 @@ function route($url) {
         'auth/reset-password' => 'auth/reset-password.php',
         'auth/otp-reset-password' => 'auth/otp-reset-password.php',
         'forgot-password' => 'auth/forgot-password.php',
+        'sitemap.xml'  => 'sitemap.php',
+        'contact'      => 'contact.php',
+        'new-arrivals' => 'new-arrivals.php',
+        'returns'      => 'returns.php',
+        'shipping'     => 'shipping.php',
     'backend/check-login' => 'backend/check-login.php',
+    'backend/dashboard-stats' => 'backend/dashboard-stats.php',
     'admin/dashboard' => 'admin/dashboard.php',
         'admin/products' => 'admin/products.php',
         'admin/orders' => 'admin/orders.php',
@@ -55,6 +61,7 @@ function route($url) {
         'admin/contact' => 'admin/contact.php',
         'admin/settings' => 'admin/settings.php',
         'backend/logout' => 'backend/logout.php',
+        'invoice' => 'invoice.php',
     ];
 
     // 3. Match Static Routes

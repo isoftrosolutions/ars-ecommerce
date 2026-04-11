@@ -80,6 +80,18 @@ class EmailService {
     }
 
     /**
+     * Send Order Confirmation email
+     */
+    public function sendOrderConfirmation($email, $name, $order_id, $total, $invoice_url = '') {
+        return $this->processAndSend('order_confirmation', $email, [
+            'name' => $name,
+            'order_id' => $order_id,
+            'total' => format_price($total),
+            'invoice_url' => $invoice_url
+        ]);
+    }
+
+    /**
      * Send Custom/Public Email
      */
     public function sendCustomEmail($to, $subject, $body) {

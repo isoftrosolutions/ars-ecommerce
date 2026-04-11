@@ -3,7 +3,8 @@
  * Categories Page
  * Easy Shopping A.R.S
  */
-$page_title = "Shop by Category";
+$page_title     = 'Shop by Category — Electronics, Fashion & More | Easy Shopping A.R.S';
+$page_meta_desc = 'Browse all product categories at Easy Shopping A.R.S Nepal. Find electronics, fashion, home goods and more with fast delivery and eSewa & COD payment options.';
 include 'includes/header-bootstrap.php';
 
 try {

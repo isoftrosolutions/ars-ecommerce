@@ -3,45 +3,39 @@
  * Checkout Page
  * Easy Shopping A.R.S
  */
-$page_title = "Checkout";
-include 'includes/header-bootstrap.php';
+require_once 'includes/db.php';
+require_once 'includes/functions.php';
 
 // Get cart items from database
 $cart_items = get_cart();
 $cart_total = get_cart_total();
-$cart_count = get_cart_count();
 
 // Get user details if logged in
 $user = $_SESSION['user'] ?? null;
 
-// Handle form submission
+// Handle form submission — must happen before any output
 $errors = [];
-$success = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Validate and process order
-    $name = trim($_POST['name'] ?? '');
-    $email = trim($_POST['email'] ?? '');
-    $phone = trim($_POST['phone'] ?? '');
-    $address = trim($_POST['address'] ?? '');
-    $city = trim($_POST['city'] ?? '');
-    $payment_method = $_POST['payment_method'] ?? '';
+    $name           = trim($_POST['name']           ?? '');
+    $email          = trim($_POST['email']          ?? '');
+    $phone          = trim($_POST['phone']          ?? '');
+    $address        = trim($_POST['address']        ?? '');
+    $city           = trim($_POST['city']           ?? '');
+    $payment_method = trim($_POST['payment_method'] ?? '');
 
-    // Validation
-    if (empty($name)) $errors[] = "Name is required";
-    if (empty($email)) $errors[] = "Email is required";
-    if (empty($phone)) $errors[] = "Phone number is required";
-    if (empty($address)) $errors[] = "Address is required";
-    if (empty($city)) $errors[] = "City is required";
+    if (empty($name))           $errors[] = "Name is required";
+    if (empty($email))          $errors[] = "Email is required";
+    if (empty($phone))          $errors[] = "Phone number is required";
+    if (empty($address))        $errors[] = "Address is required";
+    if (empty($city))           $errors[] = "City is required";
     if (empty($payment_method)) $errors[] = "Payment method is required";
-    if (empty($cart_items)) $errors[] = "Your cart is empty";
+    if (empty($cart_items))     $errors[] = "Your cart is empty";
 
     if (empty($errors)) {
         try {
-            // Start transaction
             $pdo->beginTransaction();
 
-            // Create order
             $stmt = $pdo->prepare("INSERT INTO orders (user_id, total_amount, payment_method, delivery_status, shipping_address, shipping_city, customer_name, customer_email, customer_phone, created_at) VALUES (?, ?, ?, 'Pending', ?, ?, ?, ?, ?, NOW())");
             $stmt->execute([
                 $user ? $user['id'] : null,
@@ -51,30 +45,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $city,
                 $name,
                 $email,
-                $phone
+                $phone,
             ]);
 
             $order_id = $pdo->lastInsertId();
 
-            // Add order items
             $stmt = $pdo->prepare("INSERT INTO order_items (order_id, product_id, quantity, price, discount_price) VALUES (?, ?, ?, ?, ?)");
             foreach ($cart_items as $item) {
                 $stmt->execute([
                     $order_id,
-                    $item['id'],
+                    $item['product_id'],
                     $item['quantity'],
                     $item['price'],
-                    $item['discount_price'] ?? null
+                    $item['discount_price'] ?? null,
                 ]);
             }
 
-            // Clear cart
             clear_cart();
-
             $pdo->commit();
-            $success = true;
 
-            // Redirect to success page
+            // Send order confirmation email
+            try {
+                require_once 'includes/email-service.php';
+                $emailService = getEmailService();
+                
+                // Construct absolute URL for the invoice
+                $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http");
+                $host = $_SERVER['HTTP_HOST'];
+                $invoice_url = $protocol . "://" . $host . url('/invoice?id=' . $order_id);
+                
+                $emailService->sendOrderConfirmation($email, $name, $order_id, $cart_total, $invoice_url);
+            } catch (Exception $e) {
+                // Log error but don't stop the user from seeing their success page
+                error_log("Failed to send order email: " . $e->getMessage());
+            }
+
             header("Location: " . url('/order-success?order=' . $order_id));
             exit;
 
@@ -84,6 +89,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+
+$page_title = "Checkout";
+include 'includes/header-bootstrap.php';
 ?>
 
 <div class="container py-5">
@@ -118,7 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label for="name" class="form-label">Full Name *</label>
-                                    <input type="text" class="form-control" id="name" name="name" value="<?php echo h($user['name'] ?? ''); ?>" required>
+                                    <input type="text" class="form-control" id="name" name="name" value="<?php echo h($user['full_name'] ?? ''); ?>" required>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label for="email" class="form-label">Email Address *</label>
@@ -129,7 +137,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label for="phone" class="form-label">Phone Number *</label>
-                                    <input type="tel" class="form-control" id="phone" name="phone" value="<?php echo h($user['phone'] ?? ''); ?>" required>
+                                    <input type="tel" class="form-control" id="phone" name="phone" value="<?php echo h($user['mobile'] ?? ''); ?>" required>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label for="city" class="form-label">City *</label>

@@ -3,7 +3,8 @@
  * New Arrivals Page
  * Easy Shopping A.R.S
  */
-$page_title = "New Arrivals";
+$page_title     = 'New Arrivals — Latest Products in Nepal | Easy Shopping A.R.S';
+$page_meta_desc = 'Discover the latest products just added to Easy Shopping A.R.S Nepal. New electronics, fashion, and home goods with fast delivery and easy returns.';
 include 'includes/header-bootstrap.php';
 
 try {

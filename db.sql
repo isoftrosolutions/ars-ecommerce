@@ -34,12 +34,12 @@ CREATE TABLE `cart_items` (
   KEY `product_id` (`product_id`),
   CONSTRAINT `cart_items_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   CONSTRAINT `cart_items_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 /*Data for the table `cart_items` */
 
 insert  into `cart_items`(`id`,`user_id`,`session_id`,`product_id`,`quantity`,`created_at`,`updated_at`) values 
-(1,2,'5c727c4d58a0934b7c8fde4509ae88cb',1,2,'2026-04-11 17:51:50','2026-04-11 17:56:38');
+(3,3,NULL,1,1,'2026-04-11 18:06:49','2026-04-11 18:07:11');
 
 /*Table structure for table `categories` */
 
@@ -166,9 +166,13 @@ CREATE TABLE `order_items` (
   KEY `product_id` (`product_id`),
   CONSTRAINT `order_items_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`),
   CONSTRAINT `order_items_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 /*Data for the table `order_items` */
+
+insert  into `order_items`(`id`,`order_id`,`product_id`,`quantity`,`price`,`discount_price`) values 
+(1,1,1,2,100.00,10.00),
+(3,3,1,10,100.00,10.00);
 
 /*Table structure for table `orders` */
 
@@ -197,10 +201,16 @@ CREATE TABLE `orders` (
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
+  KEY `idx_orders_created_at` (`created_at`),
+  KEY `idx_orders_payment_status` (`payment_status`),
   CONSTRAINT `orders_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 /*Data for the table `orders` */
+
+insert  into `orders`(`id`,`user_id`,`customer_name`,`customer_email`,`customer_phone`,`shipping_address`,`shipping_city`,`total_amount`,`coupon_code`,`discount_amount`,`payment_method`,`payment_status`,`delivery_status`,`current_location`,`location_updated_at`,`transaction_id`,`payment_proof`,`address`,`notes`,`created_at`) values 
+(1,2,'Devbarat Prasad Patel','mind59024@gmail.com','9811144402','Bahudramai-07, Phulkaul, Parsa','Madhesi',20.00,NULL,0.00,'eSewa','Pending','Pending','Preparing for shipment',NULL,NULL,NULL,NULL,NULL,'2026-04-11 18:00:38'),
+(3,2,'Devbarat Prasad Patel','mind59024@gmail.com','9811144402','Bahudramai-07, Phulkaul, Parsa','Birgunj',100.00,NULL,0.00,'COD','Pending','Pending','Preparing for shipment',NULL,NULL,NULL,NULL,NULL,'2026-04-11 18:20:32');
 
 /*Table structure for table `product_images` */
 
@@ -347,7 +357,8 @@ CREATE TABLE `users` (
   UNIQUE KEY `email` (`email`),
   KEY `idx_users_reset_expires` (`reset_expires`),
   KEY `idx_users_remember_token` (`remember_token`),
-  KEY `idx_oauth` (`oauth_provider`,`oauth_provider_id`)
+  KEY `idx_oauth` (`oauth_provider`,`oauth_provider_id`),
+  KEY `idx_users_role_created` (`role`,`created_at`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 /*Data for the table `users` */

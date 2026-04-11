@@ -4,6 +4,9 @@
  * Easy Shopping A.R.S
  */
 
+require_once 'includes/db.php';
+require_once 'includes/functions.php';
+
 // Get product slug from URL
 $slug = $_GET['slug'] ?? '';
 if (!$slug) {
@@ -11,11 +14,8 @@ if (!$slug) {
     exit;
 }
 
-$page_title = "Product Details";
-include 'includes/header-bootstrap.php';
-
 try {
-    // Fetch product with category info
+    // Fetch product with category info — BEFORE header so SEO tags are set
     $stmt = $pdo->prepare("
         SELECT p.*, c.name as category_name,
                (SELECT AVG(rating) FROM product_reviews WHERE product_id = p.id AND status = 'approved') as avg_rating,
@@ -43,7 +43,70 @@ try {
     $reviews = $stmt->fetchAll();
 
 } catch (PDOException $e) { $error = $e->getMessage(); $product = null; }
+
+// ── SEO meta — set BEFORE header include ─────────────────────
+$page_title     = $product ? $product['name'] . ' — Buy Online in Nepal' : 'Product Not Found';
+$page_meta_desc = $product
+    ? 'Buy ' . $product['name'] . ' online at Easy Shopping A.R.S Nepal. '
+      . 'Price: Rs. ' . number_format($product['discount_price'] ?: $product['price'], 2)
+      . '. Fast delivery across Nepal. eSewa & COD accepted.'
+    : 'Product not found at Easy Shopping A.R.S.';
+$page_og_type   = 'product';
+$page_og_image  = $product ? getProductImage($product['image']) : null;
+$page_canonical = $product ? $base_url . '/product/' . $product['slug'] : null;
+
+include 'includes/header-bootstrap.php';
+
+if ($product):
+$_schema_price  = number_format($product['discount_price'] ?: $product['price'], 2, '.', '');
+$_schema_avail  = $product['stock'] > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock';
+$_schema_image  = getProductImage($product['image']);
+$_schema_rating = $product['avg_rating'] ? round((float)$product['avg_rating'], 1) : null;
+$_schema_rcount = (int)($product['review_count'] ?? 0);
 ?>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": <?php echo json_encode($product['name']); ?>,
+  "description": <?php echo json_encode($product['description'] ?? ''); ?>,
+  "image": <?php echo json_encode($_schema_image); ?>,
+  "sku": "ARS-<?php echo $product['id']; ?>",
+  "brand": {
+    "@type": "Brand",
+    "name": "Easy Shopping A.R.S"
+  },
+  "offers": {
+    "@type": "Offer",
+    "url": <?php echo json_encode($base_url . '/product/' . $product['slug']); ?>,
+    "priceCurrency": "NPR",
+    "price": <?php echo json_encode($_schema_price); ?>,
+    "availability": "<?php echo $_schema_avail; ?>",
+    "seller": {
+      "@type": "Organization",
+      "name": "Easy Shopping A.R.S"
+    }
+  }<?php if ($_schema_rating && $_schema_rcount > 0): ?>
+,
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": <?php echo $_schema_rating; ?>,
+    "reviewCount": <?php echo $_schema_rcount; ?>
+  }<?php endif; ?>
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "Home",  "item": <?php echo json_encode($base_url); ?>},
+    {"@type": "ListItem", "position": 2, "name": "Shop",  "item": <?php echo json_encode($base_url . '/shop'); ?>},
+    {"@type": "ListItem", "position": 3, "name": <?php echo json_encode($product['name']); ?>, "item": <?php echo json_encode($base_url . '/product/' . $product['slug']); ?>}
+  ]
+}
+</script>
+<?php endif; ?>
 
 <style>
 /* ═══ Premium Product Details ═══ */
