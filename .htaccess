@@ -1,0 +1,10 @@
+# ARS-e-commerce Clean URLs
+Options -Indexes
+RewriteEngine On
+
+# Allow access to real files and directories (CSS, JS, Images)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Redirect everything else to index.php
+RewriteRule ^(.*)$ index.php [L,QSA]

@@ -1,0 +1,11 @@
+# Block execution of all server-side scripts in the uploads directory.
+# This prevents webshell execution even if a malicious file is uploaded.
+
+<FilesMatch "\.(php|php3|php4|php5|php7|phtml|phar|cgi|pl|py|sh|rb|exe|jsp|asp|aspx|shtml)$">
+    Require all denied
+</FilesMatch>
+
+# Prevent directory listing
+Options -Indexes -ExecCGI
+
+# Note: `AllowOverride` is a server/vhost-level directive and is not valid inside `.htaccess`.

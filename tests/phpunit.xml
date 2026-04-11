@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit
+    bootstrap="bootstrap.php"
+    colors="true"
+    verbose="true"
+    stopOnFailure="false"
+    displayDetailsOnTestsThatTriggerWarnings="true"
+    displayDetailsOnTestsThatTriggerErrors="true"
+    displayDetailsOnIncompleteTests="true"
+    displayDetailsOnSkippedTests="true">
+
+    <testsuites>
+        <testsuite name="ARS Authentication Tests">
+            <file>AuthTest.php</file>
+            <file>SignupTest.php</file>
+            <file>LoginTest.php</file>
+        </testsuite>
+    </testsuites>
+
+    <filter>
+        <whitelist>
+            <directory suffix=".php">../includes</directory>
+            <directory suffix=".php">../backend</directory>
+        </whitelist>
+    </filter>
+
+    <logging>
+        <log type="coverage-html" target="coverage" lowUpperBound="35" highLowerBound="70"/>
+    </logging>
+</phpunit>
