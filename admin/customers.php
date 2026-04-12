@@ -73,17 +73,13 @@ include __DIR__ . '/includes/header.php';
 let currentPage = 1;
 
 async function loadStats() {
-    const res = await fetch(BASE_URL + '/backend/customers.php', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: 'action=get_customer_stats'
-    });
+    const res = await fetch(BASE_URL + '/api/customers/stats');
     const json = await res.json();
     if (json.success) {
         const s = json.data;
         document.getElementById('stat-total').textContent = s.total_customers;
         document.getElementById('stat-new').textContent = s.new_this_month;
-        document.getElementById('stat-active').textContent = s.active_customers;
+        document.getElementById('stat-active').textContent = s.active_purchasers;
     }
 }
 
@@ -92,13 +88,12 @@ async function loadCustomers(page = 1) {
     document.getElementById('customers-tbody').innerHTML = '<tr class="loading-row"><td colspan="7"><div class="spinner"></div></td></tr>';
 
     const params = new URLSearchParams({
-        action: 'get_customers',
         page,
         limit: 10,
         search: document.getElementById('search-input').value
     });
 
-    const res = await fetch(BASE_URL + '/backend/customers.php', { method: 'POST', body: params });
+    const res = await fetch(BASE_URL + '/api/customers/list?' + params.toString());
     const json = await res.json();
     if (!json.success) { Toast.error(json.message); return; }
 
@@ -126,7 +121,7 @@ async function loadCustomers(page = 1) {
             </td>
             <td>${escHtml(c.mobile || '—')}</td>
             <td><span class="badge badge-info">${c.total_orders}</span></td>
-            <td style="font-weight:600;">Rs. ${parseFloat(c.total_spent || 0).toFixed(2)}</td>
+            <td style="font-weight:600;">Rs. ${parseFloat(c.total_spend || 0).toFixed(2)}</td>
             <td style="color:var(--text-secondary); font-size:13px;">${c.last_order_date ? formatDate(c.last_order_date) : '—'}</td>
             <td style="color:var(--text-secondary); font-size:13px;">${formatDate(c.created_at)}</td>
             <td>
@@ -145,11 +140,7 @@ async function viewCustomer(id) {
     document.getElementById('cust-modal-body').innerHTML = '<div style="text-align:center;padding:40px;"><div class="spinner"></div></div>';
     document.getElementById('cust-modal').classList.add('open');
 
-    const res = await fetch(BASE_URL + '/backend/customers.php', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: `action=get_customer_details&customer_id=${id}`
-    });
+    const res = await fetch(BASE_URL + `/api/customers/detail?id=${id}`);
     const json = await res.json();
     if (!json.success) { document.getElementById('cust-modal-body').innerHTML = `<p style="color:var(--danger)">${json.message}</p>`; return; }
 

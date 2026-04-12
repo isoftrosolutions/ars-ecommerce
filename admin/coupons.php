@@ -140,17 +140,15 @@ let currentPage = 1;
 let deleteTargetId = null;
 
 async function loadStats() {
-    const res = await fetch(BASE_URL + '/backend/coupons.php', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: 'action=get_stats'
-    });
+    const res = await fetch(BASE_URL + '/api/coupons/stats');
     const json = await res.json();
     if (json.success) {
         const s = json.data;
-        document.getElementById('stat-total').textContent = s.total_coupons;
-        document.getElementById('stat-active').textContent = s.active_coupons;
-        document.getElementById('stat-discount').textContent = 'Rs. ' + parseFloat(s.total_discount_given || 0).toFixed(2);
+        document.getElementById('stat-total').textContent = s.total;
+        document.getElementById('stat-active').textContent = s.active;
+        document.getElementById('stat-discount').textContent = s.total_usage || 0;
+        // Total discount given might need another query if needed, but using usage count as a proxy for now or label it differently
+        document.querySelector('.kpi-label[textContent="Total Discount Given"]').textContent = 'Total Usage';
     }
 }
 
@@ -159,13 +157,13 @@ async function loadCoupons(page = 1) {
     document.getElementById('coupons-tbody').innerHTML = '<tr class="loading-row"><td colspan="8"><div class="spinner"></div></td></tr>';
 
     const params = new URLSearchParams({
-        action: 'get_coupons', page, limit: 10,
+        page, limit: 10,
         search: document.getElementById('search-input').value,
         status: document.getElementById('status-filter').value,
         type: document.getElementById('type-filter').value
     });
 
-    const res = await fetch(BASE_URL + '/backend/coupons.php', { method: 'POST', body: params });
+    const res = await fetch(BASE_URL + '/api/coupons/list?' + params.toString());
     const json = await res.json();
     if (!json.success) { Toast.error(json.message); return; }
 
@@ -183,11 +181,11 @@ async function loadCoupons(page = 1) {
             <td><code style="background:var(--primary-light); color:var(--primary); padding:3px 10px; border-radius:4px; font-size:13px; font-weight:700;">${escHtml(c.code)}</code></td>
             <td><span class="badge badge-info">${c.type}</span></td>
             <td style="font-weight:600;">${c.type === 'percentage' ? c.value + '%' : 'Rs. ' + parseFloat(c.value).toFixed(2)}</td>
-            <td>${parseFloat(c.min_cart_amount || 0) > 0 ? 'Rs. ' + parseFloat(c.min_cart_amount).toFixed(2) : '—'}</td>
-            <td>${c.times_used}</td>
-            <td style="color:var(--text-secondary); font-size:13px;">${c.expiry_date ? formatDate(c.expiry_date) : 'Never'}</td>
+            <td>${parseFloat(c.min_purchase || 0) > 0 ? 'Rs. ' + parseFloat(c.min_purchase).toFixed(2) : '—'}</td>
+            <td>${c.usage_count}</td>
+            <td style="color:var(--text-secondary); font-size:13px;">${c.end_date ? formatDate(c.end_date) : 'Never'}</td>
             <td>
-                <button class="btn btn-ghost btn-sm" onclick="toggleStatus(${c.id}, '${c.status === 'active' ? 'inactive' : 'active'}')">
+                <button class="btn btn-ghost btn-sm" onclick="toggleStatus(${c.id})">
                     <span class="badge ${c.status === 'active' ? 'badge-success' : 'badge-danger'}">${c.status}</span>
                 </button>
             </td>
@@ -216,11 +214,7 @@ function openModal() {
 }
 
 async function editCoupon(id) {
-    const res = await fetch(BASE_URL + '/backend/coupons.php', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: `action=get_coupon&id=${id}`
-    });
+    const res = await fetch(BASE_URL + `/api/coupons/detail?id=${id}`);
     const json = await res.json();
     if (!json.success) { Toast.error(json.message); return; }
     const c = json.data;
@@ -228,8 +222,8 @@ async function editCoupon(id) {
     document.getElementById('coupon-code').value = c.code;
     document.getElementById('coupon-type').value = c.type;
     document.getElementById('coupon-value').value = c.value;
-    document.getElementById('coupon-min').value = c.min_cart_amount || '';
-    document.getElementById('coupon-expiry').value = c.expiry_date || '';
+    document.getElementById('coupon-min').value = c.min_purchase || '';
+    document.getElementById('coupon-expiry').value = c.end_date || '';
     document.getElementById('coupon-status').value = c.status;
     document.getElementById('modal-title').textContent = 'Edit Coupon';
     document.getElementById('coupon-modal').classList.add('open');
@@ -240,27 +234,34 @@ async function saveCoupon() {
     const value = document.getElementById('coupon-value').value;
     if (!code || !value) { Toast.error('Code and Value are required.'); return; }
 
-    const params = new URLSearchParams({ action: 'save_coupon' });
     const id = document.getElementById('coupon-id').value;
-    if (id) params.append('coupon[id]', id);
-    params.append('coupon[code]', code);
-    params.append('coupon[type]', document.getElementById('coupon-type').value);
-    params.append('coupon[value]', value);
-    params.append('coupon[min_cart_amount]', document.getElementById('coupon-min').value || 0);
-    params.append('coupon[expiry_date]', document.getElementById('coupon-expiry').value);
-    params.append('coupon[status]', document.getElementById('coupon-status').value);
+    const action = id ? 'update' : 'create';
+    
+    const body = {
+        id,
+        code,
+        type: document.getElementById('coupon-type').value,
+        value,
+        min_purchase: document.getElementById('coupon-min').value || 0,
+        end_date: document.getElementById('coupon-expiry').value,
+        status: document.getElementById('coupon-status').value
+    };
 
-    const res = await fetch(BASE_URL + '/backend/coupons.php', { method: 'POST', body: params });
+    const res = await fetch(BASE_URL + `/api/coupons/${action}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(body)
+    });
     const json = await res.json();
     if (json.success) { Toast.success(id ? 'Coupon updated!' : 'Coupon added!'); closeModal(); loadCoupons(currentPage); loadStats(); }
     else Toast.error(json.message);
 }
 
-async function toggleStatus(id, newStatus) {
-    const res = await fetch(BASE_URL + '/backend/coupons.php', {
+async function toggleStatus(id) {
+    const res = await fetch(BASE_URL + '/api/coupons/toggle-status', {
         method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: `action=toggle_status&id=${id}&status=${newStatus}`
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ id })
     });
     const json = await res.json();
     if (json.success) { loadCoupons(currentPage); loadStats(); }
@@ -273,10 +274,10 @@ function closeModal() { document.getElementById('coupon-modal').classList.remove
 
 async function confirmDelete() {
     if (!deleteTargetId) return;
-    const res = await fetch(BASE_URL + '/backend/coupons.php', {
+    const res = await fetch(BASE_URL + '/api/coupons/delete', {
         method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: `action=delete_coupon&id=${deleteTargetId}`
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ id: deleteTargetId })
     });
     const json = await res.json();
     closeDeleteModal();

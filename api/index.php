@@ -30,17 +30,19 @@ require_once __DIR__ . '/middleware/ValidationMiddleware.php';
 require_once __DIR__ . '/middleware/CorsMiddleware.php';
 require_once __DIR__ . '/utils/Response.php';
 require_once __DIR__ . '/utils/Logger.php';
+require_once __DIR__ . '/BaseController.php';
 
 // Initialize logger
 $logger = new Logger();
 
 // Parse request
 $requestMethod = $_SERVER['REQUEST_METHOD'];
+// Parse path to get endpoint and action
 $requestUri = $_SERVER['REQUEST_URI'];
+$scriptName = $_SERVER['SCRIPT_NAME']; 
+$apiBase = dirname($scriptName);
 $path = parse_url($requestUri, PHP_URL_PATH);
 
-// Remove base path to get API path
-$apiBase = '/ars/api';
 if (strpos($path, $apiBase) === 0) {
     $path = substr($path, strlen($apiBase));
 }
@@ -61,67 +63,67 @@ try {
         case 'auth':
             require_once __DIR__ . '/auth/AuthController.php';
             $controller = new AuthController();
-            $response = $controller->handleRequest($requestMethod, $action);
+            $controller->handleRequest($requestMethod, $action);
             break;
 
         case 'products':
             require_once __DIR__ . '/products/ProductController.php';
             $controller = new ProductController();
-            $response = $controller->handleRequest($requestMethod, $action);
+            $controller->handleRequest($requestMethod, $action);
             break;
 
         case 'categories':
             require_once __DIR__ . '/categories/CategoryController.php';
             $controller = new CategoryController();
-            $response = $controller->handleRequest($requestMethod, $action);
+            $controller->handleRequest($requestMethod, $action);
             break;
 
         case 'orders':
             require_once __DIR__ . '/orders/OrderController.php';
             $controller = new OrderController();
-            $response = $controller->handleRequest($requestMethod, $action);
+            $controller->handleRequest($requestMethod, $action);
             break;
 
         case 'customers':
             require_once __DIR__ . '/customers/CustomerController.php';
             $controller = new CustomerController();
-            $response = $controller->handleRequest($requestMethod, $action);
+            $controller->handleRequest($requestMethod, $action);
             break;
 
         case 'reviews':
             require_once __DIR__ . '/reviews/ReviewController.php';
             $controller = new ReviewController();
-            $response = $controller->handleRequest($requestMethod, $action);
+            $controller->handleRequest($requestMethod, $action);
             break;
 
         case 'coupons':
             require_once __DIR__ . '/coupons/CouponController.php';
             $controller = new CouponController();
-            $response = $controller->handleRequest($requestMethod, $action);
+            $controller->handleRequest($requestMethod, $action);
             break;
 
         case 'contact':
             require_once __DIR__ . '/contact/ContactController.php';
             $controller = new ContactController();
-            $response = $controller->handleRequest($requestMethod, $action);
+            $controller->handleRequest($requestMethod, $action);
             break;
 
         case 'settings':
             require_once __DIR__ . '/settings/SettingsController.php';
             $controller = new SettingsController();
-            $response = $controller->handleRequest($requestMethod, $action);
+            $controller->handleRequest($requestMethod, $action);
             break;
 
         case 'dashboard':
             require_once __DIR__ . '/dashboard/DashboardController.php';
             $controller = new DashboardController();
-            $response = $controller->handleRequest($requestMethod, $action);
+            $controller->handleRequest($requestMethod, $action);
             break;
 
         case 'uploads':
             require_once __DIR__ . '/uploads/UploadController.php';
             $controller = new UploadController();
-            $response = $controller->handleRequest($requestMethod, $action);
+            $controller->handleRequest($requestMethod, $action);
             break;
 
         default:

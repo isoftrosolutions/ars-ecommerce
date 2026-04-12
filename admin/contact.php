@@ -98,11 +98,7 @@ let currentPage = 1;
 let currentSubId = null;
 
 async function loadStats() {
-    const res = await fetch(BASE_URL + '/backend/contact.php', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: 'action=get_stats'
-    });
+    const res = await fetch(BASE_URL + '/api/contact/stats');
     const json = await res.json();
     if (json.success) {
         const s = json.data;
@@ -118,12 +114,12 @@ async function loadSubmissions(page = 1) {
     document.getElementById('subs-tbody').innerHTML = '<tr class="loading-row"><td colspan="7"><div class="spinner"></div></td></tr>';
 
     const params = new URLSearchParams({
-        action: 'get_submissions', page, limit: 10,
+        page, limit: 10,
         search: document.getElementById('search-input').value,
         status: document.getElementById('status-filter').value
     });
 
-    const res = await fetch(BASE_URL + '/backend/contact.php', { method: 'POST', body: params });
+    const res = await fetch(BASE_URL + '/api/contact/list?' + params.toString());
     const json = await res.json();
     if (!json.success) { Toast.error(json.message); return; }
 
@@ -165,11 +161,7 @@ async function viewSubmission(id) {
     document.getElementById('view-modal-body').innerHTML = '<div style="text-align:center;padding:40px;"><div class="spinner"></div></div>';
     document.getElementById('view-modal').classList.add('open');
 
-    const res = await fetch(BASE_URL + '/backend/contact.php', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: `action=get_submission&id=${id}`
-    });
+    const res = await fetch(BASE_URL + `/api/contact/detail?id=${id}`);
     const json = await res.json();
     if (!json.success) { document.getElementById('view-modal-body').innerHTML = `<p style="color:var(--danger)">${json.message}</p>`; return; }
     const s = json.data;
@@ -200,8 +192,14 @@ async function sendReply() {
     const msg = document.getElementById('reply-textarea').value.trim();
     if (!msg) { Toast.error('Reply message cannot be empty.'); return; }
 
-    const params = new URLSearchParams({ action: 'send_reply', submission_id: currentSubId, reply_message: msg });
-    const res  = await fetch(BASE_URL + '/backend/contact.php', { method: 'POST', body: params });
+    const res  = await fetch(BASE_URL + '/api/contact/send-reply', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            submission_id: currentSubId,
+            reply_message: msg
+        })
+    });
     const json = await res.json();
 
     if (json.success) {
@@ -218,10 +216,10 @@ async function sendReply() {
 
 async function markCurrentReplied() {
     if (!currentSubId) return;
-    await fetch(BASE_URL + '/backend/contact.php', {
+    await fetch(BASE_URL + '/api/contact/update-status', {
         method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: `action=update_status&id=${currentSubId}&status=replied`
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ id: currentSubId, status: 'replied' })
     });
     Toast.success('Marked as replied.');
     closeViewModal();
@@ -231,10 +229,10 @@ async function markCurrentReplied() {
 
 async function deleteSubmission(id) {
     if (!confirm('Delete this submission?')) return;
-    const res = await fetch(BASE_URL + '/backend/contact.php', {
+    const res = await fetch(BASE_URL + '/api/contact/delete', {
         method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: `action=delete_submission&id=${id}`
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ id })
     });
     const json = await res.json();
     if (json.success) { Toast.success('Deleted.'); loadSubmissions(currentPage); loadStats(); }
@@ -249,18 +247,22 @@ async function applyBulkAction() {
 
     if (action === 'delete') {
         if (!confirm(`Delete ${ids.length} submission(s)?`)) return;
-        const params = new URLSearchParams({ action: 'bulk_delete' });
-        ids.forEach(id => params.append('submission_ids[]', id));
-        const res = await fetch(BASE_URL + '/backend/contact.php', { method: 'POST', body: params });
+        const res = await fetch(BASE_URL + '/api/contact/bulk-delete', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ submission_ids: ids })
+        });
         const json = await res.json();
-        if (json.success) { Toast.success(`${json.deleted} deleted.`); loadSubmissions(currentPage); loadStats(); }
+        if (json.success) { Toast.success(`${json.data.deleted} deleted.`); loadSubmissions(currentPage); loadStats(); }
         else Toast.error(json.message);
     } else {
-        const params = new URLSearchParams({ action: 'bulk_update_status', status: action });
-        ids.forEach(id => params.append('submission_ids[]', id));
-        const res = await fetch(BASE_URL + '/backend/contact.php', { method: 'POST', body: params });
+        const res = await fetch(BASE_URL + '/api/contact/bulk-update-status', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ submission_ids: ids, status: action })
+        });
         const json = await res.json();
-        if (json.success) { Toast.success(`${json.updated} updated.`); loadSubmissions(currentPage); loadStats(); }
+        if (json.success) { Toast.success(`${json.data.updated} updated.`); loadSubmissions(currentPage); loadStats(); }
         else Toast.error(json.message);
     }
 }

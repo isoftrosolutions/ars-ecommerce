@@ -216,7 +216,7 @@ async function loadProducts(page = 1) {
             <td><input type="checkbox" class="row-check" value="${p.id}"></td>
             <td>
                 <div style="display:flex; align-items:center; gap:10px;">
-                    <img src="${p.image ? '/uploads/products/' + escHtml(p.image) : 'https://placehold.co/40x40/e5e7eb/6b7280?text=No+Img'}"
+                    <img src="${p.image_url || 'https://placehold.co/40x40/e5e7eb/6b7280?text=No+Img'}"
                          alt="" style="width:40px; height:40px; object-fit:cover; border-radius:6px;"
                          onerror="this.src='https://placehold.co/40x40/e5e7eb/6b7280?text=Err'">
                     <span style="font-weight:500;">${escHtml(p.name)}</span>

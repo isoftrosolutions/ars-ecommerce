@@ -91,7 +91,7 @@ class ProductController extends BaseController {
 
         // Add image URLs
         foreach ($products as &$product) {
-            $product['image_url'] = $product['image'] ? '/uploads/products/' . $product['image'] : null;
+            $product['image_url'] = $product['image'] ? url('/uploads/products/' . $product['image']) : null;
             $product['images'] = $this->getProductImages($product['id']);
         }
 
@@ -121,7 +121,7 @@ class ProductController extends BaseController {
             Response::error('Product not found', 404);
         }
 
-        $product['image_url'] = $product['image'] ? '/uploads/products/' . $product['image'] : null;
+        $product['image_url'] = $product['image'] ? url('/uploads/products/' . $product['image']) : null;
         $product['images'] = $this->getProductImages($product['id']);
 
         Response::success($product, 'Product retrieved successfully');
@@ -132,6 +132,12 @@ class ProductController extends BaseController {
      */
     private function createProduct() {
         $data = $this->getInputData();
+        if (isset($data['product'])) {
+            $productData = $data['product'];
+            $productData['images'] = $this->parseFormDataImages($data);
+            $data = $productData;
+        }
+
         $this->validateProductData($data);
 
         $this->beginTransaction();
@@ -144,13 +150,13 @@ class ProductController extends BaseController {
             ", [
                 $data['name'],
                 $data['slug'],
-                $data['description'] ?? null,
+                !empty($data['description']) ? $data['description'] : null,
                 $data['price'],
-                $data['discount_price'] ?? null,
-                $data['category_id'] ?? null,
-                $data['stock'] ?? 0,
-                $data['sku'] ?? null,
-                isset($data['is_featured']) ? 1 : 0
+                !empty($data['discount_price']) ? $data['discount_price'] : null,
+                !empty($data['category_id']) ? $data['category_id'] : null,
+                $data['stock'] !== '' && isset($data['stock']) ? $data['stock'] : 0,
+                !empty($data['sku']) ? $data['sku'] : null,
+                isset($data['is_featured']) && $data['is_featured'] ? 1 : 0
             ]);
 
             $productId = $this->pdo->lastInsertId();
@@ -176,6 +182,12 @@ class ProductController extends BaseController {
      */
     private function updateProduct() {
         $data = $this->getInputData();
+        if (isset($data['product'])) {
+            $productData = $data['product'];
+            $productData['images'] = $this->parseFormDataImages($data);
+            $data = $productData;
+        }
+
         ValidationMiddleware::validateRequired($data, ['id']);
         $this->validateProductData($data);
 
@@ -191,13 +203,13 @@ class ProductController extends BaseController {
             ", [
                 $data['name'],
                 $data['slug'],
-                $data['description'] ?? null,
+                !empty($data['description']) ? $data['description'] : null,
                 $data['price'],
-                $data['discount_price'] ?? null,
-                $data['category_id'] ?? null,
-                $data['stock'] ?? 0,
-                $data['sku'] ?? null,
-                isset($data['is_featured']) ? 1 : 0,
+                !empty($data['discount_price']) ? $data['discount_price'] : null,
+                !empty($data['category_id']) ? $data['category_id'] : null,
+                $data['stock'] !== '' && isset($data['stock']) ? $data['stock'] : 0,
+                !empty($data['sku']) ? $data['sku'] : null,
+                isset($data['is_featured']) && $data['is_featured'] ? 1 : 0,
                 $data['id']
             ]);
 
@@ -380,7 +392,7 @@ class ProductController extends BaseController {
 
         // Add full URLs
         foreach ($images as &$image) {
-            $image['full_url'] = '/uploads/products/' . $image['image_path'];
+            $image['full_url'] = url('/uploads/products/' . $image['image_path']);
         }
 
         return $images;
@@ -394,6 +406,7 @@ class ProductController extends BaseController {
         $this->executeQuery("DELETE FROM product_images WHERE product_id = ?", [$productId]);
 
         if (empty($images)) {
+            $this->executeQuery("UPDATE products SET image = NULL WHERE id = ?", [$productId]);
             return;
         }
 
@@ -407,6 +420,10 @@ class ProductController extends BaseController {
                     "INSERT INTO product_images (product_id, image_path, is_primary) VALUES (?, ?, ?)",
                     [$productId, $image['path'], $isPrimary]
                 );
+                
+                if ($isPrimary) {
+                    $this->executeQuery("UPDATE products SET image = ? WHERE id = ?", [$image['path'], $productId]);
+                }
             } elseif (isset($image['file'])) {
                 // Handle uploaded files
                 $this->handleFileUpload($productId, $image, $isPrimary);
@@ -432,9 +449,51 @@ class ProductController extends BaseController {
                 "INSERT INTO product_images (product_id, image_path, is_primary) VALUES (?, ?, ?)",
                 [$productId, $fileName, $isPrimary]
             );
+
+            if ($isPrimary) {
+                $this->executeQuery("UPDATE products SET image = ? WHERE id = ?", [$fileName, $productId]);
+            }
         } else {
             $this->logger->error('Failed to upload product image', ['product_id' => $productId]);
         }
+    }
+
+    /**
+     * Parse multipart/form-data images payload into standardized format
+     */
+    private function parseFormDataImages($data) {
+        $images = [];
+        if (!isset($data['img_order']) || !is_array($data['img_order'])) {
+            return $images;
+        }
+
+        foreach ($data['img_order'] as $item) {
+            $parts = explode(':', $item);
+            if (count($parts) !== 2) continue;
+
+            $type = $parts[0];
+            $index = $parts[1];
+
+            if ($type === 'file' && isset($_FILES["img_file_$index"])) {
+                if ($_FILES["img_file_$index"]['error'] === UPLOAD_ERR_OK) {
+                    $images[] = [
+                        'type' => 'file',
+                        'file' => $_FILES["img_file_$index"]
+                    ];
+                }
+            } elseif ($type === 'url' && isset($data["img_url_$index"])) {
+                // If the URL is just a relative path from an existing image, we extract just the filename
+                $url = $data["img_url_$index"];
+                if (strpos($url, '/uploads/products/') !== false) {
+                    $url = basename($url);
+                }
+                $images[] = [
+                    'type' => 'url',
+                    'path' => $url
+                ];
+            }
+        }
+        return $images;
     }
 }
 ?>

@@ -28,8 +28,9 @@ $admin_initial = strtoupper(substr($admin_name, 0, 1));
     <!-- Font Awesome 6 Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Core CSS -->
+    <!-- Core CSS & JS -->
     <link rel="stylesheet" href="<?php echo url('/public/assets/css/admin-style.css'); ?>">
+    <script src="<?php echo url('/public/assets/js/admin-core.js'); ?>"></script>
 </head>
 <body>
 

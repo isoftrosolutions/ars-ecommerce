@@ -1,0 +1,4 @@
+[2026-04-11 14:09:16] ERROR: Database query failed: SQLSTATE[22007]: Invalid datetime format: 1366 Incorrect integer value: '' for column `ars_ecommerce`.`products`.`category_id` at row 1 {"query":"\n                INSERT INTO products (name, slug, description, price, discount_price, category_id, stock, sku, is_featured, created_at)\n                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())\n            ","params":["apple","apple","this is a test page","100","10","","100","app101",1]}
+[2026-04-11 14:12:12] INFO: Admin action: create_category {"category_id":"1","name":"Electronice","user_id":3,"user_name":"Admin (pdewbrath)","ip":"::1"}
+[2026-04-11 14:13:02] INFO: Admin action: create_product {"product_id":"2","name":"Eleceq","user_id":3,"user_name":"Admin (pdewbrath)","ip":"::1"}
+[2026-04-11 14:14:16] INFO: Admin action: update_product {"product_id":"2","name":"Eleceq","user_id":3,"user_name":"Admin (pdewbrath)","ip":"::1"}

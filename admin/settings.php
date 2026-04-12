@@ -188,22 +188,14 @@ include __DIR__ . '/includes/header.php';
 let currentSettings = {};
 
 async function loadSettings() {
-    const res = await fetch(BASE_URL + '/backend/settings.php', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: 'action=get_settings'
-    });
+    const res = await fetch(BASE_URL + '/api/settings/all');
     const json = await res.json();
     if (!json.success) { Toast.error('Failed to load settings.'); return; }
 
     // If DB is empty, fetch defaults
     let settings = json.data;
     if (Object.keys(settings).length === 0) {
-        const defRes = await fetch(BASE_URL + '/backend/settings.php', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-            body: 'action=get_default_settings'
-        });
+        const defRes = await fetch(BASE_URL + '/api/settings/defaults');
         const defJson = await defRes.json();
         if (defJson.success) settings = defJson.data;
     }
@@ -229,20 +221,21 @@ async function saveAllSettings() {
     document.querySelectorAll('[data-key]').forEach(el => {
         const key = el.dataset.key;
         if (el.dataset.type === 'bool') {
-            updates[key] = el.checked ? '1' : '0';
+            updates[key] = el.checked;
         } else {
             updates[key] = el.value;
         }
     });
 
-    const params = new URLSearchParams({ action: 'bulk_update' });
-    Object.entries(updates).forEach(([k, v]) => params.append(`settings[${k}]`, v));
-
-    const res = await fetch(BASE_URL + '/backend/settings.php', { method: 'POST', body: params });
+    const res = await fetch(BASE_URL + '/api/settings/bulk-update', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ settings: updates })
+    });
     const json = await res.json();
 
     if (json.success) {
-        Toast.success(`${json.updated} settings saved successfully!`);
+        Toast.success(`${json.data.updated} settings saved successfully!`);
     } else {
         Toast.error(json.message || 'Failed to save settings.');
     }

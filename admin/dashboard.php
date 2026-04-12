@@ -5,91 +5,17 @@
  */
 $page_title = "Dashboard";
 include __DIR__ . '/includes/header.php';
-
-// Fetch Statistics
-try {
-    // Total Products
-    $stmt = $pdo->query("SELECT COUNT(*) FROM products");
-    $total_products = $stmt->fetchColumn();
-
-    // Total Orders
-    $stmt = $pdo->query("SELECT COUNT(*) FROM orders");
-    $total_orders = $stmt->fetchColumn();
-
-    // Total Revenue (Paid Orders)
-    $stmt = $pdo->query("SELECT SUM(total_amount) FROM orders WHERE payment_status = 'Paid'");
-    $total_revenue = $stmt->fetchColumn() ?: 0;
-
-    // Total Customers
-    $stmt = $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'customer'");
-    $total_customers = $stmt->fetchColumn();
-
-    // --- Revenue Trend: this month vs last month ---
-    $stmt = $pdo->query("
-        SELECT
-            COALESCE(SUM(CASE WHEN DATE_FORMAT(created_at,'%Y-%m') = DATE_FORMAT(NOW(),'%Y-%m') THEN total_amount ELSE 0 END), 0) AS this_month,
-            COALESCE(SUM(CASE WHEN DATE_FORMAT(created_at,'%Y-%m') = DATE_FORMAT(DATE_SUB(NOW(), INTERVAL 1 MONTH),'%Y-%m') THEN total_amount ELSE 0 END), 0) AS last_month
-        FROM orders WHERE payment_status = 'Paid'
-    ");
-    $rev = $stmt->fetch();
-    $revenue_pct = $rev['last_month'] > 0
-        ? round(($rev['this_month'] - $rev['last_month']) / $rev['last_month'] * 100)
-        : ($rev['this_month'] > 0 ? 100 : 0);
-
-    // --- Orders Trend: this month vs last month ---
-    $stmt = $pdo->query("
-        SELECT
-            SUM(CASE WHEN DATE_FORMAT(created_at,'%Y-%m') = DATE_FORMAT(NOW(),'%Y-%m') THEN 1 ELSE 0 END) AS this_month,
-            SUM(CASE WHEN DATE_FORMAT(created_at,'%Y-%m') = DATE_FORMAT(DATE_SUB(NOW(), INTERVAL 1 MONTH),'%Y-%m') THEN 1 ELSE 0 END) AS last_month
-        FROM orders
-    ");
-    $ord = $stmt->fetch();
-    $orders_pct = $ord['last_month'] > 0
-        ? round(($ord['this_month'] - $ord['last_month']) / $ord['last_month'] * 100)
-        : ($ord['this_month'] > 0 ? 100 : 0);
-
-    // --- New customers this week ---
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE role = 'customer' AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)");
-    $stmt->execute();
-    $new_customers_week = (int)$stmt->fetchColumn();
-
-    // Recent Orders
-    $stmt = $pdo->query("SELECT o.*, u.full_name FROM orders o 
-                        LEFT JOIN users u ON o.user_id = u.id 
-                        ORDER BY o.created_at DESC LIMIT 5");
-    $recent_orders = $stmt->fetchAll();
-
-} catch (PDOException $e) {
-    $total_products = 0;
-    $total_orders = 0;
-    $total_revenue = 0;
-    $total_customers = 0;
-    $recent_orders = [];
-    $revenue_pct = 0;
-    $orders_pct = 0;
-    $new_customers_week = 0;
-    error_log('[ARS] Dashboard query error: ' . $e->getMessage());
-    $db_error = 'Database query failed. Please ensure db.sql is imported.';
-}
-
-// Helpers for trend display
-function trend_class(int $pct): string { return $pct >= 0 ? 'positive' : 'negative'; }
-function trend_icon(int $pct): string  { return $pct >= 0 ? 'fa-caret-up' : 'fa-caret-down'; }
-function trend_label(int $pct, string $context = 'from last month'): string {
-    return abs($pct) . '% ' . ($pct >= 0 ? 'up' : 'down') . ' ' . $context;
-}
 ?>
 
 <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
     <h1>Overview</h1>
-    <a href="<?php echo url('/admin/products.php'); ?>" class="btn btn-primary">+ Add New Product</a>
-</div>
-
-<?php if (isset($db_error)): ?>
-    <div class="card" style="border-left: 4px solid var(--danger);">
-        <p style="color: var(--danger);"><strong>Note:</strong> <?php echo h($db_error); ?></p>
+    <div style="display: flex; gap: 12px;">
+        <button class="btn btn-ghost" onclick="fetchStats()" title="Refresh Data">
+            <i class="fa-solid fa-rotate"></i>
+        </button>
+        <a href="<?php echo url('/admin/products.php'); ?>" class="btn btn-primary">+ Add New Product</a>
     </div>
-<?php endif; ?>
+</div>
 
 <!-- KPI Grid -->
 <div class="kpi-grid">
@@ -98,11 +24,8 @@ function trend_label(int $pct, string $context = 'from last month'): string {
             <span class="kpi-label">Total Revenue</span>
             <i class="fa-solid fa-money-bill-trend-up" style="color: var(--success); font-size: 20px;"></i>
         </div>
-        <div class="kpi-value"><?php echo format_price($total_revenue); ?></div>
-        <div class="kpi-change <?php echo trend_class($revenue_pct); ?>">
-            <i class="fa-solid <?php echo trend_icon($revenue_pct); ?>"></i>
-            <?php echo trend_label($revenue_pct); ?>
-        </div>
+        <div class="kpi-value" id="stat-revenue"><div class="spinner spinner-sm"></div></div>
+        <div class="kpi-change" id="stat-revenue-trend">—</div>
     </div>
     
     <div class="kpi-card">
@@ -110,11 +33,8 @@ function trend_label(int $pct, string $context = 'from last month'): string {
             <span class="kpi-label">Orders</span>
             <i class="fa-solid fa-cart-shopping" style="color: var(--primary); font-size: 20px;"></i>
         </div>
-        <div class="kpi-value"><?php echo $total_orders; ?></div>
-        <div class="kpi-change <?php echo trend_class($orders_pct); ?>">
-            <i class="fa-solid <?php echo trend_icon($orders_pct); ?>"></i>
-            <?php echo trend_label($orders_pct); ?>
-        </div>
+        <div class="kpi-value" id="stat-orders"><div class="spinner spinner-sm"></div></div>
+        <div class="kpi-change" id="stat-orders-trend">—</div>
     </div>
     
     <div class="kpi-card">
@@ -122,7 +42,7 @@ function trend_label(int $pct, string $context = 'from last month'): string {
             <span class="kpi-label">Products</span>
             <i class="fa-solid fa-box" style="color: #7C3AED; font-size: 20px;"></i>
         </div>
-        <div class="kpi-value"><?php echo $total_products; ?></div>
+        <div class="kpi-value" id="stat-products"><div class="spinner spinner-sm"></div></div>
         <div class="kpi-change">Active in shop</div>
     </div>
     
@@ -131,13 +51,8 @@ function trend_label(int $pct, string $context = 'from last month'): string {
             <span class="kpi-label">Customers</span>
             <i class="fa-solid fa-users" style="color: var(--warning); font-size: 20px;"></i>
         </div>
-        <div class="kpi-value"><?php echo $total_customers; ?></div>
-        <div class="kpi-change <?php echo $new_customers_week > 0 ? 'positive' : ''; ?>">
-            <?php if ($new_customers_week > 0): ?>
-                <i class="fa-solid fa-caret-up"></i>
-            <?php endif; ?>
-            <?php echo $new_customers_week > 0 ? $new_customers_week . ' new this week' : 'No new this week'; ?>
-        </div>
+        <div class="kpi-value" id="stat-customers"><div class="spinner spinner-sm"></div></div>
+        <div class="kpi-change" id="stat-customers-trend">—</div>
     </div>
 </div>
 
@@ -159,22 +74,8 @@ function trend_label(int $pct, string $context = 'from last month'): string {
                         <th>Date</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <?php if (count($recent_orders) > 0): ?>
-                        <?php foreach ($recent_orders as $order): ?>
-                            <tr>
-                                <td>#<?php echo $order['id']; ?></td>
-                                <td><?php echo h($order['full_name'] ?? 'Guest'); ?></td>
-                                <td><?php echo format_price($order['total_amount']); ?></td>
-                                <td><span class="badge <?php echo get_status_badge($order['delivery_status']); ?>"><?php echo $order['delivery_status']; ?></span></td>
-                                <td><?php echo date('M d, Y', strtotime($order['created_at'])); ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <tr>
-                            <td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 40px;">No recent orders found.</td>
-                        </tr>
-                    <?php endif; ?>
+                <tbody id="recent-orders-tbody">
+                    <tr><td colspan="5" style="text-align:center; padding:40px;"><div class="spinner"></div></td></tr>
                 </tbody>
             </table>
         </div>
@@ -187,7 +88,7 @@ function trend_label(int $pct, string $context = 'from last month'): string {
         </div>
         <div class="status-summary" style="display: flex; flex-direction: column; gap: 16px;">
             <div style="display: flex; justify-content: space-between;">
-                <span>Delivery Status</span>
+                <span>Delivery Service</span>
                 <span class="badge badge-success">Online</span>
             </div>
             <div style="display: flex; justify-content: space-between;">
@@ -196,14 +97,115 @@ function trend_label(int $pct, string $context = 'from last month'): string {
             </div>
             <div style="display: flex; justify-content: space-between;">
                 <span>Digital Payment</span>
-                <span class="badge badge-info">eSewa/QR Active</span>
+                <span class="badge badge-info" id="payment-status">eSewa/QR Active</span>
             </div>
             <hr style="border: none; border-top: 1px solid var(--border-color);">
-            <p class="text-sm" style="color: var(--text-secondary);">
-                Welcome to your command center. From here you can manage all aspects of <strong>Easy Shopping A.R.S</strong>.
-            </p>
+            <div id="order-status-breakdown" style="display:flex; flex-direction:column; gap:8px;">
+                <!-- Filled via JS -->
+            </div>
         </div>
     </div>
 </div>
+
+<script>
+async function fetchStats() {
+    try {
+        const res = await fetch(BASE_URL + '/api/dashboard/stats');
+        const json = await res.json();
+        
+        if (!json.success) {
+            Toast.error(json.message);
+            return;
+        }
+        
+        const s = json.data;
+        
+        // Update KPIs
+        document.getElementById('stat-revenue').textContent = formatPrice(s.total_revenue);
+        renderTrend('stat-revenue-trend', s.revenue_trend.change_percent);
+        
+        document.getElementById('stat-orders').textContent = s.total_orders;
+        renderTrend('stat-orders-trend', s.orders_trend.change_percent);
+        
+        document.getElementById('stat-products').textContent = s.total_products;
+        document.getElementById('stat-customers').textContent = s.total_customers;
+        
+        const newCust = s.new_customers_week;
+        document.getElementById('stat-customers-trend').innerHTML = newCust > 0 
+            ? `<span class="positive"><i class="fa-solid fa-caret-up"></i> ${newCust} new this week</span>`
+            : `<span style="color:var(--text-secondary)">No new this week</span>`;
+            
+        // Recent Orders
+        const tbody = document.getElementById('recent-orders-tbody');
+        if (s.recent_orders.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:40px; color:var(--text-secondary);">No recent orders.</td></tr>';
+        } else {
+            tbody.innerHTML = s.recent_orders.map(o => `
+                <tr>
+                    <td style="font-weight:600;">#${o.id}</td>
+                    <td>${escHtml(o.full_name || 'Guest')}</td>
+                    <td style="font-weight:600;">${formatPrice(o.total_amount)}</td>
+                    <td><span class="badge ${getBadgeClass(o.delivery_status)}">${o.delivery_status}</span></td>
+                    <td style="color:var(--text-secondary); font-size:13px;">${formatDate(o.created_at)}</td>
+                </tr>
+            `).join('');
+        }
+        
+        // Status Breakdown
+        const breakdown = document.getElementById('order-status-breakdown');
+        breakdown.innerHTML = Object.entries(s.order_status_breakdown).map(([status, count]) => `
+            <div style="display:flex; justify-content:space-between; font-size:13px;">
+                <span style="color:var(--text-secondary)">${status}</span>
+                <span style="font-weight:600;">${count}</span>
+            </div>
+        `).join('');
+        
+    } catch (e) {
+        console.error(e);
+        Toast.error('Failed to load dashboard statistics');
+    }
+}
+
+function renderTrend(id, pct) {
+    const el = document.getElementById(id);
+    const cls = pct >= 0 ? 'positive' : 'negative';
+    const icon = pct >= 0 ? 'fa-caret-up' : 'fa-caret-down';
+    el.className = 'kpi-change ' + cls;
+    el.innerHTML = `<i class="fa-solid ${icon}"></i> ${Math.abs(pct)}% ${pct >= 0 ? 'up' : 'down'} from last month`;
+}
+
+function getBadgeClass(status) {
+    const s = (status || '').toLowerCase();
+    if (['paid','delivered','approved'].includes(s)) return 'badge-success';
+    if (['pending'].includes(s)) return 'badge-warning';
+    if (['shipped','confirmed','out for delivery'].includes(s)) return 'badge-info';
+    if (['failed','cancelled','rejected'].includes(s)) return 'badge-danger';
+    return 'badge-primary';
+}
+
+function formatPrice(val) {
+    return 'Rs. ' + parseFloat(val || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
+function formatDate(d) {
+    return new Date(d).toLocaleDateString('en-US', {month:'short', day:'numeric'});
+}
+
+function escHtml(str) {
+    if (!str) return '';
+    return str.toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Initialize
+fetchStats();
+</script>
+
+<style>
+.spinner-sm { width: 14px; height: 14px; border-width: 2px; }
+.positive { color: var(--success); font-weight: 500; }
+.negative { color: var(--danger); font-weight: 500; }
+</style>
+
+<?php include __DIR__ . '/includes/footer.php'; ?>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>

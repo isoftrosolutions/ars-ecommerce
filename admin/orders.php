@@ -88,7 +88,6 @@ async function loadOrders(page = 1) {
     document.getElementById('orders-tbody').innerHTML = '<tr class="loading-row"><td colspan="7"><div class="spinner"></div></td></tr>';
 
     const params = new URLSearchParams({
-        action: 'get_orders',
         page,
         limit: 10,
         search: document.getElementById('search-input').value,
@@ -96,7 +95,7 @@ async function loadOrders(page = 1) {
         payment_status: document.getElementById('payment-filter').value
     });
 
-    const res = await fetch(BASE_URL + '/backend/orders.php', { method: 'POST', body: params });
+    const res = await fetch(BASE_URL + '/api/orders/list?' + params.toString());
     const json = await res.json();
     if (!json.success) { Toast.error(json.message); return; }
 
@@ -137,11 +136,7 @@ async function viewOrder(id) {
     document.getElementById('order-modal-body').innerHTML = '<div style="text-align:center;padding:40px;"><div class="spinner"></div></div>';
     document.getElementById('order-modal').classList.add('open');
 
-    const res = await fetch(BASE_URL + '/backend/orders.php', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: `action=get_order_details&order_id=${id}`
-    });
+    const res = await fetch(BASE_URL + `/api/orders/detail?id=${id}`);
     const json = await res.json();
     if (!json.success) { document.getElementById('order-modal-body').innerHTML = `<p style="color:var(--danger)">${json.message}</p>`; return; }
 
@@ -215,15 +210,22 @@ async function saveOrderStatus() {
     const location = document.getElementById('update-location').value;
 
     const [r1, r2] = await Promise.all([
-        fetch(BASE_URL + '/backend/orders.php', {
+        fetch(BASE_URL + '/api/orders/update-status', {
             method: 'POST',
-            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-            body: `action=update_order_status&order_id=${currentOrderId}&status=${encodeURIComponent(deliveryStatus)}&current_location=${encodeURIComponent(location)}`
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                order_id: currentOrderId,
+                status: deliveryStatus,
+                current_location: location
+            })
         }),
-        fetch(BASE_URL + '/backend/orders.php', {
+        fetch(BASE_URL + '/api/orders/update-payment-status', {
             method: 'POST',
-            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-            body: `action=update_payment_status&order_id=${currentOrderId}&payment_status=${encodeURIComponent(paymentStatus)}`
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                order_id: currentOrderId,
+                payment_status: paymentStatus
+            })
         })
     ]);
 

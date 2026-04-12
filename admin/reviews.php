@@ -84,17 +84,12 @@ include __DIR__ . '/includes/header.php';
 let currentPage = 1;
 
 async function loadStats() {
-    const res = await fetch(BASE_URL + '/backend/reviews.php', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: 'action=get_stats'
-    });
+    const res = await fetch(BASE_URL + '/api/reviews/stats');
     const json = await res.json();
     if (json.success) {
         const s = json.data;
-        document.getElementById('stat-total').textContent = s.total_reviews;
-        document.getElementById('stat-pending').textContent = s.status_counts['pending'] || 0;
-        document.getElementById('stat-approved').textContent = s.status_counts['approved'] || 0;
+        document.getElementById('stat-total').textContent = s.total;
+        document.getElementById('stat-pending').textContent = s.pending;
         document.getElementById('stat-avg').textContent = s.average_rating ? s.average_rating + ' ★' : '—';
     }
 }
@@ -104,13 +99,13 @@ async function loadReviews(page = 1) {
     document.getElementById('reviews-tbody').innerHTML = '<tr class="loading-row"><td colspan="8"><div class="spinner"></div></td></tr>';
 
     const params = new URLSearchParams({
-        action: 'get_reviews', page, limit: 10,
+        page, limit: 10,
         search: document.getElementById('search-input').value,
         status: document.getElementById('status-filter').value,
         rating: document.getElementById('rating-filter').value
     });
 
-    const res = await fetch(BASE_URL + '/backend/reviews.php', { method: 'POST', body: params });
+    const res = await fetch(BASE_URL + '/api/reviews/list?' + params.toString());
     const json = await res.json();
     if (!json.success) { Toast.error(json.message); return; }
 
@@ -128,8 +123,8 @@ async function loadReviews(page = 1) {
             <td><input type="checkbox" class="row-check" value="${r.id}"></td>
             <td style="font-weight:500; max-width:160px;">${escHtml(r.product_name)}</td>
             <td>
-                <div style="font-weight:500;">${escHtml(r.full_name || 'Anonymous')}</div>
-                <div style="font-size:12px; color:var(--text-secondary);">${escHtml(r.mobile || '')}</div>
+                <div style="font-weight:500;">${escHtml(r.user_name || 'Anonymous')}</div>
+                <div style="font-size:12px; color:var(--text-secondary);">${escHtml(r.user_email || '')}</div>
             </td>
             <td><span class="stars">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</span></td>
             <td style="max-width:200px; color:var(--text-secondary); font-size:13px;">${escHtml((r.comment || '').substring(0, 80))}${r.comment && r.comment.length > 80 ? '…' : ''}</td>
@@ -153,10 +148,10 @@ async function loadReviews(page = 1) {
 }
 
 async function updateStatus(id, status) {
-    const res = await fetch(BASE_URL + '/backend/reviews.php', {
+    const res = await fetch(BASE_URL + '/api/reviews/update-status', {
         method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: `action=update_status&id=${id}&status=${status}`
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ id, status })
     });
     const json = await res.json();
     if (json.success) { Toast.success(`Review ${status}!`); loadReviews(currentPage); loadStats(); }
@@ -165,10 +160,10 @@ async function updateStatus(id, status) {
 
 async function deleteReview(id) {
     if (!confirm('Delete this review?')) return;
-    const res = await fetch(BASE_URL + '/backend/reviews.php', {
+    const res = await fetch(BASE_URL + '/api/reviews/delete', {
         method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: `action=delete_review&id=${id}`
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ id })
     });
     const json = await res.json();
     if (json.success) { Toast.success('Review deleted.'); loadReviews(currentPage); loadStats(); }
@@ -183,18 +178,22 @@ async function applyBulkAction() {
 
     if (action === 'delete') {
         if (!confirm(`Delete ${ids.length} review(s)?`)) return;
-        const params = new URLSearchParams({ action: 'bulk_delete' });
-        ids.forEach(id => params.append('review_ids[]', id));
-        const res = await fetch(BASE_URL + '/backend/reviews.php', { method: 'POST', body: params });
+        const res = await fetch(BASE_URL + '/api/reviews/bulk-delete', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ ids })
+        });
         const json = await res.json();
-        if (json.success) { Toast.success(`${json.deleted} review(s) deleted.`); loadReviews(currentPage); loadStats(); }
+        if (json.success) { Toast.success(`${json.data.deleted} review(s) deleted.`); loadReviews(currentPage); loadStats(); }
         else Toast.error(json.message);
     } else {
-        const params = new URLSearchParams({ action: 'bulk_update_status', status: action });
-        ids.forEach(id => params.append('review_ids[]', id));
-        const res = await fetch(BASE_URL + '/backend/reviews.php', { method: 'POST', body: params });
+        const res = await fetch(BASE_URL + '/api/reviews/bulk-update-status', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ ids, status: action })
+        });
         const json = await res.json();
-        if (json.success) { Toast.success(`${json.updated} review(s) updated.`); loadReviews(currentPage); loadStats(); }
+        if (json.success) { Toast.success(`${json.data.updated} review(s) updated.`); loadReviews(currentPage); loadStats(); }
         else Toast.error(json.message);
     }
 }
