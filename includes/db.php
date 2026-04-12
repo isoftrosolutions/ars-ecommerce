@@ -1,15 +1,21 @@
 <?php
 /**
- * Database Connection File
+ * Database Connection & Security Bootstrap
  * Easy Shopping A.R.S eCommerce Platform
+ * 
+ * This file initializes: env config, DB connection, session hardening,
+ * security headers, and remember-me token handling.
  */
 
-// Database Configuration
-$host = 'localhost';
-$db   = 'ars_ecommerce';
-$user = 'root';
-$pass = ''; // Default XAMPP/Apache password is empty
-$charset = 'utf8mb4';
+// ── 1. Load Environment Configuration ─────────────────────────────
+require_once __DIR__ . '/env.php';
+
+// ── 2. Database Configuration (from .env) ─────────────────────────
+$host    = env('DB_HOST', 'localhost');
+$db      = env('DB_NAME', 'ars_ecommerce');
+$user    = env('DB_USER', 'root');
+$pass    = env('DB_PASS', '');
+$charset = env('DB_CHARSET', 'utf8mb4');
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
 $options = [
@@ -33,12 +39,47 @@ try {
     exit();
 }
 
-// Start session if not already started
+// ── 3. Hardened Session Configuration ─────────────────────────────
 if (session_status() === PHP_SESSION_NONE) {
+    $isSecure = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on')
+             || env('SESSION_SECURE', false);
+
+    session_set_cookie_params([
+        'lifetime' => (int) env('SESSION_LIFETIME', 0),
+        'path'     => '/',
+        'domain'   => '',
+        'secure'   => (bool) $isSecure,
+        'httponly'  => true,
+        'samesite'  => 'Lax',
+    ]);
+
+    ini_set('session.use_strict_mode', 1);
+    ini_set('session.cookie_httponly', 1);
+    ini_set('session.use_only_cookies', 1);
+
     session_start();
 }
 
-// Check for remember me token
+// ── 4. Security Headers (applied on every request) ────────────────
+if (!headers_sent()) {
+    // Prevent clickjacking
+    header('X-Frame-Options: SAMEORIGIN');
+    // Prevent MIME sniffing
+    header('X-Content-Type-Options: nosniff');
+    // Control referrer information
+    header('Referrer-Policy: strict-origin-when-cross-origin');
+    // Restrict browser features
+    header('Permissions-Policy: camera=(), microphone=(), geolocation=()');
+    // Legacy XSS protection for older browsers
+    header('X-XSS-Protection: 1; mode=block');
+
+    // HSTS — only enable when SSL is confirmed in production
+    if (env('APP_ENV') === 'production' && isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') {
+        header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+    }
+}
+
+// ── 5. Check for Remember-Me Token ────────────────────────────────
 if (!isset($_SESSION['user']) && isset($_COOKIE['remember_token'])) {
     $token = $_COOKIE['remember_token'];
     $hashed_token = hash('sha256', $token);
@@ -53,7 +94,7 @@ if (!isset($_SESSION['user']) && isset($_COOKIE['remember_token'])) {
             unset($user['password']);
             $_SESSION['user'] = $user;
 
-            // Generate new token for security (optional rotation)
+            // Generate new token for security (rotation)
             $new_token = bin2hex(random_bytes(32));
             $new_hashed_token = hash('sha256', $new_token);
 

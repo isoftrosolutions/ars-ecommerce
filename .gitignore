@@ -1,0 +1,33 @@
+# ── Environment & Secrets ──
+.env
+*.env.local
+
+# ── Logs ──
+logs/*.log
+logs/*.bak
+
+# ── Uploads (optional: keep in repo or not) ──
+uploads/products/*
+uploads/payments/*
+!uploads/products/.gitkeep
+!uploads/payments/.gitkeep
+
+# ── IDE & OS ──
+.vscode/
+.idea/
+*.swp
+*.swo
+Thumbs.db
+.DS_Store
+
+# ── Dependencies ──
+vendor/
+node_modules/
+
+# ── Database dumps with sensitive data ──
+# db.sql (uncomment if you want to exclude the dump)
+
+# ── Temp files ──
+scratch/
+*.tmp
+*.bak

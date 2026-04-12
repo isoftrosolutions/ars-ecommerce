@@ -349,10 +349,10 @@ async function editProduct(id) {
     document.getElementById('modal-title').textContent = 'Edit Product';
 
     // Load existing images as URL type (already stored paths)
-    productImages = (p.images || []).map(img => ({ type: 'url', path: img.image_path, file: null, preview: null }));
+    productImages = (p.images || []).map(img => ({ type: 'url', path: img.full_url, file: null, preview: null }));
     // Fallback: if no images table rows but product has a legacy image
-    if (!productImages.length && p.image) {
-        productImages = [{ type: 'url', path: p.image, file: null, preview: null }];
+    if (!productImages.length && p.image_url) {
+        productImages = [{ type: 'url', path: p.image_url, file: null, preview: null }];
     }
     renderImageList();
     document.getElementById('product-modal').classList.add('open');

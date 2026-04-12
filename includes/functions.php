@@ -8,8 +8,8 @@
 $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http");
 $host = $_SERVER['HTTP_HOST'];
 $project_dir = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/\\');
-// If we are in backend or auth or admin subfolders, get the parent
-if (preg_match('/(backend|auth|admin|includes)$/', $project_dir)) {
+// If we are in backend or auth or admin or api subfolders, get the parent
+if (preg_match('/(backend|auth|admin|api|includes)$/', $project_dir)) {
     $project_dir = dirname($project_dir);
 }
 $project_dir = rtrim(str_replace('\\', '/', $project_dir), '/');

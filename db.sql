@@ -38,9 +38,6 @@ CREATE TABLE `cart_items` (
 
 /*Data for the table `cart_items` */
 
-insert  into `cart_items`(`id`,`user_id`,`session_id`,`product_id`,`quantity`,`created_at`,`updated_at`) values 
-(3,3,NULL,1,1,'2026-04-11 18:06:49','2026-04-11 18:07:11');
-
 /*Table structure for table `categories` */
 
 DROP TABLE IF EXISTS `categories`;
@@ -51,9 +48,12 @@ CREATE TABLE `categories` (
   `slug` varchar(100) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `slug` (`slug`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 /*Data for the table `categories` */
+
+insert  into `categories`(`id`,`name`,`slug`) values 
+(1,'Electronice','electronice');
 
 /*Table structure for table `contact_submissions` */
 
@@ -171,8 +171,9 @@ CREATE TABLE `order_items` (
 /*Data for the table `order_items` */
 
 insert  into `order_items`(`id`,`order_id`,`product_id`,`quantity`,`price`,`discount_price`) values 
-(1,1,1,2,100.00,10.00),
-(3,3,1,10,100.00,10.00);
+(1,1,1,1,2500.00,NULL),
+(2,2,1,1,2500.00,NULL),
+(3,3,2,1,1000.00,10.00);
 
 /*Table structure for table `orders` */
 
@@ -209,8 +210,9 @@ CREATE TABLE `orders` (
 /*Data for the table `orders` */
 
 insert  into `orders`(`id`,`user_id`,`customer_name`,`customer_email`,`customer_phone`,`shipping_address`,`shipping_city`,`total_amount`,`coupon_code`,`discount_amount`,`payment_method`,`payment_status`,`delivery_status`,`current_location`,`location_updated_at`,`transaction_id`,`payment_proof`,`address`,`notes`,`created_at`) values 
-(1,2,'Devbarat Prasad Patel','mind59024@gmail.com','9811144402','Bahudramai-07, Phulkaul, Parsa','Madhesi',20.00,NULL,0.00,'eSewa','Pending','Pending','Preparing for shipment',NULL,NULL,NULL,NULL,NULL,'2026-04-11 18:00:38'),
-(3,2,'Devbarat Prasad Patel','mind59024@gmail.com','9811144402','Bahudramai-07, Phulkaul, Parsa','Birgunj',100.00,NULL,0.00,'COD','Pending','Pending','Preparing for shipment',NULL,NULL,NULL,NULL,NULL,'2026-04-11 18:20:32');
+(1,2,'Devbarat Prasad Patel','mind59024@gmail.com','9811144402','Bahudramai-07, Phulkaul, Parsa','Birgunj',2500.00,NULL,0.00,'COD','Pending','Pending','Preparing for shipment',NULL,NULL,NULL,NULL,NULL,'2026-04-12 10:02:17'),
+(2,2,'Devbarat Prasad Patel','mind59024@gmail.com','9811144402','Bahudramai-07, Phulkaul, Parsa','Birgunj',2500.00,NULL,0.00,'COD','Pending','Pending','Preparing for shipment',NULL,NULL,NULL,NULL,NULL,'2026-04-12 13:26:44'),
+(3,2,'Devbarat Prasad Patel','mind59024@gmail.com','9811144402','Bahudramai-07, Phulkaul, Parsa','Birgunj',10.00,NULL,0.00,'eSewa','Pending','Pending','Preparing for shipment',NULL,NULL,'uploads/payments/esewa_1775980091_69db4e3b74888.png',NULL,NULL,'2026-04-12 13:33:11');
 
 /*Table structure for table `product_images` */
 
@@ -224,12 +226,13 @@ CREATE TABLE `product_images` (
   PRIMARY KEY (`id`),
   KEY `product_id` (`product_id`),
   CONSTRAINT `product_images_ibfk_1` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 /*Data for the table `product_images` */
 
 insert  into `product_images`(`id`,`product_id`,`image_path`,`is_primary`) values 
-(1,1,'prod_69da394fcafc95.38973015.png',1);
+(1,1,'prod_69db1b20de730_mouse.jpg',1),
+(2,2,'prod_69db4e1cc7223.png',1);
 
 /*Table structure for table `product_reviews` */
 
@@ -277,12 +280,13 @@ CREATE TABLE `products` (
   UNIQUE KEY `sku` (`sku`),
   KEY `category_id` (`category_id`),
   CONSTRAINT `products_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 /*Data for the table `products` */
 
 insert  into `products`(`id`,`name`,`slug`,`description`,`price`,`discount_price`,`category_id`,`stock`,`image`,`sku`,`is_featured`,`created_at`) values 
-(1,'Apple','apple','this is a  test project ',100.00,10.00,NULL,100,'prod_69da394fcafc95.38973015.png','APPLE123',1,'2026-04-11 17:51:39');
+(1,'Logitech Wireless Master Mouse','logitech-wireless-master-mouse','A premium wireless computer mouse with ergonomic design, fast scrolling, and advanced tracking. Perfect for productivity and gaming.',2500.00,NULL,NULL,50,'prod_69db1b20de730_mouse.jpg','MOUSE-LOGI-01',1,'2026-04-12 09:55:10'),
+(2,'APPLE','apple','this is  a  test product',1000.00,10.00,1,100,'prod_69db4e1cc7223.png',NULL,1,'2026-04-12 13:32:40');
 
 /*Table structure for table `site_settings` */
 
@@ -366,7 +370,7 @@ CREATE TABLE `users` (
 insert  into `users`(`id`,`full_name`,`email`,`mobile`,`password`,`address`,`role`,`reset_token`,`reset_expires`,`reset_token_used_at`,`otp_attempts`,`otp_issued_at`,`otp_hash`,`email_verified_at`,`verification_token`,`remember_token`,`oauth_provider`,`oauth_provider_id`,`created_at`) values 
 (1,'Admin','easyshoppinga.r.s1@gmail.com','9820210361','$2y$12$h8F1x.7kwgQhM4OGkRcUF.wjKSPoSY1ZV/xy6aTSeuZ9TNBQKDajq',NULL,'admin',NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-11 10:54:28'),
 (2,'Devbarat Prasad Patel','mind59024@gmail.com','9811144402','$2y$12$VPBoIR19Sf70449AXW8D/eO4BWAUX03RSjDF1nRMIz0c/JR0m4C.u','Bahudramai-07, Phulkaul, Parsa','customer',NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-11 15:04:48'),
-(3,'Admin (pdewbrath)','pdewbrath@gmail.com','9800000000','$2y$12$RTKZfH6MghcesA4zgNCI1.JZYSIlPPx8/nU4o9Na6WXzseITGRNS.','Admin Office','admin','33c45f4e5d8a34ec8d6e7cb874a1542244891e5f83707c1e9f671f73756875de','2026-04-11 12:41:39',NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-11 16:57:00');
+(3,'Admin (pdewbrath)','pdewbrath@gmail.com','9800000000','$2y$12$RTKZfH6MghcesA4zgNCI1.JZYSIlPPx8/nU4o9Na6WXzseITGRNS.','Admin Office','admin','33c45f4e5d8a34ec8d6e7cb874a1542244891e5f83707c1e9f671f73756875de','2026-04-11 12:41:39',NULL,0,NULL,NULL,NULL,NULL,'859f39c1772a2d7a531702362414dc286b8f2fa470b5bf94c18c217fa68951ec',NULL,NULL,'2026-04-11 16:57:00');
 
 /*Table structure for table `wishlist` */
 

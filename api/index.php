@@ -12,9 +12,11 @@ if (getenv('APP_ENV') !== 'production') {
 
 // Set headers for API responses
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
+$allowed_origin = env('APP_URL', ($_SERVER['REQUEST_SCHEME'] ?? 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost'));
+header('Access-Control-Allow-Origin: ' . $allowed_origin);
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-CSRF-Token');
+header('Access-Control-Allow-Credentials: true');
 
 // Handle preflight OPTIONS request
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -123,6 +125,12 @@ try {
         case 'uploads':
             require_once __DIR__ . '/uploads/UploadController.php';
             $controller = new UploadController();
+            $controller->handleRequest($requestMethod, $action);
+            break;
+
+        case 'health':
+            require_once __DIR__ . '/health/HealthController.php';
+            $controller = new HealthController();
             $controller->handleRequest($requestMethod, $action);
             break;
 

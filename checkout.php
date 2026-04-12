@@ -17,6 +17,11 @@ $user = $_SESSION['user'] ?? null;
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // CSRF validation
+    if (!validate_csrf_token()) {
+        $errors[] = "Invalid security token. Please refresh the page and try again.";
+    }
+
     $name           = trim($_POST['name']           ?? '');
     $email          = trim($_POST['email']          ?? '');
     $phone          = trim($_POST['phone']          ?? '');
@@ -32,15 +37,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($payment_method)) $errors[] = "Payment method is required";
     if (empty($cart_items))     $errors[] = "Your cart is empty";
 
+    $payment_proof_path = null;
+    if ($payment_method === 'esewa') {
+        if (!isset($_FILES['payment_proof']) || $_FILES['payment_proof']['error'] !== UPLOAD_ERR_OK) {
+            $errors[] = "Payment screenshot is required for eSewa payment.";
+        } else {
+            $file = $_FILES['payment_proof'];
+            $allowed_types = ['image/jpeg', 'image/png', 'image/jpg'];
+            $max_size = 5 * 1024 * 1024; // 5MB
+            
+            if (!in_array($file['type'], $allowed_types)) {
+                $errors[] = "Invalid file type. Only JPG and PNG are allowed.";
+            } elseif ($file['size'] > $max_size) {
+                $errors[] = "File size exceeds 5MB limit.";
+            } else {
+                $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+                $filename = 'esewa_' . time() . '_' . uniqid() . '.' . $ext;
+                $upload_dir = __DIR__ . '/uploads/payments/';
+                
+                if (!is_dir($upload_dir)) {
+                    mkdir($upload_dir, 0755, true);
+                }
+                
+                if (move_uploaded_file($file['tmp_name'], $upload_dir . $filename)) {
+                    $payment_proof_path = 'uploads/payments/' . $filename;
+                } else {
+                    $errors[] = "Failed to upload payment screenshot.";
+                }
+            }
+        }
+    }
+
     if (empty($errors)) {
         try {
             $pdo->beginTransaction();
 
-            $stmt = $pdo->prepare("INSERT INTO orders (user_id, total_amount, payment_method, delivery_status, shipping_address, shipping_city, customer_name, customer_email, customer_phone, created_at) VALUES (?, ?, ?, 'Pending', ?, ?, ?, ?, ?, NOW())");
+            $stmt = $pdo->prepare("INSERT INTO orders (user_id, total_amount, payment_method, payment_proof, delivery_status, shipping_address, shipping_city, customer_name, customer_email, customer_phone, created_at) VALUES (?, ?, ?, ?, 'Pending', ?, ?, ?, ?, ?, NOW())");
             $stmt->execute([
                 $user ? $user['id'] : null,
                 $cart_total,
                 $payment_method,
+                $payment_proof_path,
                 $address,
                 $city,
                 $name,
@@ -120,7 +157,8 @@ include 'includes/header-bootstrap.php';
                             <a href="<?php echo url('/shop'); ?>" class="btn btn-primary">Continue Shopping</a>
                         </div>
                     <?php else: ?>
-                        <form method="POST">
+                        <form method="POST" enctype="multipart/form-data">
+                            <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
                             <h5 class="mb-3">Shipping Information</h5>
 
                             <div class="row">
@@ -153,18 +191,28 @@ include 'includes/header-bootstrap.php';
                             <h5 class="mb-3 mt-4">Payment Method</h5>
                             <div class="mb-3">
                                 <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="payment_method" id="cod" value="cod" checked>
+                                    <input class="form-check-input" type="radio" name="payment_method" id="cod" value="cod" checked onchange="toggleEsewaDetails()">
                                     <label class="form-check-label" for="cod">
                                         <strong>Cash on Delivery</strong>
                                         <br><small class="text-muted">Pay when you receive your order</small>
                                     </label>
                                 </div>
                                 <div class="form-check mt-2">
-                                    <input class="form-check-input" type="radio" name="payment_method" id="esewa" value="esewa">
+                                    <input class="form-check-input" type="radio" name="payment_method" id="esewa" value="esewa" onchange="toggleEsewaDetails()">
                                     <label class="form-check-label" for="esewa">
                                         <strong>eSewa</strong>
                                         <br><small class="text-muted">Pay securely with eSewa</small>
                                     </label>
+                                </div>
+
+                                <div id="esewa_details" class="mt-3 p-3 border rounded bg-light" style="display: none;">
+                                    <h6>eSewa Payment Details</h6>
+                                    <p class="small mb-2">Please send the total amount to our eSewa ID: <strong>98XXXXXXXX</strong> or scan our QR code.</p>
+                                    <div class="mb-3">
+                                        <label for="payment_proof" class="form-label small fw-bold">Upload Payment Screenshot <span class="text-danger">*</span></label>
+                                        <input class="form-control form-control-sm" type="file" id="payment_proof" name="payment_proof" accept="image/png, image/jpeg, image/jpg">
+                                        <div class="form-text" style="font-size: 0.75rem;">Allowed formats: JPG, PNG, JPEG. Max size: 5MB.</div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -237,6 +285,26 @@ include 'includes/header-bootstrap.php';
 </div>
 
 <script>
+// Toggle eSewa payment details visibility based on selected payment method
+function toggleEsewaDetails() {
+    var esewaDetails = document.getElementById('esewa_details');
+    var isEsewa = document.getElementById('esewa').checked;
+    var paymentProof = document.getElementById('payment_proof');
+    
+    if (isEsewa) {
+        esewaDetails.style.display = 'block';
+        paymentProof.setAttribute('required', 'required');
+    } else {
+        esewaDetails.style.display = 'none';
+        paymentProof.removeAttribute('required');
+    }
+}
+
+// Initial call to set correct state
+document.addEventListener('DOMContentLoaded', function() {
+    toggleEsewaDetails();
+});
+
 // Auto-fill form if user is logged in
 <?php if ($user): ?>
 document.addEventListener('DOMContentLoaded', function() {

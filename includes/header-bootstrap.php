@@ -321,6 +321,18 @@ $_seo_canonical = rtrim($_seo_canonical, '?&');
                         </div>
                     </a>
 
+                    <?php if (is_admin()): ?>
+                    <!-- Admin Dashboard Link -->
+                    <a href="<?php echo url('/admin/dashboard'); ?>" class="meta-link ms-2">
+                        <div class="cart-wrapper">
+                            <i class="bi bi-speedometer2"></i>
+                        </div>
+                        <div class="meta-text">
+                            <span class="meta-label">Admin</span>
+                            <span class="meta-value">Dashboard</span>
+                        </div>
+                    </a>
+                    <?php else: ?>
                     <!-- Cart Link -->
                     <a href="<?php echo url('/cart.php'); ?>" class="meta-link ms-2">
                         <div class="cart-wrapper">
@@ -332,6 +344,7 @@ $_seo_canonical = rtrim($_seo_canonical, '?&');
                             <span class="meta-value">Cart</span>
                         </div>
                     </a>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -399,14 +412,21 @@ window.BASE_URL = '<?php echo rtrim(url(''), '/'); ?>';
             method: 'GET',
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) return null;
+            const ct = response.headers.get('content-type') || '';
+            if (!ct.includes('application/json')) return null;
+            return response.json();
+        })
         .then(data => {
+            if (!data) return;
             if (data.logged_in !== currentLoginStatus) {
                 currentLoginStatus = data.logged_in;
                 localStorage.setItem('loginStatus', JSON.stringify(data));
-                window.location.reload(); // Safer for complex structure changes
+                window.location.reload();
             }
-        });
+        })
+        .catch(() => { /* silently ignore transient network/parse errors */ });
     }
 
     // Storage listener

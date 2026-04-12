@@ -162,6 +162,7 @@ async function viewOrder(id) {
             <div class="detail-item"><label>Payment Method</label><span>${escHtml(o.payment_method || '—')}</span></div>
             <div class="detail-item"><label>Transaction ID</label><span>${escHtml(o.transaction_id || '—')}</span></div>
             <div class="detail-item"><label>Coupon</label><span>${o.coupon_code ? escHtml(o.coupon_code) + ' (-Rs. ' + parseFloat(o.discount_amount||0).toFixed(2) + ')' : '—'}</span></div>
+            ${o.payment_proof ? `<div class="detail-item" style="grid-column: 1 / -1;"><label>Payment Proof</label><div style="margin-top: 8px;"><a href="${BASE_URL}/${escHtml(o.payment_proof)}" target="_blank" title="Click to view full size"><img src="${BASE_URL}/${escHtml(o.payment_proof)}" style="max-height: 150px; border: 1px solid var(--border-color, #e2e8f0); border-radius: 6px; padding: 4px; background: white; object-fit: contain;"></a></div></div>` : ''}
         </div>
 
         <div class="table-container" style="margin-bottom:24px;">

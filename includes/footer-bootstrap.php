@@ -16,7 +16,7 @@ global $base_url;
                     <div class="footer-brand mb-4">
                         <a href="/" class="d-flex align-items-center text-decoration-none mb-3">
                             <div class="brand-logo me-2" style="width: 45px; height: 45px; border-radius: 12px; overflow: hidden; flex-shrink: 0; background: #fff; display: flex; align-items: center; justify-content: center;">
-                                <img src="<?= $base_url ?>/assets/logo.jpeg" alt="ARS Shop Logo" onerror="this.src='https://ui-avatars.com/api/?name=ARS&background=ea6c00&color=fff'" style="width: 100%; height: 100%; object-fit: cover;">
+                                <img src="https://ui-avatars.com/api/?name=ARS&background=ea6c00&color=fff&size=90&bold=true" alt="ARS Shop Logo" style="width: 100%; height: 100%; object-fit: cover;">
                             </div>
                             <span class="brand-text fw-bold text-white fs-3">Easy Shopping <span style="color: #ea6c00;">A.R.S</span></span>
                         </a>
@@ -160,7 +160,7 @@ global $base_url;
                     <div class="app-install-card p-3 rounded-3 mb-3" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);">
                         <div class="d-flex align-items-center gap-3 mb-3">
                             <div style="width:40px;height:40px;border-radius:10px;overflow:hidden;flex-shrink:0;">
-                                <img src="<?= $base_url ?>/assets/logo.jpeg" alt="ARS App Icon" onerror="this.src='https://ui-avatars.com/api/?name=ARS&background=ea6c00&color=fff'" style="width:100%;height:100%;object-fit:cover;">
+                                <img src="https://ui-avatars.com/api/?name=ARS&background=ea6c00&color=fff&size=80&bold=true" alt="ARS App Icon" style="width:100%;height:100%;object-fit:cover;">
                             </div>
                             <div>
                                 <div class="fw-semibold text-white small" style="font-size: 12px;">Easy Shopping A.R.S</div>

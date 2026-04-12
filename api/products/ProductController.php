@@ -445,6 +445,7 @@ class ProductController extends BaseController {
         $filePath = $uploadDir . $fileName;
 
         if (move_uploaded_file($image['file']['tmp_name'], $filePath)) {
+            chmod($filePath, 0644); // Fix Windows permission inheritance issue
             $this->executeQuery(
                 "INSERT INTO product_images (product_id, image_path, is_primary) VALUES (?, ?, ?)",
                 [$productId, $fileName, $isPrimary]
