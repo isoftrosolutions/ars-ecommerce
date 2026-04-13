@@ -28,6 +28,7 @@ node_modules/
 # db.sql (uncomment if you want to exclude the dump)
 
 # ── Temp files ──
+tmp/
 scratch/
 *.tmp
 *.bak

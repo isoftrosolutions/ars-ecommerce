@@ -57,6 +57,24 @@ $pathParts = explode('/', $path);
 $endpoint = $pathParts[0] ?? '';
 $action = $pathParts[1] ?? 'index';
 
+// Disable HTML error output for API
+ini_set('display_errors', 0);
+ini_set('html_errors', 0);
+
+/**
+ * Custom Error Handler to convert PHP errors to JSON
+ */
+set_error_handler(function($severity, $message, $file, $line) use ($logger) {
+    if (!(error_reporting() & $severity)) return;
+    
+    $logger->error("PHP Error [$severity]: $message in $file on line $line");
+    
+    // For fatal-like errors, return JSON and exit
+    if ($severity & (E_USER_ERROR | E_RECOVERABLE_ERROR)) {
+        Response::error("Internal Server Error: $message", 500);
+    }
+});
+
 // Route requests to appropriate handlers
 try {
     $response = null;
@@ -139,12 +157,19 @@ try {
             break;
     }
 
-} catch (Exception $e) {
-    $logger->error('API Error: ' . $e->getMessage(), [
+} catch (Throwable $e) {
+    $userId = null;
+    if (isset($_SESSION['user']) && is_array($_SESSION['user'])) {
+        $userId = $_SESSION['user']['id'] ?? null;
+    }
+
+    $logger->error('API Uncaught Error: ' . $e->getMessage(), [
+        'file' => $e->getFile(),
+        'line' => $e->getLine(),
         'endpoint' => $endpoint,
         'action' => $action,
         'method' => $requestMethod,
-        'user_id' => $_SESSION['user']['id'] ?? null
+        'user_id' => $userId
     ]);
 
     Response::error('Internal server error', 500);
