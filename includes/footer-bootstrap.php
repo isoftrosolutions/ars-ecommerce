@@ -274,38 +274,87 @@ global $base_url;
             const installedMsg = document.getElementById('pwa-installed-msg');
             let _deferredPrompt = null;
 
+            console.log('[PWA] Initializing PWA install prompt...');
+
+            // Check PWA support
+            const isPWAInstallable = 'beforeinstallprompt' in window;
+            console.log('[PWA] beforeinstallprompt supported:', isPWAInstallable);
+            console.log('[PWA] Service Worker supported:', 'serviceWorker' in navigator);
+
             // Register service worker
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('./sw.js', { scope: './' })
-                    .catch(err => console.warn('[PWA] SW registration failed:', err));
+                    .then(registration => {
+                        console.log('[PWA] SW registered successfully:', registration.scope);
+                    })
+                    .catch(err => {
+                        console.error('[PWA] SW registration failed:', err);
+                    });
             }
 
             // Show install button when browser is ready
             window.addEventListener('beforeinstallprompt', function(e) {
+                console.log('[PWA] beforeinstallprompt event fired');
                 e.preventDefault();
                 _deferredPrompt = e;
-                if (installBtn) installBtn.classList.remove('d-none');
+                if (installBtn) {
+                    installBtn.style.display = 'flex'; // Use style.display instead of class toggle
+                    installBtn.disabled = false;
+                    console.log('[PWA] Install button shown');
+                }
             });
 
             // Trigger install on button click
             if (installBtn) {
                 installBtn.addEventListener('click', async function() {
-                    if (!_deferredPrompt) return;
-                    _deferredPrompt.prompt();
-                    const { outcome } = await _deferredPrompt.userChoice;
-                    _deferredPrompt = null;
-                    if (outcome === 'accepted' && installedMsg) {
-                        installBtn.classList.add('d-none');
-                        installedMsg.classList.remove('d-none');
+                    console.log('[PWA] Install button clicked');
+                    if (!_deferredPrompt) {
+                        console.warn('[PWA] No deferred prompt available');
+                        alert('PWA installation is not available right now. Try refreshing the page.');
+                        return;
+                    }
+
+                    try {
+                        _deferredPrompt.prompt();
+                        console.log('[PWA] Install prompt shown to user');
+
+                        const { outcome } = await _deferredPrompt.userChoice;
+                        console.log('[PWA] User choice:', outcome);
+
+                        _deferredPrompt = null;
+                        if (outcome === 'accepted') {
+                            console.log('[PWA] App installation accepted');
+                            if (installBtn) installBtn.style.display = 'none';
+                            if (installedMsg) installedMsg.classList.remove('d-none');
+                        } else {
+                            console.log('[PWA] App installation dismissed');
+                        }
+                    } catch (error) {
+                        console.error('[PWA] Error during installation:', error);
                     }
                 });
             }
 
             // Already installed
             window.addEventListener('appinstalled', function() {
+                console.log('[PWA] App installed successfully');
                 _deferredPrompt = null;
-                if (installBtn) installBtn.classList.add('d-none');
+                if (installBtn) installBtn.style.display = 'none';
                 if (installedMsg) installedMsg.classList.remove('d-none');
+            });
+
+            // Fallback: Show button for manual install if supported
+            window.addEventListener('load', function() {
+                setTimeout(() => {
+                    if (!isPWAInstallable && 'serviceWorker' in navigator && installBtn) {
+                        console.log('[PWA] Showing manual install option');
+                        installBtn.style.display = 'flex';
+                        installBtn.textContent = 'Add to Home Screen';
+                        installBtn.addEventListener('click', () => {
+                            alert('To install this app:\n1. Open browser menu (⋮)\n2. Select "Add to Home screen"\n3. Follow the prompts');
+                        });
+                    }
+                }, 3000); // Wait 3 seconds to see if beforeinstallprompt fires
             });
         })();
     </script>
