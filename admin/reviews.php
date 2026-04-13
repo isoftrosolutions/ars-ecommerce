@@ -84,8 +84,7 @@ include __DIR__ . '/includes/header.php';
 let currentPage = 1;
 
 async function loadStats() {
-    const res = await fetch(BASE_URL + '/api/reviews/stats');
-    const json = await res.json();
+    const json = await apiFetch('/api/reviews/stats');
     if (json.success) {
         const s = json.data;
         document.getElementById('stat-total').textContent = s.total;
@@ -105,8 +104,7 @@ async function loadReviews(page = 1) {
         rating: document.getElementById('rating-filter').value
     });
 
-    const res = await fetch(BASE_URL + '/api/reviews/list?' + params.toString());
-    const json = await res.json();
+    const json = await apiFetch('/api/reviews/list?' + params.toString());
     if (!json.success) { Toast.error(json.message); return; }
 
     const { data, pagination } = json;
@@ -148,24 +146,22 @@ async function loadReviews(page = 1) {
 }
 
 async function updateStatus(id, status) {
-    const res = await fetch(BASE_URL + '/api/reviews/update-status', {
+    const json = await apiFetch('/api/reviews/update-status', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ id, status })
     });
-    const json = await res.json();
     if (json.success) { Toast.success(`Review ${status}!`); loadReviews(currentPage); loadStats(); }
     else Toast.error(json.message);
 }
 
 async function deleteReview(id) {
     if (!confirm('Delete this review?')) return;
-    const res = await fetch(BASE_URL + '/api/reviews/delete', {
+    const json = await apiFetch('/api/reviews/delete', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ id })
     });
-    const json = await res.json();
     if (json.success) { Toast.success('Review deleted.'); loadReviews(currentPage); loadStats(); }
     else Toast.error(json.message);
 }
@@ -178,21 +174,19 @@ async function applyBulkAction() {
 
     if (action === 'delete') {
         if (!confirm(`Delete ${ids.length} review(s)?`)) return;
-        const res = await fetch(BASE_URL + '/api/reviews/bulk-delete', {
+        const json = await apiFetch('/api/reviews/bulk-delete', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ ids })
         });
-        const json = await res.json();
         if (json.success) { Toast.success(`${json.data.deleted} review(s) deleted.`); loadReviews(currentPage); loadStats(); }
         else Toast.error(json.message);
     } else {
-        const res = await fetch(BASE_URL + '/api/reviews/bulk-update-status', {
+        const json = await apiFetch('/api/reviews/bulk-update-status', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ ids, status: action })
         });
-        const json = await res.json();
         if (json.success) { Toast.success(`${json.data.updated} review(s) updated.`); loadReviews(currentPage); loadStats(); }
         else Toast.error(json.message);
     }

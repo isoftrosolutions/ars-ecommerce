@@ -140,8 +140,7 @@ let currentPage = 1;
 let deleteTargetId = null;
 
 async function loadStats() {
-    const res = await fetch(BASE_URL + '/api/coupons/stats');
-    const json = await res.json();
+    const json = await apiFetch('/api/coupons/stats');
     if (json.success) {
         const s = json.data;
         document.getElementById('stat-total').textContent = s.total;
@@ -163,8 +162,7 @@ async function loadCoupons(page = 1) {
         type: document.getElementById('type-filter').value
     });
 
-    const res = await fetch(BASE_URL + '/api/coupons/list?' + params.toString());
-    const json = await res.json();
+    const json = await apiFetch('/api/coupons/list?' + params.toString());
     if (!json.success) { Toast.error(json.message); return; }
 
     const { data, pagination } = json;
@@ -214,8 +212,7 @@ function openModal() {
 }
 
 async function editCoupon(id) {
-    const res = await fetch(BASE_URL + `/api/coupons/detail?id=${id}`);
-    const json = await res.json();
+    const json = await apiFetch(`/api/coupons/detail?id=${id}`);
     if (!json.success) { Toast.error(json.message); return; }
     const c = json.data;
     document.getElementById('coupon-id').value = c.id;
@@ -247,23 +244,21 @@ async function saveCoupon() {
         status: document.getElementById('coupon-status').value
     };
 
-    const res = await fetch(BASE_URL + `/api/coupons/${action}`, {
+    const json = await apiFetch(`/api/coupons/${action}`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(body)
     });
-    const json = await res.json();
     if (json.success) { Toast.success(id ? 'Coupon updated!' : 'Coupon added!'); closeModal(); loadCoupons(currentPage); loadStats(); }
     else Toast.error(json.message);
 }
 
 async function toggleStatus(id) {
-    const res = await fetch(BASE_URL + '/api/coupons/toggle-status', {
+    const json = await apiFetch('/api/coupons/toggle-status', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ id })
     });
-    const json = await res.json();
     if (json.success) { loadCoupons(currentPage); loadStats(); }
     else Toast.error(json.message);
 }
@@ -274,12 +269,11 @@ function closeModal() { document.getElementById('coupon-modal').classList.remove
 
 async function confirmDelete() {
     if (!deleteTargetId) return;
-    const res = await fetch(BASE_URL + '/api/coupons/delete', {
+    const json = await apiFetch('/api/coupons/delete', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ id: deleteTargetId })
     });
-    const json = await res.json();
     closeDeleteModal();
     if (json.success) { Toast.success('Coupon deleted.'); loadCoupons(currentPage); loadStats(); }
     else Toast.error(json.message);

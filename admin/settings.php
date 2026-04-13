@@ -188,15 +188,13 @@ include __DIR__ . '/includes/header.php';
 let currentSettings = {};
 
 async function loadSettings() {
-    const res = await fetch(BASE_URL + '/api/settings/all');
-    const json = await res.json();
+    const json = await apiFetch('/api/settings/all');
     if (!json.success) { Toast.error('Failed to load settings.'); return; }
 
     // If DB is empty, fetch defaults
     let settings = json.data;
     if (Object.keys(settings).length === 0) {
-        const defRes = await fetch(BASE_URL + '/api/settings/defaults');
-        const defJson = await defRes.json();
+        const defJson = await apiFetch('/api/settings/defaults');
         if (defJson.success) settings = defJson.data;
     }
 
@@ -227,12 +225,11 @@ async function saveAllSettings() {
         }
     });
 
-    const res = await fetch(BASE_URL + '/api/settings/bulk-update', {
+    const json = await apiFetch('/api/settings/bulk-update', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ settings: updates })
     });
-    const json = await res.json();
 
     if (json.success) {
         Toast.success(`${json.data.updated} settings saved successfully!`);

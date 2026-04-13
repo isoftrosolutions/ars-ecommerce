@@ -173,8 +173,7 @@ let productImages = [];
 
 // Load categories for dropdowns
 async function loadCategories() {
-    const res = await fetch(BASE_URL + '/api/categories/list');
-    const json = await res.json();
+    const json = await apiFetch('/api/categories/list');
     if (json.success) {
         const opts = json.data.map(c => `<option value="${c.id}">${escHtml(c.name)}</option>`).join('');
         document.getElementById('category-filter').innerHTML += opts;
@@ -194,8 +193,7 @@ async function loadProducts(page = 1) {
         category_id: document.getElementById('category-filter').value
     });
 
-    const res = await fetch(BASE_URL + '/api/products/list?' + params.toString());
-    const json = await res.json();
+    const json = await apiFetch('/api/products/list?' + params.toString());
 
     if (!json.success) { Toast.error(json.message); return; }
 
@@ -331,8 +329,7 @@ function openProductModal() {
 }
 
 async function editProduct(id) {
-    const res = await fetch(BASE_URL + `/api/products/detail?id=${id}`);
-    const json = await res.json();
+    const json = await apiFetch(`/api/products/detail?id=${id}`);
     if (!json.success) { Toast.error(json.message); return; }
     const p = json.data;
 
@@ -396,8 +393,7 @@ async function saveProduct() {
 
     try {
         const action = id ? 'update' : 'create';
-        const res = await fetch(BASE_URL + `/api/products/${action}`, { method: 'POST', body: formData });
-        const json = await res.json();
+        const json = await apiFetch(`/api/products/${action}`, { method: 'POST', body: formData });
         if (json.success) {
             Toast.success(id ? 'Product updated!' : 'Product added!');
             closeProductModal();
@@ -414,12 +410,11 @@ async function saveProduct() {
 }
 
 async function toggleFeatured(id, featured) {
-    const res = await fetch(BASE_URL + '/api/products/toggle-featured', {
+    const json = await apiFetch('/api/products/toggle-featured', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ id, featured: !!featured })
     });
-    const json = await res.json();
     if (json.success) loadProducts(currentPage);
     else Toast.error(json.message);
 }
@@ -435,12 +430,11 @@ function closeDeleteModal() {
 
 async function confirmDelete() {
     if (!deleteTargetId) return;
-    const res = await fetch(BASE_URL + '/api/products/delete', {
+    const json = await apiFetch('/api/products/delete', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ id: deleteTargetId })
     });
-    const json = await res.json();
     closeDeleteModal();
     if (json.success) { Toast.success('Product deleted.'); loadProducts(currentPage); }
     else Toast.error(json.message);
@@ -467,12 +461,11 @@ async function applyBulkAction() {
     if (!ids.length) { Toast.error('Select at least one product.'); return; }
 
     if (action === 'delete' && confirm(`Delete ${ids.length} product(s)?`)) {
-        const res = await fetch(BASE_URL + '/api/products/bulk-delete', {
+        const json = await apiFetch('/api/products/bulk-delete', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ product_ids: ids })
         });
-        const json = await res.json();
         if (json.success) {
             Toast.success(`${ids.length} product(s) deleted.`);
             loadProducts(currentPage);

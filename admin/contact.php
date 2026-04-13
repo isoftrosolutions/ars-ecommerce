@@ -98,8 +98,7 @@ let currentPage = 1;
 let currentSubId = null;
 
 async function loadStats() {
-    const res = await fetch(BASE_URL + '/api/contact/stats');
-    const json = await res.json();
+    const json = await apiFetch('/api/contact/stats');
     if (json.success) {
         const s = json.data;
         document.getElementById('stat-total').textContent = s.total_submissions;
@@ -119,8 +118,7 @@ async function loadSubmissions(page = 1) {
         status: document.getElementById('status-filter').value
     });
 
-    const res = await fetch(BASE_URL + '/api/contact/list?' + params.toString());
-    const json = await res.json();
+    const json = await apiFetch('/api/contact/list?' + params.toString());
     if (!json.success) { Toast.error(json.message); return; }
 
     const { data, pagination } = json;
@@ -161,8 +159,7 @@ async function viewSubmission(id) {
     document.getElementById('view-modal-body').innerHTML = '<div style="text-align:center;padding:40px;"><div class="spinner"></div></div>';
     document.getElementById('view-modal').classList.add('open');
 
-    const res = await fetch(BASE_URL + `/api/contact/detail?id=${id}`);
-    const json = await res.json();
+    const json = await apiFetch(`/api/contact/detail?id=${id}`);
     if (!json.success) { document.getElementById('view-modal-body').innerHTML = `<p style="color:var(--danger)">${json.message}</p>`; return; }
     const s = json.data;
 
@@ -192,7 +189,7 @@ async function sendReply() {
     const msg = document.getElementById('reply-textarea').value.trim();
     if (!msg) { Toast.error('Reply message cannot be empty.'); return; }
 
-    const res  = await fetch(BASE_URL + '/api/contact/send-reply', {
+    const json = await apiFetch('/api/contact/send-reply', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
@@ -200,7 +197,6 @@ async function sendReply() {
             reply_message: msg
         })
     });
-    const json = await res.json();
 
     if (json.success) {
         Toast.success('Reply saved!');
@@ -216,7 +212,7 @@ async function sendReply() {
 
 async function markCurrentReplied() {
     if (!currentSubId) return;
-    await fetch(BASE_URL + '/api/contact/update-status', {
+    await apiFetch('/api/contact/update-status', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ id: currentSubId, status: 'replied' })
@@ -229,12 +225,11 @@ async function markCurrentReplied() {
 
 async function deleteSubmission(id) {
     if (!confirm('Delete this submission?')) return;
-    const res = await fetch(BASE_URL + '/api/contact/delete', {
+    const json = await apiFetch('/api/contact/delete', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ id })
     });
-    const json = await res.json();
     if (json.success) { Toast.success('Deleted.'); loadSubmissions(currentPage); loadStats(); }
     else Toast.error(json.message);
 }
@@ -247,21 +242,19 @@ async function applyBulkAction() {
 
     if (action === 'delete') {
         if (!confirm(`Delete ${ids.length} submission(s)?`)) return;
-        const res = await fetch(BASE_URL + '/api/contact/bulk-delete', {
+        const json = await apiFetch('/api/contact/bulk-delete', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ submission_ids: ids })
         });
-        const json = await res.json();
         if (json.success) { Toast.success(`${json.data.deleted} deleted.`); loadSubmissions(currentPage); loadStats(); }
         else Toast.error(json.message);
     } else {
-        const res = await fetch(BASE_URL + '/api/contact/bulk-update-status', {
+        const json = await apiFetch('/api/contact/bulk-update-status', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ submission_ids: ids, status: action })
         });
-        const json = await res.json();
         if (json.success) { Toast.success(`${json.data.updated} updated.`); loadSubmissions(currentPage); loadStats(); }
         else Toast.error(json.message);
     }

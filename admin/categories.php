@@ -96,8 +96,7 @@ let allCategories = [];
 let deleteTargetId = null;
 
 async function loadStats() {
-    const res = await fetch(BASE_URL + '/api/categories/stats');
-    const json = await res.json();
+    const json = await apiFetch('/api/categories/stats');
     if (json.success) {
         const s = json.data;
         document.getElementById('stat-total').textContent = s.total_categories;
@@ -107,8 +106,7 @@ async function loadStats() {
 }
 
 async function loadCategories() {
-    const res = await fetch(BASE_URL + '/api/categories/list');
-    const json = await res.json();
+    const json = await apiFetch('/api/categories/list');
     if (!json.success) { Toast.error(json.message); return; }
     allCategories = json.data;
     renderTable(allCategories);
@@ -151,12 +149,11 @@ function autoSlug() {
 async function generateSlug() {
     const name = document.getElementById('cat-name').value.trim();
     if (!name) return;
-    const res = await fetch(BASE_URL + '/api/categories/generate-slug', {
+    const json = await apiFetch('/api/categories/generate-slug', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ name })
     });
-    const json = await res.json();
     if (json.success) document.getElementById('cat-slug').value = json.data.slug;
 }
 
@@ -169,8 +166,7 @@ function openModal() {
 }
 
 async function editCategory(id) {
-    const res = await fetch(BASE_URL + `/api/categories/detail?id=${id}`);
-    const json = await res.json();
+    const json = await apiFetch(`/api/categories/detail?id=${id}`);
     if (!json.success) { Toast.error(json.message); return; }
     const c = json.data;
     document.getElementById('cat-id').value = c.id;
@@ -188,12 +184,11 @@ async function saveCategory() {
     const id = document.getElementById('cat-id').value;
     const action = id ? 'update' : 'create';
 
-    const res = await fetch(BASE_URL + `/api/categories/${action}`, {
+    const json = await apiFetch(`/api/categories/${action}`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ id, name, slug })
     });
-    const json = await res.json();
 
     if (json.success) {
         Toast.success(id ? 'Category updated!' : 'Category added!');
@@ -217,12 +212,11 @@ function closeModal() { document.getElementById('cat-modal').classList.remove('o
 
 async function confirmDelete() {
     if (!deleteTargetId) return;
-    const res = await fetch(BASE_URL + '/api/categories/delete', {
+    const json = await apiFetch('/api/categories/delete', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ id: deleteTargetId })
     });
-    const json = await res.json();
     closeDeleteModal();
     if (json.success) { Toast.success('Category deleted.'); loadCategories(); loadStats(); }
     else Toast.error(json.message);

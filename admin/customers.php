@@ -73,8 +73,7 @@ include __DIR__ . '/includes/header.php';
 let currentPage = 1;
 
 async function loadStats() {
-    const res = await fetch(BASE_URL + '/api/customers/stats');
-    const json = await res.json();
+    const json = await apiFetch('/api/customers/stats');
     if (json.success) {
         const s = json.data;
         document.getElementById('stat-total').textContent = s.total_customers;
@@ -93,8 +92,7 @@ async function loadCustomers(page = 1) {
         search: document.getElementById('search-input').value
     });
 
-    const res = await fetch(BASE_URL + '/api/customers/list?' + params.toString());
-    const json = await res.json();
+    const json = await apiFetch('/api/customers/list?' + params.toString());
     if (!json.success) { Toast.error(json.message); return; }
 
     const { data, pagination } = json;
@@ -140,8 +138,7 @@ async function viewCustomer(id) {
     document.getElementById('cust-modal-body').innerHTML = '<div style="text-align:center;padding:40px;"><div class="spinner"></div></div>';
     document.getElementById('cust-modal').classList.add('open');
 
-    const res = await fetch(BASE_URL + `/api/customers/detail?id=${id}`);
-    const json = await res.json();
+    const json = await apiFetch(`/api/customers/detail?id=${id}`);
     if (!json.success) { document.getElementById('cust-modal-body').innerHTML = `<p style="color:var(--danger)">${json.message}</p>`; return; }
 
     const c = json.data;

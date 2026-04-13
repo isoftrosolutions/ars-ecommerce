@@ -95,8 +95,7 @@ async function loadOrders(page = 1) {
         payment_status: document.getElementById('payment-filter').value
     });
 
-    const res = await fetch(BASE_URL + '/api/orders/list?' + params.toString());
-    const json = await res.json();
+    const json = await apiFetch('/api/orders/list?' + params.toString());
     if (!json.success) { Toast.error(json.message); return; }
 
     const { data, pagination } = json;
@@ -136,8 +135,7 @@ async function viewOrder(id) {
     document.getElementById('order-modal-body').innerHTML = '<div style="text-align:center;padding:40px;"><div class="spinner"></div></div>';
     document.getElementById('order-modal').classList.add('open');
 
-    const res = await fetch(BASE_URL + `/api/orders/detail?id=${id}`);
-    const json = await res.json();
+    const json = await apiFetch(`/api/orders/detail?id=${id}`);
     if (!json.success) { document.getElementById('order-modal-body').innerHTML = `<p style="color:var(--danger)">${json.message}</p>`; return; }
 
     const o = json.data;
@@ -210,8 +208,8 @@ async function saveOrderStatus() {
     const paymentStatus = document.getElementById('update-payment-status').value;
     const location = document.getElementById('update-location').value;
 
-    const [r1, r2] = await Promise.all([
-        fetch(BASE_URL + '/api/orders/update-status', {
+    const [j1, j2] = await Promise.all([
+        apiFetch('/api/orders/update-status', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
@@ -220,7 +218,7 @@ async function saveOrderStatus() {
                 current_location: location
             })
         }),
-        fetch(BASE_URL + '/api/orders/update-payment-status', {
+        apiFetch('/api/orders/update-payment-status', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
@@ -229,8 +227,6 @@ async function saveOrderStatus() {
             })
         })
     ]);
-
-    const [j1, j2] = await Promise.all([r1.json(), r2.json()]);
 
     if (j1.success && j2.success) {
         Toast.success('Order updated!');
