@@ -276,8 +276,7 @@ global $base_url;
 
             // Register service worker
             if ('serviceWorker' in navigator) {
-                const _swPath = <?= json_encode($base_url) ?>;
-                navigator.serviceWorker.register(_swPath + '/sw.js', { scope: _swPath + '/' })
+                navigator.serviceWorker.register('./sw.js', { scope: './' })
                     .catch(err => console.warn('[PWA] SW registration failed:', err));
             }
 

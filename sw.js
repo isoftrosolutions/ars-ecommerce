@@ -7,7 +7,6 @@ const CACHE_NAME = 'ars-cache-v3';
 const OFFLINE_URL = './offline.php';
 
 const urlsToCache = [
-  './',
   './index.php',
   './manifest.json',
   './offline.php',

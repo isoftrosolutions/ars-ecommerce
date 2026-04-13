@@ -2,8 +2,8 @@
   "name": "Easy Shopping A.R.S",
   "short_name": "ARS Shop",
   "description": "Nepal's trusted online store for electronics, fashion, and more.",
-  "start_url": "./index.php",
-  "scope": "./",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#ea6c00",
@@ -13,13 +13,13 @@
       "src": "./public/assets/img/logo.jpg",
       "sizes": "192x192",
       "type": "image/jpeg",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "./public/assets/img/logo.jpg",
       "sizes": "512x512",
       "type": "image/jpeg",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
 }
