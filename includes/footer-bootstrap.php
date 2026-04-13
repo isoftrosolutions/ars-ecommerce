@@ -283,7 +283,7 @@ global $base_url;
 
             // Register service worker
             if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('./sw.js', { scope: './' })
+                navigator.serviceWorker.register(window.BASE_URL + '/sw.js', { scope: window.BASE_URL + '/' })
                     .then(registration => {
                         console.log('[PWA] SW registered successfully:', registration.scope);
                     })

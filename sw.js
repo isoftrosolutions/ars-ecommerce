@@ -3,14 +3,16 @@
  * Placeholder to allow PWA installation and basic offline capabilities.
  */
 
-const CACHE_NAME = 'ars-cache-v3';
+const CACHE_NAME = 'ars-cache-v4';
 const OFFLINE_URL = './offline.php';
 
 const urlsToCache = [
+  './',
   './index.php',
   './manifest.json',
   './offline.php',
-  './public/assets/img/logo.jpg',
+  './public/assets/img/pwa-icon-192.png',
+  './public/assets/img/pwa-icon-512.png',
   'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css',
   'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js',
   'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css'

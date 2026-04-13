@@ -34,7 +34,7 @@ $_seo_canonical = rtrim($_seo_canonical, '?&');
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="ARS Shop">
-    <link rel="apple-touch-icon" href="<?php echo url('/public/assets/img/logo.jpg'); ?>">
+    <link rel="apple-touch-icon" href="<?php echo url('/public/assets/img/pwa-icon-192.png'); ?>">
 
     <!-- Open Graph (Facebook, WhatsApp, LinkedIn) -->
     <meta property="og:type"        content="<?php echo isset($page_og_type) ? h($page_og_type) : 'website'; ?>">
