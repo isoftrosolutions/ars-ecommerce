@@ -98,6 +98,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ]);
             }
 
+            // Audit log: record order creation
+            require_once 'includes/audit-logger.php';
+            AuditLogger::logOrderCreate($order_id, $cart_total);
+
             clear_cart();
             $pdo->commit();
 

@@ -28,42 +28,40 @@ ServerSignature Off
     </IfModule>
 </FilesMatch>
 
-# Block access to hidden files (.git, .env, etc.)
+# ══════════════════════════════════════════════
+# URL Rewriting Rules (single consolidated block)
+# ══════════════════════════════════════════════
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteRule (^\.|/\.) - [F]
+
+    # Block direct browser access to hidden files (.git, .env, etc.)
+    RewriteRule (^\.|/\.) - [F,L]
+
+    # Block direct browser access to sensitive directories
+    RewriteRule ^logs(/|$) - [F,L]
+    RewriteRule ^config(/|$) - [F,L]
+
+    # Block direct browser access to includes/ ONLY for HTTP requests
+    # (PHP require/include still works since it's filesystem, not HTTP)
+    RewriteCond %{REQUEST_URI} ^(.*/)?includes/ [NC]
+    RewriteRule .* - [F,L]
+
+    # ── HTTPS Redirect (uncomment for production) ──
+    # RewriteCond %{HTTPS} off
+    # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # Route API requests to api/index.php
+    RewriteRule ^(?:.*/)?api/(.*)$ api/index.php [L,QSA]
+
+    # Route backend clean URLs explicitly (backend is a real directory)
+    RewriteRule ^backend/check-login$ index.php [L,QSA]
+    RewriteRule ^backend/dashboard-stats$ index.php [L,QSA]
+
+    # Allow access to real files and directories (CSS, JS, Images, uploads)
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Redirect everything else to index.php (clean URL router)
+    RewriteRule ^(.*)$ index.php [L,QSA]
 </IfModule>
-
-# ── Block Direct Access to Sensitive Directories ─
-# Protect logs directory
-<IfModule mod_rewrite.c>
-    RewriteRule ^logs/ - [F,L]
-    RewriteRule ^config/ - [F,L]
-    RewriteRule ^includes/ - [F,L]
-</IfModule>
-
-# ── HTTPS Redirect (uncomment for production) ──
-# <IfModule mod_rewrite.c>
-#     RewriteCond %{HTTPS} off
-#     RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
-# </IfModule>
-
-# ══════════════════════════════════════════════
-# URL Rewriting Rules
-# ══════════════════════════════════════════════
-RewriteEngine On
-
-# Route API requests to api/index.php (handles both root and subfolder installs)
-RewriteRule ^(?:.*/)?api/(.*)$ api/index.php [L,QSA]
-
-# Route backend clean URLs explicitly (backend is a real directory)
-RewriteRule ^backend/check-login$ index.php [L,QSA]
-RewriteRule ^backend/dashboard-stats$ index.php [L,QSA]
-
-# Allow access to real files and directories (CSS, JS, Images)
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-
-# Redirect everything else to index.php
-RewriteRule ^(.*)$ index.php [L,QSA]
-

@@ -305,7 +305,7 @@ insert  into `site_settings`(`key`,`value`) values
 ('site_name','Easy Shopping A.R.S'),
 ('smtp_encryption','tls'),
 ('smtp_host','smtp.gmail.com'),
-('smtp_password','vobx mgfp fstc zlhx'),
+('smtp_password','YOUR_SMTP_PASSWORD_HERE'),
 ('smtp_port','587'),
 ('smtp_username','easyshoppinga.r.s1@gmail.com'),
 ('support_email','easyshoppinga.r.s1@gmail.com');
@@ -367,10 +367,7 @@ CREATE TABLE `users` (
 
 /*Data for the table `users` */
 
-insert  into `users`(`id`,`full_name`,`email`,`mobile`,`password`,`address`,`role`,`reset_token`,`reset_expires`,`reset_token_used_at`,`otp_attempts`,`otp_issued_at`,`otp_hash`,`email_verified_at`,`verification_token`,`remember_token`,`oauth_provider`,`oauth_provider_id`,`created_at`) values 
-(1,'Admin','easyshoppinga.r.s1@gmail.com','9820210361','$2y$12$h8F1x.7kwgQhM4OGkRcUF.wjKSPoSY1ZV/xy6aTSeuZ9TNBQKDajq',NULL,'admin',NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-11 10:54:28'),
-(2,'Devbarat Prasad Patel','mind59024@gmail.com','9811144402','$2y$12$VPBoIR19Sf70449AXW8D/eO4BWAUX03RSjDF1nRMIz0c/JR0m4C.u','Bahudramai-07, Phulkaul, Parsa','customer',NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-11 15:04:48'),
-(3,'Admin (pdewbrath)','pdewbrath@gmail.com','9800000000','$2y$12$RTKZfH6MghcesA4zgNCI1.JZYSIlPPx8/nU4o9Na6WXzseITGRNS.','Admin Office','admin','33c45f4e5d8a34ec8d6e7cb874a1542244891e5f83707c1e9f671f73756875de','2026-04-11 12:41:39',NULL,0,NULL,NULL,NULL,NULL,'859f39c1772a2d7a531702362414dc286b8f2fa470b5bf94c18c217fa68951ec',NULL,NULL,'2026-04-11 16:57:00');
+(1,'Admin','admin@example.com','9800000000','$2y$10$YourPlaceholderHashHere',NULL,'admin',NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-12 00:00:00');
 
 /*Table structure for table `wishlist` */
 

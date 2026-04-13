@@ -3,18 +3,27 @@
  * Placeholder to allow PWA installation and basic offline capabilities.
  */
 
-const CACHE_NAME = 'ars-cache-v2';
+const CACHE_NAME = 'ars-cache-v3';
+const OFFLINE_URL = './offline.php';
+
 const urlsToCache = [
-  '/',
-  '/assets/logo.jpeg'
+  './',
+  './index.php',
+  './manifest.json',
+  './offline.php',
+  './public/assets/img/logo.jpg',
+  'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css',
+  'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js',
+  'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css'
 ];
 
 self.addEventListener('install', event => {
-  // Perform install steps
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        return cache.addAll(urlsToCache).catch(err => console.log('Partial cache failure', err));
+        return Promise.allSettled(
+          urlsToCache.map(url => cache.add(url).catch(err => console.warn(`[PWA] Failed to cache: ${url}`, err)))
+        );
       })
   );
 });
@@ -42,18 +51,22 @@ self.addEventListener('fetch', event => {
       url.pathname.includes('/backend/') ||
       url.pathname.includes('/api/') ||
       event.request.method !== 'GET') {
-    return; // Let these requests go directly to network
+    return;
   }
 
   event.respondWith(
     caches.match(event.request)
       .then(response => {
-        // Cache hit - return response
         if (response) {
           return response;
         }
-        return fetch(event.request);
-      }
-    )
+        return fetch(event.request).catch(() => {
+          // If the fetch fails (offline) and it's a navigation request, show offline page
+          if (event.request.mode === 'navigate') {
+            return caches.match(OFFLINE_URL);
+          }
+        });
+      })
   );
 });
+

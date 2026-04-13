@@ -5,6 +5,7 @@
  */
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/functions.php';
+require_once __DIR__ . '/maintenance.php';
 ?>
 <?php
 // ── SEO meta resolution ───────────────────────────────────────
@@ -25,6 +26,15 @@ $_seo_canonical = rtrim($_seo_canonical, '?&');
     <title><?php echo $_seo_title; ?></title>
     <meta name="description" content="<?php echo $_seo_desc; ?>">
     <link rel="canonical" href="<?php echo h($_seo_canonical); ?>">
+
+    <!-- PWA Settings -->
+    <link rel="manifest" href="<?php echo $base_url; ?>/manifest.json">
+    <meta name="theme-color" content="#ea6c00">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ARS Shop">
+    <link rel="apple-touch-icon" href="<?php echo url('/public/assets/img/logo.jpg'); ?>">
 
     <!-- Open Graph (Facebook, WhatsApp, LinkedIn) -->
     <meta property="og:type"        content="<?php echo isset($page_og_type) ? h($page_og_type) : 'website'; ?>">
@@ -228,7 +238,9 @@ $_seo_canonical = rtrim($_seo_canonical, '?&');
                 <i class="bi bi-list"></i>
             </button>
             <a href="<?php echo url('/'); ?>" class="mobile-brand">
-                <span>ARS</span> Shopping
+                <div style="width: 40px; height: 40px; overflow: hidden; border-radius: 8px;">
+                    <img src="<?php echo url('/public/assets/img/logo.jpg'); ?>" alt="ARS Shop Logo" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
             </a>
             <div class="mobile-actions">
                 <a href="<?php echo is_logged_in() ? url('/profile') : url('/auth/login.php'); ?>" class="mobile-signin">
@@ -288,7 +300,10 @@ $_seo_canonical = rtrim($_seo_canonical, '?&');
             <div class="container d-flex align-items-center">
                 <!-- Brand -->
                 <a class="navbar-brand me-4" href="<?php echo url('/'); ?>">
-                    <span>ARS</span> Shopping
+                    <div style="width: 45px; height: 45px; overflow: hidden; border-radius: 10px; display: inline-block; vertical-align: middle; margin-right: 10px;">
+                        <img src="<?php echo url('/public/assets/img/logo.jpg'); ?>" alt="ARS Shop Logo" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                    <span style="font-weight: 800; font-size: 1.5rem; vertical-align: middle;">ARS <span style="color: var(--primary-color);">Shopping</span></span>
                 </a>
 
                 <!-- 🔍 Seamless Search Engine -->

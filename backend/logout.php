@@ -12,6 +12,10 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Clear remember me token if exists
 if (isset($_SESSION['user']['id'])) {
+    // Audit log: record logout before session is destroyed
+    require_once __DIR__ . '/../includes/audit-logger.php';
+    AuditLogger::logLogout($_SESSION['user']['id'], $_SESSION['user']['full_name'] ?? 'Unknown');
+
     try {
         $stmt = $pdo->prepare("UPDATE users SET remember_token = NULL WHERE id = ?");
         $stmt->execute([$_SESSION['user']['id']]);

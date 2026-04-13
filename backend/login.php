@@ -49,6 +49,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             unset($user['password']); // Don't store password in session
             $_SESSION['user'] = $user;
 
+            // Audit log: record login
+            require_once __DIR__ . '/../includes/audit-logger.php';
+            AuditLogger::logLogin($user['id'], $user['full_name']);
+
             // Transfer any guest cart items to the newly logged-in user
             transfer_guest_cart_to_user($user['id']);
 

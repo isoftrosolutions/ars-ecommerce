@@ -14,8 +14,11 @@ function _is_nav_active(string $page): string {
 }
 ?>
 <aside class="sidebar">
-    <div class="sidebar-logo">
-        <span class="nav-text">Easy Shopping</span>
+    <div class="sidebar-logo" style="display: flex; align-items: center; gap: 12px; padding: 20px;">
+        <div style="width: 32px; height: 32px; overflow: hidden; border-radius: 6px; flex-shrink: 0;">
+            <img src="<?php echo url('/public/assets/img/logo.jpg'); ?>" alt="ARS Shop Logo" style="width: 100%; height: 100%; object-fit: cover;">
+        </div>
+        <span class="nav-text" style="font-weight: 700; font-size: 1.1rem; letter-spacing: -0.5px;">ARS Admin</span>
     </div>
     
     <nav class="sidebar-nav">
@@ -57,6 +60,11 @@ function _is_nav_active(string $page): string {
         <a href="<?php echo url('/admin/contact.php'); ?>" class="nav-item <?php echo _is_nav_active('admin/contact'); ?>">
             <span class="nav-icon"><i class="fa-solid fa-envelope"></i></span>
             <span class="nav-text">Contact</span>
+        </a>
+
+        <a href="<?php echo url('/admin/logs.php'); ?>" class="nav-item <?php echo _is_nav_active('admin/logs'); ?>">
+            <span class="nav-icon"><i class="fa-solid fa-clipboard-list"></i></span>
+            <span class="nav-text">Audit Logs</span>
         </a>
 
         <div style="margin: 20px 0; border-top: 1px solid var(--border-color);"></div>
