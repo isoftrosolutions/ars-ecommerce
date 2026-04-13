@@ -4,6 +4,9 @@
  * Production-ready REST API for Easy Shopping A.R.S Admin Panel
  */
 
+// ── CRITICAL: Start output buffering FIRST to capture any stray PHP output ──
+ob_start();
+
 // Disable HTML error output for API immediately to prevent HTML leaking into JSON
 ini_set('display_errors', 0);
 ini_set('html_errors', 0);
@@ -14,6 +17,7 @@ header('Content-Type: application/json');
 
 // Handle preflight OPTIONS request (before includes to be fast)
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    ob_end_clean();
     header('Access-Control-Allow-Origin: *');
     header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
     header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-CSRF-Token');
@@ -22,15 +26,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// Include required files (must come before any env() calls)
-require_once __DIR__ . '/../includes/db.php';
-require_once __DIR__ . '/../includes/functions.php';
-require_once __DIR__ . '/middleware/AuthMiddleware.php';
-require_once __DIR__ . '/middleware/ValidationMiddleware.php';
-require_once __DIR__ . '/middleware/CorsMiddleware.php';
-require_once __DIR__ . '/utils/Response.php';
-require_once __DIR__ . '/utils/Logger.php';
-require_once __DIR__ . '/BaseController.php';
+/**
+ * Shutdown handler to catch fatal errors that set_error_handler cannot.
+ * Registered early so it catches include-time fatals.
+ */
+register_shutdown_function(function() {
+    $error = error_get_last();
+    if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+        // Clear ALL buffered output (may contain HTML error messages)
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+        http_response_code(500);
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => false,
+            'message' => 'Internal server error'
+        ]);
+    }
+});
+
+// ── Load environment config FIRST (defines env() function) ──
+// This must come before anything that calls env()
+require_once __DIR__ . '/../includes/env.php';
+
+// Include required files
+try {
+    require_once __DIR__ . '/../includes/db.php';
+    require_once __DIR__ . '/../includes/functions.php';
+    require_once __DIR__ . '/middleware/AuthMiddleware.php';
+    require_once __DIR__ . '/middleware/ValidationMiddleware.php';
+    require_once __DIR__ . '/middleware/CorsMiddleware.php';
+    require_once __DIR__ . '/utils/Response.php';
+    require_once __DIR__ . '/utils/Logger.php';
+    require_once __DIR__ . '/BaseController.php';
+} catch (Throwable $e) {
+    // If any include fails, return clean JSON
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+    http_response_code(500);
+    header('Content-Type: application/json');
+    echo json_encode([
+        'success' => false,
+        'message' => 'Server configuration error'
+    ]);
+    exit;
+}
 
 // Now that env() is available, set CORS headers
 $allowed_origin = env('APP_URL', ($_SERVER['REQUEST_SCHEME'] ?? 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost'));
@@ -72,29 +114,17 @@ set_error_handler(function($severity, $message, $file, $line) use ($logger) {
     
     // For fatal-like errors, return JSON and exit
     if ($severity & (E_USER_ERROR | E_RECOVERABLE_ERROR)) {
-        Response::error("Internal Server Error: $message", 500);
+        // Clean any buffered output
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+        Response::error("Internal Server Error", 500);
     }
 });
 
-/**
- * Shutdown handler to catch fatal errors that set_error_handler cannot
- */
-register_shutdown_function(function() use ($logger) {
-    $error = error_get_last();
-    if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
-        $logger->error("PHP Fatal: {$error['message']} in {$error['file']} on line {$error['line']}");
-        // Clear any buffered HTML output
-        if (ob_get_level()) {
-            ob_end_clean();
-        }
-        http_response_code(500);
-        header('Content-Type: application/json');
-        echo json_encode([
-            'success' => false,
-            'message' => 'Internal server error'
-        ]);
-    }
-});
+// ── Clean the output buffer before routing ──
+// Any notices/warnings from the includes above would be buffered; discard them
+ob_end_clean();
 
 // Route requests to appropriate handlers
 try {

@@ -110,8 +110,7 @@ include __DIR__ . '/includes/header.php';
 <script>
 async function fetchStats() {
     try {
-        const res = await fetch(BASE_URL + '/api/dashboard/stats');
-        const json = await res.json();
+        const json = await apiFetch('/api/dashboard/stats');
         
         if (!json.success) {
             Toast.error(json.message);

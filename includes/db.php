@@ -28,8 +28,26 @@ try {
     $pdo = new PDO($dsn, $user, $pass, $options);
 } catch (\PDOException $e) {
     error_log('[ARS] Database connection failed: ' . $e->getMessage());
-    // Return JSON for AJAX requests, HTML for page requests
-    if (!empty($_POST['action']) || !empty($_SERVER['HTTP_X_REQUESTED_WITH'])) {
+    // Detect API context: check Content-Type header or AJAX indicators
+    $isApi = !empty($_SERVER['HTTP_X_REQUESTED_WITH'])
+          || !empty($_POST['action'])
+          || (strpos($_SERVER['REQUEST_URI'] ?? '', '/api/') !== false);
+    
+    // Also check if Content-Type was already set to JSON (by api/index.php)
+    $headers = headers_list();
+    foreach ($headers as $h) {
+        if (stripos($h, 'Content-Type: application/json') !== false) {
+            $isApi = true;
+            break;
+        }
+    }
+    
+    if ($isApi) {
+        // Clean any buffered output that might have leaked
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+        http_response_code(503);
         header('Content-Type: application/json');
         echo json_encode(['success' => false, 'message' => 'Database service temporarily unavailable.']);
     } else {

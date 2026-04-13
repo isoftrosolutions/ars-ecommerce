@@ -17,6 +17,30 @@
     };
 })();
 
+/**
+ * Safe API Fetch — wraps fetch() with Content-Type validation and JSON guard.
+ * Returns {success, data, message} or throws with a user-friendly message.
+ * Usage:  const json = await apiFetch('/api/dashboard/stats');
+ *         const json = await apiFetch('/api/products', { method: 'POST', body: formData });
+ */
+async function apiFetch(url, options = {}) {
+    // Prepend BASE_URL if the URL starts with /
+    const fullUrl = url.startsWith('/') ? (window.BASE_URL || '') + url : url;
+    
+    const res = await fetch(fullUrl, options);
+    
+    // Guard: check Content-Type before parsing JSON
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+        const text = await res.text();
+        console.error(`[apiFetch] Non-JSON response from ${url}:`, text.substring(0, 500));
+        throw new Error('Server returned an unexpected response. Please try again.');
+    }
+    
+    const json = await res.json();
+    return json;
+}
+
 // 1. Dark Mode Manager
 class DarkModeManager {
     constructor() {
