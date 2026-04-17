@@ -10,9 +10,9 @@ require_once 'includes/functions.php';
 $cart_items = get_cart();
 $cart_total = get_cart_total();
 
-// Calculate shipping charge
-$free_shipping_threshold = 5000;
-$shipping_charge = ($cart_total >= $free_shipping_threshold) ? 0 : 150;
+// Calculate shipping charge from settings
+$free_shipping_threshold = (float)get_setting('free_shipping_threshold', 5000);
+$shipping_charge = ($cart_total >= $free_shipping_threshold) ? 0 : (float)get_setting('shipping_cost', 150);
 $grand_total = $cart_total + $shipping_charge;
 
 // Get user details if logged in

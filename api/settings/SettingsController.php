@@ -90,9 +90,9 @@ class SettingsController extends BaseController {
             'bank_account_details' => '',
 
             // Shipping
-            'shipping_cost' => 100,
-            'free_shipping_threshold' => 1000,
-            'estimated_delivery_days' => '3-5 business days',
+            'shipping_cost' => 150,
+            'free_shipping_threshold' => 5000,
+            'estimated_delivery_days' => '3-5',
 
             // SEO
             'meta_title' => 'Easy Shopping A.R.S - Quality Products Online',

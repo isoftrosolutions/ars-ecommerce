@@ -350,7 +350,7 @@ $_seo_canonical = rtrim($_seo_canonical, '?&');
                     </a>
                     <?php else: ?>
                     <!-- Cart Link -->
-                    <a href="<?php echo url('/cart.php'); ?>" class="meta-link ms-2">
+                    <a href="#" class="meta-link ms-2" onclick="event.preventDefault(); loadMiniCart(); bootstrap.Offcanvas.getOrCreateInstance(document.getElementById('miniCartDrawer')).show();">
                         <div class="cart-wrapper">
                             <i class="bi bi-cart3"></i>
                             <span class="cart-badge cart-count"><?php echo get_cart_count(); ?></span>
@@ -401,6 +401,112 @@ $_seo_canonical = rtrim($_seo_canonical, '?&');
         <i class="bi bi-person"></i>Profile
     </a>
 </div>
+
+<!-- Mini Cart Drawer -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="miniCartDrawer" aria-labelledby="miniCartLabel">
+    <div class="offcanvas-header border-bottom">
+        <h5 class="offcanvas-title" id="miniCartLabel">
+            <i class="bi bi-cart3 me-2"></i>Your Cart
+            <span class="badge bg-warning text-dark ms-2" id="miniCartCount">0</span>
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body p-0" id="miniCartBody">
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-cart-x" style="font-size: 3rem; opacity: 0.3;"></i>
+            <p class="mt-3">Your cart is empty</p>
+            <a href="<?php echo url('/shop'); ?>" class="btn btn-outline-primary btn-sm">Continue Shopping</a>
+        </div>
+    </div>
+    <div class="offcanvas-footer border-top p-3" id="miniCartFooter" style="display: none;">
+        <div class="d-flex justify-content-between mb-3">
+            <span class="fw-bold">Total:</span>
+            <span class="fw-bold fs-5" id="miniCartTotal">Rs. 0</span>
+        </div>
+        <a href="<?php echo url('/checkout'); ?>" class="btn btn-warning w-100 fw-bold">
+            <i class="bi bi-bag-check me-2"></i>Proceed to Checkout
+        </a>
+        <a href="<?php echo url('/cart'); ?>" class="btn btn-outline-secondary w-100 mt-2">
+            View Full Cart
+        </a>
+    </div>
+</div>
+
+<style>
+/* Mini Cart Drawer Styles */
+#miniCartDrawer .offcanvas {
+    width: 400px;
+    max-width: 90vw;
+}
+.mini-cart-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.2s;
+}
+.mini-cart-item:hover {
+    background: #fafafa;
+}
+.mini-cart-item img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+.mini-cart-item-details {
+    flex: 1;
+    min-width: 0;
+}
+.mini-cart-item-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.mini-cart-item-price {
+    color: var(--primary-color);
+    font-weight: 700;
+}
+.mini-cart-item-qty {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+.mini-cart-qty-btn {
+    width: 24px;
+    height: 24px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+.mini-cart-qty-btn:hover {
+    background: #f0f0f0;
+}
+.mini-cart-remove {
+    color: #dc3545;
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+}
+.mini-cart-remove:hover {
+    color: #bb2d3b;
+}
+</style>
+
+<!-- Toast Container -->
+<div id="toast-container" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 3000;"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
@@ -458,25 +564,34 @@ window.BASE_URL = '<?php echo rtrim(url(''), '/'); ?>';
  * Global Cart Function
  */
 async function addToCart(productId, quantity = 1) {
-    // Show loading state if button exists
     const btn = event?.currentTarget;
     const originalContent = btn ? btn.innerHTML : null;
-    if (btn) btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+    }
 
     try {
         const response = await fetch(`${window.BASE_URL}/cart-action?action=add&id=${productId}&quantity=${quantity}`);
         const data = await response.json();
 
         if (data.success) {
-            // Update all cart count bubbles in the UI
+            // Update all cart count bubbles
             document.querySelectorAll('.cart-count').forEach(el => {
                 el.textContent = data.cart_count;
                 el.classList.add('bump');
                 setTimeout(() => el.classList.remove('bump'), 300);
             });
             
-            // Show Success Notification
+            // Show mini cart drawer
+            await loadMiniCart();
+            
+            // Show toast
             showToast('Success', 'Item added to your cart!', 'success');
+            
+            // Open the drawer
+            const drawer = bootstrap.Offcanvas.getOrCreateInstance(document.getElementById('miniCartDrawer'));
+            drawer.show();
         } else {
             showToast('Notice', data.message || 'Could not add item', 'warning');
         }
@@ -484,7 +599,120 @@ async function addToCart(productId, quantity = 1) {
         console.error('Cart Error:', error);
         showToast('Error', 'Something went wrong. Please try again.', 'danger');
     } finally {
-        if (btn) btn.innerHTML = originalContent;
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalContent;
+        }
+    }
+}
+
+/**
+ * Load Mini Cart Contents
+ */
+async function loadMiniCart() {
+    try {
+        const response = await fetch(`${window.BASE_URL}/cart-action?action=get`);
+        const data = await response.json();
+        
+        const body = document.getElementById('miniCartBody');
+        const footer = document.getElementById('miniCartFooter');
+        const countBadge = document.getElementById('miniCartCount');
+        const totalEl = document.getElementById('miniCartTotal');
+        
+        countBadge.textContent = data.cart_count || 0;
+        
+        if (!data.items || data.items.length === 0) {
+            body.innerHTML = `
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-cart-x" style="font-size: 3rem; opacity: 0.3;"></i>
+                    <p class="mt-3">Your cart is empty</p>
+                    <a href="${window.BASE_URL}/shop" class="btn btn-outline-primary btn-sm">Continue Shopping</a>
+                </div>`;
+            footer.style.display = 'none';
+            return;
+        }
+        
+        let itemsHtml = '';
+        let total = 0;
+        
+        data.items.forEach(item => {
+            const price = item.discount_price || item.price;
+            total += price * item.quantity;
+            const imageUrl = item.image ? (item.image.startsWith('http') ? item.image : window.BASE_URL + '/uploads/products/' + item.image) 
+                : 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=80&w=100';
+            
+            itemsHtml += `
+                <div class="mini-cart-item">
+                    <img src="${imageUrl}" alt="${item.name}" onerror="this.src='https://placehold.co/60x60/f1f5f9/6b7280?text=No+Img'">
+                    <div class="mini-cart-item-details">
+                        <div class="mini-cart-item-name">${item.name}</div>
+                        <div class="mini-cart-item-price">Rs. ${price.toLocaleString()}</div>
+                        <div class="mini-cart-item-qty">
+                            <button class="mini-cart-qty-btn" onclick="updateMiniCartQty(${item.product_id}, ${item.quantity - 1})">-</button>
+                            <span>${item.quantity}</span>
+                            <button class="mini-cart-qty-btn" onclick="updateMiniCartQty(${item.product_id}, ${item.quantity + 1})">+</button>
+                            <button class="mini-cart-remove ms-auto" onclick="removeMiniCartItem(${item.product_id})" title="Remove">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>`;
+        });
+        
+        body.innerHTML = itemsHtml;
+        totalEl.textContent = 'Rs. ' + total.toLocaleString();
+        footer.style.display = 'block';
+        
+    } catch (error) {
+        console.error('Error loading mini cart:', error);
+    }
+}
+
+/**
+ * Update Mini Cart Quantity
+ */
+async function updateMiniCartQty(productId, quantity) {
+    if (quantity < 1) {
+        await removeMiniCartItem(productId);
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${window.BASE_URL}/cart-action?action=update&id=${productId}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: 'quantity=' + quantity
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            await loadMiniCart();
+            // Update header count
+            document.querySelectorAll('.cart-count').forEach(el => {
+                el.textContent = data.cart_count;
+            });
+        }
+    } catch (error) {
+        console.error('Error updating quantity:', error);
+    }
+}
+
+/**
+ * Remove Item from Mini Cart
+ */
+async function removeMiniCartItem(productId) {
+    try {
+        const response = await fetch(`${window.BASE_URL}/cart-action?action=remove&id=${productId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            await loadMiniCart();
+            document.querySelectorAll('.cart-count').forEach(el => {
+                el.textContent = data.cart_count;
+            });
+        }
+    } catch (error) {
+        console.error('Error removing item:', error);
     }
 }
 

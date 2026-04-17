@@ -65,6 +65,16 @@ try {
             $response = ['success' => true];
             break;
 
+        case 'get':
+            $items = get_cart();
+            $response = [
+                'success' => true,
+                'items' => $items,
+                'cart_count' => get_cart_count(),
+                'cart_total' => get_cart_total()
+            ];
+            break;
+
         default:
             $response = ['success' => false, 'message' => 'Unknown action'];
     }
