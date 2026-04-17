@@ -10,6 +10,11 @@ require_once 'includes/functions.php';
 $cart_items = get_cart();
 $cart_total = get_cart_total();
 
+// Calculate shipping charge
+$free_shipping_threshold = 5000;
+$shipping_charge = ($cart_total >= $free_shipping_threshold) ? 0 : 150;
+$grand_total = $cart_total + $shipping_charge;
+
 // Get user details if logged in
 $user = $_SESSION['user'] ?? null;
 
@@ -72,10 +77,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $pdo->beginTransaction();
 
-            $stmt = $pdo->prepare("INSERT INTO orders (user_id, total_amount, payment_method, payment_proof, delivery_status, shipping_address, shipping_city, customer_name, customer_email, customer_phone, created_at) VALUES (?, ?, ?, ?, 'Pending', ?, ?, ?, ?, ?, NOW())");
+            $stmt = $pdo->prepare("INSERT INTO orders (user_id, total_amount, shipping_charge, payment_method, payment_proof, delivery_status, shipping_address, shipping_city, customer_name, customer_email, customer_phone, created_at) VALUES (?, ?, ?, ?, ?, 'Pending', ?, ?, ?, ?, ?, ?, NOW())");
             $stmt->execute([
                 $user ? $user['id'] : null,
                 $cart_total,
+                $shipping_charge,
                 $payment_method,
                 $payment_proof_path,
                 $address,
@@ -230,7 +236,7 @@ include 'includes/header-bootstrap.php';
                             </div>
 
                             <button type="submit" class="btn btn-success btn-lg w-100">
-                                <i class="bi bi-check-circle me-2"></i>Place Order (Rs. <?php echo format_price($cart_total); ?>)
+                                <i class="bi bi-check-circle me-2"></i>Place Order (Rs. <?php echo format_price($grand_total); ?>)
                             </button>
                         </form>
                     <?php endif; ?>
@@ -266,12 +272,21 @@ include 'includes/header-bootstrap.php';
                         </div>
                         <div class="d-flex justify-content-between mb-2">
                             <span>Shipping:</span>
-                            <span class="text-success">Free</span>
+                            <?php if ($shipping_charge > 0): ?>
+                                <span>Rs. <?php echo format_price($shipping_charge); ?></span>
+                            <?php else: ?>
+                                <span class="text-success">Free</span>
+                            <?php endif; ?>
                         </div>
+                        <?php if ($cart_total < $free_shipping_threshold): ?>
+                            <div class="small text-success mb-2">
+                                <i class="bi bi-truck"></i> Add Rs. <?php echo number_format($free_shipping_threshold - $cart_total); ?> more for FREE delivery!
+                            </div>
+                        <?php endif; ?>
                         <hr>
                         <div class="d-flex justify-content-between fw-bold fs-5">
                             <span>Total:</span>
-                            <span>Rs. <?php echo format_price($cart_total); ?></span>
+                            <span>Rs. <?php echo format_price($grand_total); ?></span>
                         </div>
                     <?php endif; ?>
                 </div>

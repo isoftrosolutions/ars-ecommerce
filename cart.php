@@ -11,6 +11,11 @@ include 'includes/header-bootstrap.php';
 $cart_items = get_cart();
 $cart_total = get_cart_total();
 $cart_count = get_cart_count();
+
+// Calculate shipping charge
+$free_shipping_threshold = 5000;
+$shipping_charge = ($cart_total >= $free_shipping_threshold || $cart_total == 0) ? 0 : 150;
+$grand_total = $cart_total + $shipping_charge;
 ?>
 
 <div class="container py-5">
@@ -120,12 +125,21 @@ $cart_count = get_cart_count();
                         </div>
                         <div class="d-flex justify-content-between mb-2">
                             <span>Shipping</span>
-                            <span class="text-success">Free</span>
+                            <?php if ($shipping_charge > 0): ?>
+                                <span>Rs. <?php echo format_price($shipping_charge); ?></span>
+                            <?php else: ?>
+                                <span class="text-success">Free</span>
+                            <?php endif; ?>
                         </div>
+                        <?php if ($cart_total > 0 && $cart_total < $free_shipping_threshold): ?>
+                            <div class="small text-success mb-2">
+                                <i class="bi bi-truck"></i> Add Rs. <?php echo number_format($free_shipping_threshold - $cart_total); ?> more for FREE delivery!
+                            </div>
+                        <?php endif; ?>
                         <hr>
                         <div class="d-flex justify-content-between mb-3">
                             <strong>Total</strong>
-                            <strong><?php echo format_price($cart_total); ?></strong>
+                            <strong><?php echo format_price($grand_total); ?></strong>
                         </div>
                         <a href="<?php echo url('/checkout'); ?>" class="btn btn-success w-100 mb-2">
                             <i class="bi bi-credit-card me-2"></i>Proceed to Checkout

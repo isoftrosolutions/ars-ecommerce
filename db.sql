@@ -188,6 +188,7 @@ CREATE TABLE `orders` (
   `shipping_address` text DEFAULT NULL,
   `shipping_city` varchar(100) DEFAULT NULL,
   `total_amount` decimal(10,2) NOT NULL,
+  `shipping_charge` decimal(10,2) DEFAULT 0.00,
   `coupon_code` varchar(50) DEFAULT NULL,
   `discount_amount` decimal(10,2) DEFAULT 0.00,
   `payment_method` enum('COD','eSewa','BankQR') NOT NULL,

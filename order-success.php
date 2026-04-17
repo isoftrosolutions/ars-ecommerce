@@ -128,8 +128,16 @@ if (!$order) {
                                 </tbody>
                                 <tfoot>
                                     <tr>
+                                        <td colspan="3" class="text-end">Subtotal:</td>
+                                        <td class="text-end">Rs. <?php echo format_price($order['total_amount']); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3" class="text-end">Shipping:</td>
+                                        <td class="text-end"><?php echo ($order['shipping_charge'] ?? 0) > 0 ? 'Rs. ' . format_price($order['shipping_charge']) : '<span class="text-success">Free</span>'; ?></td>
+                                    </tr>
+                                    <tr>
                                         <td colspan="3" class="text-end fw-bold">Total Amount:</td>
-                                        <td class="text-end fw-bold fs-5 text-success">Rs. <?php echo format_price($order['total_amount']); ?></td>
+                                        <td class="text-end fw-bold fs-5 text-success">Rs. <?php echo format_price(($order['total_amount'] ?? 0) + ($order['shipping_charge'] ?? 0)); ?></td>
                                     </tr>
                                 </tfoot>
                             </table>
