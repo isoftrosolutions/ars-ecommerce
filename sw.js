@@ -47,12 +47,28 @@ self.addEventListener('install', event => {
   
   event.waitUntil(
     caches.open(STATIC_CACHE)
-      .then(cache => {
+      .then(async cache => {
         console.log('[SW] Caching static assets');
-        return cache.addAll(STATIC_ASSETS);
+        // Use Promise.allSettled to not fail if some assets don't exist
+        const results = await Promise.allSettled(
+          STATIC_ASSETS.map(url => 
+            cache.add(url).catch(err => {
+              console.warn('[SW] Skipping cache for:', url, err);
+              return null;
+            })
+          )
+        );
+        console.log('[SW] Static caching complete');
       })
-      .then(() => self.skipWaiting())
-      .catch(err => console.error('[SW] Cache failed:', err))
+      .then(() => {
+        console.log('[SW] Skip waiting to activate immediately');
+        return self.skipWaiting();
+      })
+      .catch(err => {
+        console.error('[SW] Cache install failed:', err);
+        // Don't fail the install, just proceed
+        return self.skipWaiting();
+      })
   );
 });
 
