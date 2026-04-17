@@ -107,6 +107,11 @@ include __DIR__ . '/includes/header.php';
                 </div>
             </div>
             <div class="form-group"><label class="form-label">eSewa Merchant ID</label><input type="text" class="form-control" data-key="esewa_merchant_id" placeholder="Your eSewa merchant ID"></div>
+            <div class="form-group"><label class="form-label">Seller Payment QR Code (Image)</label>
+                <input type="file" class="form-control" id="qr_code_file" accept="image/*" onchange="uploadQRCode()">
+                <small style="color:var(--text-secondary);">Upload QR code for customers to scan and pay</small>
+                <div id="qr_preview" class="mt-2"></div>
+            </div>
             <div class="form-group"><label class="form-label">Bank Account Details</label><textarea class="form-control" data-key="bank_account_details" rows="4" placeholder="Bank name, account number, account name..."></textarea></div>
         </div>
 
@@ -247,6 +252,40 @@ function showTab(name, el) {
 }
 
 loadSettings();
+loadQRCodePreview();
+
+async function uploadQRCode() {
+    const fileInput = document.getElementById('qr_code_file');
+    if (!fileInput.files[0]) return;
+    
+    const formData = new FormData();
+    formData.append('qr_code', fileInput.files[0]);
+    
+    try {
+        const response = await fetch('<?php echo url("/api/uploads/qr-code"); ?>', {
+            method: 'POST',
+            body: formData
+        });
+        const json = await response.json();
+        if (json.success) {
+            loadQRCodePreview();
+            Toast.success('QR code uploaded successfully!');
+        } else {
+            Toast.error(json.message || 'Failed to upload QR code');
+        }
+    } catch (e) {
+        Toast.error('Upload failed');
+    }
+}
+
+async function loadQRCodePreview() {
+    const preview = document.getElementById('qr_preview');
+    const json = await apiFetch('/api/settings/all');
+    const qrPath = json.data?.qr_code_path || '';
+    if (qrPath) {
+        preview.innerHTML = '<img src="' + qrPath + '" style="max-width:150px; border-radius:8px;">';
+    }
+}
 </script>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>

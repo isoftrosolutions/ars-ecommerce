@@ -194,7 +194,7 @@ class SettingsController extends BaseController {
             'facebook_url', 'twitter_url', 'instagram_url', 'linkedin_url',
 
             // Payment
-            'esewa_enabled', 'bank_qr_enabled', 'cod_enabled', 'esewa_merchant_id', 'bank_account_details',
+            'esewa_enabled', 'bank_qr_enabled', 'cod_enabled', 'esewa_merchant_id', 'bank_account_details', 'qr_code_path',
 
             // Shipping
             'shipping_cost', 'free_shipping_threshold', 'estimated_delivery_days',

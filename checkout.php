@@ -211,7 +211,16 @@ include 'includes/header-bootstrap.php';
 
                                 <div id="esewa_details" class="mt-3 p-3 border rounded bg-light" style="display: none;">
                                     <h6>eSewa Payment Details</h6>
-                                    <p class="small mb-2">Please send the total amount to our eSewa ID: <strong>98XXXXXXXX</strong> or scan our QR code.</p>
+                                    <p class="small mb-2">Please send the total amount to our eSewa ID or scan the QR code below.</p>
+                                    <div class="mb-3 text-center">
+                                        <?php 
+                                        $qr_code_path = get_setting('qr_code_path', '');
+                                        if ($qr_code_path): ?>
+                                            <img src="<?php echo url($qr_code_path); ?>" alt="eSewa QR Code" class="img-fluid" style="max-width: 180px; border-radius: 8px; border: 2px solid #ddd;">
+                                        <?php else: ?>
+                                            <div class="text-muted small">QR code not available. Please pay via eSewa app manually.</div>
+                                        <?php endif; ?>
+                                    </div>
                                     <div class="mb-3">
                                         <label for="payment_proof" class="form-label small fw-bold">Upload Payment Screenshot <span class="text-danger">*</span></label>
                                         <input class="form-control form-control-sm" type="file" id="payment_proof" name="payment_proof" accept="image/png, image/jpeg, image/jpg">

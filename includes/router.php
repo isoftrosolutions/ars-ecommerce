@@ -46,6 +46,7 @@ function route($url) {
         'forgot-password' => 'auth/forgot-password.php',
         'sitemap.xml'  => 'sitemap.php',
         'contact'      => 'contact.php',
+        'queries'     => 'queries.php',
         'new-arrivals' => 'new-arrivals.php',
         'returns'      => 'returns.php',
         'shipping'     => 'shipping.php',

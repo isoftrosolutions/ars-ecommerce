@@ -283,6 +283,7 @@ $_seo_canonical = rtrim($_seo_canonical, '?&');
                 <div class="list-group-item bg-light fw-bold">Help & Settings</div>
                 <a href="<?php echo url('/profile'); ?>" class="list-group-item list-group-item-action py-3">Your Account</a>
                 <a href="<?php echo url('/orders'); ?>" class="list-group-item list-group-item-action py-3">Your Orders</a>
+                <a href="<?php echo url('/queries'); ?>" class="list-group-item list-group-item-action py-3">My Queries</a>
                 <a href="<?php echo url('/contact'); ?>" class="list-group-item list-group-item-action py-3">Customer Service</a>
                 <?php if (is_logged_in()): ?>
                     <a href="<?php echo url('/backend/logout.php'); ?>" class="list-group-item list-group-item-action py-3 text-danger">Sign Out</a>
@@ -375,6 +376,7 @@ $_seo_canonical = rtrim($_seo_canonical, '?&');
                     <a href="<?php echo url('/shop'); ?>" class="nav-link-custom active">Shop</a>
                     <a href="<?php echo url('/categories'); ?>" class="nav-link-custom">Categories</a>
                     <a href="<?php echo url('/orders'); ?>" class="nav-link-custom">My Orders</a>
+                    <a href="<?php echo url('/queries'); ?>" class="nav-link-custom">My Queries</a>
                     <a href="<?php echo url('/todays-deal'); ?>" class="nav-link-custom d-none d-md-inline">Today's Deal</a>
                     <a href="<?php echo url('/support'); ?>" class="nav-link-custom d-none d-lg-inline">Service</a>
                 </nav>

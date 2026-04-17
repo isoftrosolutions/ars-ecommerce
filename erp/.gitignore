@@ -1,0 +1,51 @@
+# ERP Project Ignored Files
+
+# Cleanup Plan Exclusions
+tmp_*.php
+scratch.php
+check_*.php
+cleanup.ps1
+
+# Environment and Config
+.env
+.env.*
+!.env.example
+/.vscode
+/.idea
+/node_modules
+/vendor
+/storage/*.key
+/storage/framework/cache/data/*
+/storage/framework/views/*.php
+/storage/framework/sessions/*
+/storage/logs/*.log
+/public/storage
+/public/hot
+/public/build
+
+# Composer
+composer.lock
+
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Uploads
+/public/uploads
+/storage/app/uploads
+
+# Bootstrap cache
+/bootstrap/cache/*.php
+
+# Local-only htaccess (swap manually for local Apache dev)
+.htaccess.local
+
+# Local tooling / agent worktrees
+.claude/
+
+# Local runtime/uploads (do not commit)
+/app/public/
+
+# Duplicate local-only CSS copy (source-of-truth is public/assets/css/*)
+/resources/css/ia-dashboard-new.css

@@ -280,8 +280,8 @@ function doAddToCart() {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            alert('Product added to cart!');
             window.dispatchEvent(new Event('cartUpdated'));
+            window.location.href = '<?php echo url("/cart"); ?>';
         }
         btn.disabled = false;
     });
