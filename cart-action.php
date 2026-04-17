@@ -29,6 +29,11 @@ try {
                 break;
             }
 
+            if (!is_logged_in()) {
+                $response = ['success' => false, 'require_login' => true, 'message' => 'Please log in or create a free account to add items to cart'];
+                break;
+            }
+
             $add_quantity = (int)($_GET['quantity'] ?? 1);
             if ($add_quantity <= 0) $add_quantity = 1;
 

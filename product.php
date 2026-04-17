@@ -282,6 +282,9 @@ function doAddToCart() {
         if (data.success) {
             window.dispatchEvent(new Event('cartUpdated'));
             window.location.href = '<?php echo url("/cart"); ?>';
+        } else if (data.require_login) {
+            const modal = new bootstrap.Modal(document.getElementById('loginRequiredModal'));
+            modal.show();
         }
         btn.disabled = false;
     });

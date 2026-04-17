@@ -508,6 +508,32 @@ $_seo_canonical = rtrim($_seo_canonical, '?&');
 <!-- Toast Container -->
 <div id="toast-container" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 3000;"></div>
 
+<!-- Login Required Modal -->
+<div class="modal fade" id="loginRequiredModal" tabindex="-1" aria-labelledby="loginRequiredLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header border-0 pb-0">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center pt-0">
+                <div class="mb-4">
+                    <i class="bi bi-person-circle text-primary" style="font-size: 4rem;"></i>
+                </div>
+                <h4 class="fw-bold mb-2" id="loginRequiredLabel">Login Required</h4>
+                <p class="text-muted mb-4">Please log in or create a free account to add items to your cart.</p>
+                <div class="d-grid gap-2">
+                    <a href="<?php echo url('/auth/login.php'); ?>" class="btn btn-primary btn-lg fw-bold py-3">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Log In
+                    </a>
+                    <a href="<?php echo url('/auth/signup.php'); ?>" class="btn btn-outline-secondary fw-bold py-3">
+                        <i class="bi bi-person-plus me-2"></i>Create Free Account
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 window.BASE_URL = '<?php echo rtrim(url(''), '/'); ?>';
@@ -592,6 +618,10 @@ async function addToCart(productId, quantity = 1) {
             // Open the drawer
             const drawer = bootstrap.Offcanvas.getOrCreateInstance(document.getElementById('miniCartDrawer'));
             drawer.show();
+        } else if (data.require_login) {
+            // Show login required modal
+            const modal = new bootstrap.Modal(document.getElementById('loginRequiredModal'));
+            modal.show();
         } else {
             showToast('Notice', data.message || 'Could not add item', 'warning');
         }

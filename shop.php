@@ -444,6 +444,11 @@ function addToCart(productId, btn) {
             
             // Dispatch event to Update Header Cart Counter
             window.dispatchEvent(new Event('cartUpdated'));
+        } else if (data.require_login) {
+            const modal = new bootstrap.Modal(document.getElementById('loginRequiredModal'));
+            modal.show();
+            btn.innerHTML = originalText;
+            btn.disabled = false;
         }
         setTimeout(() => {
             btn.innerHTML = originalText;
