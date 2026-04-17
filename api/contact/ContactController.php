@@ -6,7 +6,6 @@
 class ContactController extends BaseController {
     public function handleRequest($method, $action) {
         AuthMiddleware::authenticate();
-        AuthMiddleware::checkRateLimit('contact', 100, 3600);
 
         switch ($method) {
             case 'GET':

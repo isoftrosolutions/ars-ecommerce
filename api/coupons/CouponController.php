@@ -6,7 +6,6 @@
 class CouponController extends BaseController {
     public function handleRequest($method, $action) {
         AuthMiddleware::authenticate();
-        AuthMiddleware::checkRateLimit('coupons', 50, 3600);
 
         switch ($method) {
             case 'GET':

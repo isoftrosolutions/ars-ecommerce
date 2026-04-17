@@ -6,7 +6,6 @@
 class SettingsController extends BaseController {
     public function handleRequest($method, $action) {
         AuthMiddleware::authenticate();
-        AuthMiddleware::checkRateLimit('settings', 30, 3600);
 
         switch ($method) {
             case 'GET':

@@ -6,7 +6,6 @@
 class CategoryController extends BaseController {
     public function handleRequest($method, $action) {
         AuthMiddleware::authenticate();
-        AuthMiddleware::checkRateLimit('categories', 50, 3600);
 
         switch ($method) {
             case 'GET':

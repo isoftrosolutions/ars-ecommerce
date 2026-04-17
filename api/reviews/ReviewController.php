@@ -6,7 +6,6 @@
 class ReviewController extends BaseController {
     public function handleRequest($method, $action) {
         AuthMiddleware::authenticate();
-        AuthMiddleware::checkRateLimit('reviews', 100, 3600);
 
         switch ($method) {
             case 'GET':

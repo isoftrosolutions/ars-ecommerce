@@ -6,7 +6,6 @@
 class CustomerController extends BaseController {
     public function handleRequest($method, $action) {
         AuthMiddleware::authenticate();
-        AuthMiddleware::checkRateLimit('customers', 50, 3600);
 
         switch ($method) {
             case 'GET':

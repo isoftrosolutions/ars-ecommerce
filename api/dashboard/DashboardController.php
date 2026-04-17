@@ -6,7 +6,6 @@
 class DashboardController extends BaseController {
     public function handleRequest($method, $action) {
         AuthMiddleware::authenticate();
-        AuthMiddleware::checkRateLimit('dashboard', 60, 3600); // 60 requests per hour
 
         switch ($method) {
             case 'GET':
