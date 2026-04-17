@@ -3,17 +3,21 @@
  * OTP Reset Password Page
  * Easy Shopping A.R.S
  */
+
+// Error reporting for debugging (remove in production)
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/functions.php';
 
 $page_title = "Reset Password with OTP";
 
-include_once __DIR__ . '/../includes/header-bootstrap.php';
-
 // Get email from URL parameter
 $email = trim($_GET['email'] ?? '');
 
 if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    $_SESSION['error'] = "Invalid email address.";
     header("Location: forgot-password.php");
     exit();
 }
@@ -25,13 +29,18 @@ try {
     $user = $stmt->fetch();
 
     if (!$user) {
+        $_SESSION['error'] = "No account found with this email.";
         header("Location: forgot-password.php");
         exit();
     }
 } catch (PDOException $e) {
+    error_log("OTP Reset Password Error: " . $e->getMessage());
+    $_SESSION['error'] = "Something went wrong. Please try again.";
     header("Location: forgot-password.php");
     exit();
 }
+
+include_once __DIR__ . '/../includes/header-bootstrap.php';
 ?>
 
 <link rel="stylesheet" href="<?php echo url('/public/assets/css/auth.css'); ?>">
@@ -217,7 +226,8 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function resendOTP() {
-    if (!confirm('Resend OTP to <?php echo h($email); ?>?')) {
+    const userEmail = <?php echo json_encode($email); ?>;
+    if (!confirm('Resend OTP to ' + userEmail + '?')) {
         return;
     }
 
@@ -228,12 +238,13 @@ function resendOTP() {
     btn.disabled = true;
 
     // Send resend request
-    fetch('<?php echo url("/backend/send-otp.php"); ?>', {
+    const baseUrl = <?php echo json_encode(url('')); ?>;
+    fetch(baseUrl + '/backend/send-otp.php', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: 'email=<?php echo urlencode($email); ?>&action=password_reset&csrf_token=<?php echo urlencode(generate_csrf_token()); ?>'
+        body: 'email=' + encodeURIComponent(<?php echo json_encode($email); ?>) + '&action=password_reset&csrf_token=' + encodeURIComponent(<?php echo json_encode(generate_csrf_token()); ?>)
     })
     .then(response => response.json())
     .then(data => {
