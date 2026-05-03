@@ -87,160 +87,576 @@ $_seo_canonical = rtrim($_seo_canonical, '?&');
 
         /* ═══ Header Foundation ═══ */
         .header-main {
-            background-color: var(--secondary-color);
+            background: linear-gradient(135deg, var(--secondary-color) 0%, #334155 50%, var(--secondary-color) 100%);
             position: fixed;
             top: 0; width: 100%; z-index: 1050;
             padding: 12px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            backdrop-filter: blur(10px);
         }
 
         .navbar-brand {
             font-weight: 800; font-size: 1.8rem;
             color: white !important; letter-spacing: -1px;
+            transition: all 0.3s ease;
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        .navbar-brand span { color: var(--primary-color); }
+
+        .navbar-brand:hover {
+            transform: translateY(-1px);
+        }
+
+        .navbar-brand span {
+            color: var(--primary-color);
+            position: relative;
+        }
+
+        .navbar-brand span::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary-color), #ff8533);
+            transition: width 0.3s ease;
+        }
+
+        .navbar-brand:hover span::after {
+            width: 100%;
+        }
 
         /* 🔍 Seamless Premium Search Bar */
         .search-container {
             display: flex;
-            background: #ffffff;
-            border-radius: 8px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(255,255,255,0.98));
+            border-radius: 16px;
             overflow: hidden;
-            height: 44px;
+            height: 48px;
             max-width: 800px;
             flex-grow: 1;
             margin: 0 40px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .search-container:focus-within {
+            box-shadow: 0 12px 40px rgba(234,108,0,0.15);
+            border-color: rgba(234,108,0,0.3);
+            transform: translateY(-1px);
         }
 
         .search-cat {
-            background: #f1f5f9;
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
             border: none;
-            border-right: 1px solid #e2e8f0;
-            padding: 0 15px;
-            font-size: 0.8rem;
+            border-right: 1px solid rgba(226,232,240,0.8);
+            padding: 0 16px;
+            font-size: 0.85rem;
             color: #475569;
             font-weight: 600;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .search-cat:hover {
+            background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+            color: #334155;
+        }
+
+        .search-cat::after {
+            content: '';
+            width: 0;
+            height: 0;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-top: 4px solid #64748b;
+            margin-left: 4px;
+            transition: transform 0.2s ease;
         }
 
         .search-input {
             border: none !important;
             padding: 0 20px;
             flex-grow: 1;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             box-shadow: none !important;
+            background: transparent;
+            color: #1e293b;
+            font-weight: 500;
+        }
+
+        .search-input::placeholder {
+            color: #94a3b8;
+            font-weight: 400;
+        }
+
+        .search-input:focus {
+            outline: none;
+            background: rgba(234,108,0,0.02);
         }
 
         .search-btn {
-            background: var(--primary-color);
+            background: linear-gradient(135deg, var(--primary-color), #ff8533);
             border: none;
-            width: 60px;
+            width: 64px;
             color: white;
-            font-size: 1.2rem;
-            transition: all 0.2s;
+            font-size: 1.1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .search-btn:hover { background: #ff7d2b; }
+
+        .search-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .search-btn:hover::before {
+            left: 100%;
+        }
+
+        .search-btn:hover {
+            background: linear-gradient(135deg, #ff7d2b, #ff9a4d);
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(234,108,0,0.3);
+        }
 
         /* 👤 Account & Cart Meta-info */
         .meta-actions {
-            display: flex; align-items: center; gap: 8px;
+            display: flex; align-items: center; gap: 12px;
         }
+
         .meta-link {
-            display: flex; align-items: center; gap: 10px;
+            display: flex; align-items: center; gap: 12px;
             color: white; text-decoration: none;
-            padding: 6px 12px; border-radius: 8px;
-            transition: background 0.2s;
+            padding: 10px 16px; border-radius: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
         }
-        .meta-link:hover { background: rgba(255,255,255,0.05); color: white; }
 
-        .meta-label { font-size: 0.7rem; color: #94a3b8; display: block; }
-        .meta-value { font-size: 0.85rem; font-weight: 700; display: block; }
+        .meta-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s ease;
+        }
 
-        .cart-wrapper { position: relative; font-size: 1.5rem; color: var(--primary-color); }
+        .meta-link:hover::before {
+            left: 100%;
+        }
+
+        .meta-link:hover {
+            background: rgba(255,255,255,0.08);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            border-color: rgba(255,255,255,0.15);
+        }
+
+        .meta-link .meta-icon {
+            font-size: 1.4rem;
+            color: #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .meta-link:hover .meta-icon {
+            color: var(--primary-color);
+            transform: scale(1.1);
+        }
+
+        .meta-label {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            display: block;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .meta-value {
+            font-size: 0.9rem;
+            font-weight: 700;
+            display: block;
+            color: white;
+            margin-top: 1px;
+        }
+
+        .cart-wrapper {
+            position: relative;
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            transition: all 0.3s ease;
+        }
+
+        .cart-wrapper:hover {
+            transform: scale(1.1);
+            color: #ff8533;
+        }
+
         .cart-badge {
-            position: absolute; top: -5px; right: -10px;
-            background: #ef4444; color: white;
-            font-size: 0.65rem; font-weight: 700;
-            width: 20px; height: 20px;
+            position: absolute; top: -6px; right: -12px;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            font-size: 0.7rem; font-weight: 700;
+            width: 22px; height: 22px;
             border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             border: 2px solid var(--secondary-color);
+            box-shadow: 0 4px 12px rgba(239,68,68,0.3);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 4px 12px rgba(239,68,68,0.3); }
+            50% { box-shadow: 0 4px 12px rgba(239,68,68,0.6); }
+            100% { box-shadow: 0 4px 12px rgba(239,68,68,0.3); }
         }
 
         /* 🧭 Bottom Nav 🧭 */
         .header-bottom {
-            background-color: #1e293b;
-            padding: 8px 0;
+            background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #1e293b 100%);
+            padding: 10px 0;
             position: fixed;
             top: 68px; width: 100%; z-index: 1040;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
         }
+
         .nav-link-custom {
             color: #cbd5e1;
             text-decoration: none;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             font-weight: 600;
-            padding: 4px 12px;
-            transition: color 0.2s;
+            padding: 8px 16px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 8px;
+            position: relative;
+            margin: 0 2px;
+            letter-spacing: 0.25px;
         }
-        .nav-link-custom:hover { color: white; }
-        .nav-link-custom.active { color: var(--primary-color); }
-        .nav-link-custom:hover { outline: 1px solid white; }
-        .nav-link-custom.all-menu { font-weight: 800; }
+
+        .nav-link-custom::before {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary-color), #ff8533);
+            transition: all 0.3s ease;
+            border-radius: 1px;
+            transform: translateX(-50%);
+        }
+
+        .nav-link-custom:hover {
+            color: white;
+            background: rgba(255,255,255,0.05);
+            transform: translateY(-1px);
+        }
+
+        .nav-link-custom:hover::before {
+            width: 80%;
+        }
+
+        .nav-link-custom.active {
+            color: var(--primary-color);
+            background: rgba(234,108,0,0.1);
+        }
+
+        .nav-link-custom.active::before {
+            width: 100%;
+            background: linear-gradient(90deg, var(--primary-color), #ff8533);
+        }
+
+        .nav-link-custom.all-menu {
+            font-weight: 700;
+            background: linear-gradient(135deg, rgba(234,108,0,0.1), rgba(255,133,51,0.1));
+            border: 1px solid rgba(234,108,0,0.2);
+        }
+
+        .nav-link-custom.all-menu:hover {
+            background: linear-gradient(135deg, rgba(234,108,0,0.15), rgba(255,133,51,0.15));
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(234,108,0,0.2);
+        }
 
         /* ═══ Mobile UI ═══ */
         .mobile-header {
-            background-color: var(--secondary-color);
-            padding: 10px 0;
+            background: linear-gradient(135deg, var(--secondary-color) 0%, #334155 50%, var(--secondary-color) 100%);
+            padding: 12px 0;
             position: fixed;
             top: 0; width: 100%;
             z-index: 1100;
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
+
         .mobile-top-row {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 15px;
-            margin-bottom: 10px;
+            padding: 0 16px;
+            margin-bottom: 12px;
         }
-        .mobile-search-row { padding: 0 15px; }
-        .mobile-menu-btn { color: white; font-size: 1.5rem; background: none; border: none; padding: 0; }
-        .mobile-brand { font-size: 1.25rem; font-weight: 800; color: white !important; text-decoration: none; }
-        .mobile-brand span { color: var(--primary-color); }
-        .mobile-actions { display: flex; align-items: center; gap: 15px; color: white; }
-        .mobile-signin { color: white; text-decoration: none; font-size: 0.9rem; font-weight: 600; }
-        .mobile-whatsapp { color: #25D366; font-size: 1.4rem; }
+
+        .mobile-search-row {
+            padding: 0 16px;
+        }
+
+        .mobile-menu-btn {
+            color: white;
+            font-size: 1.4rem;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 10px;
+            padding: 10px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+        }
+
+        .mobile-menu-btn:hover {
+            background: rgba(255,255,255,0.15);
+            transform: scale(1.05);
+        }
+
+        .mobile-brand {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: white !important;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .mobile-brand:hover {
+            transform: translateY(-1px);
+        }
+
+        .mobile-brand span {
+            color: var(--primary-color);
+            position: relative;
+        }
+
+        .mobile-brand span::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary-color), #ff8533);
+            transition: width 0.3s ease;
+        }
+
+        .mobile-brand:hover span::after {
+            width: 100%;
+        }
+
+        .mobile-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .mobile-signin {
+            color: white;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.15);
+            transition: all 0.3s ease;
+        }
+
+        .mobile-signin:hover {
+            background: rgba(255,255,255,0.15);
+            transform: translateY(-1px);
+        }
+
+        .mobile-whatsapp {
+            color: #25D366;
+            font-size: 1.4rem;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-whatsapp:hover {
+            transform: scale(1.1);
+        }
 
         .mobile-bottom-nav {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            background: white;
+            background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(255,255,255,0.95));
+            backdrop-filter: blur(20px);
             display: none;
             justify-content: space-around;
-            padding: 10px 0;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            padding: 12px 0;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+            border-top: 1px solid rgba(0,0,0,0.05);
             z-index: 2000;
         }
+
         .mobile-nav-item {
             text-align: center;
             text-decoration: none;
             color: #64748b;
-            font-size: 0.65rem;
+            font-size: 0.7rem;
             flex: 1;
+            padding: 6px 8px;
+            border-radius: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            font-weight: 600;
+            margin: 0 2px;
         }
-        .mobile-nav-item.active { color: var(--primary-color); }
-        .mobile-nav-item i { font-size: 1.3rem; display: block; margin-bottom: 2px; }
+
+        .mobile-nav-item::before {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            width: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-color), #ff8533);
+            border-radius: 2px;
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+
+        .mobile-nav-item:hover {
+            background: rgba(234,108,0,0.1);
+            color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .mobile-nav-item.active {
+            color: var(--primary-color);
+            background: rgba(234,108,0,0.1);
+        }
+
+        .mobile-nav-item.active::before {
+            width: 80%;
+        }
+
+        .mobile-nav-item i {
+            font-size: 1.4rem;
+            display: block;
+            margin-bottom: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-nav-item.active i,
+        .mobile-nav-item:hover i {
+            transform: scale(1.1);
+        }
 
         @media (max-width: 991px) {
             .header-bottom { display: none; }
-            .search-container { order: 3; max-width: 100%; margin: 8px 0 0; }
-            .header-main { height: auto; padding-bottom: 12px; }
-            .navbar-brand { margin-right: 0; font-size: 1.3rem; }
+            .search-container {
+                order: 3;
+                max-width: 100%;
+                margin: 8px 0 0;
+                box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            }
+            .header-main {
+                height: auto;
+                padding-bottom: 12px;
+                background: linear-gradient(135deg, var(--secondary-color) 0%, #334155 100%);
+            }
+            .navbar-brand {
+                margin-right: 0;
+                font-size: 1.3rem;
+            }
             .meta-item.d-lg-inline-block { display: none; }
             .mobile-bottom-nav { display: flex; }
+        }
+
+        @media (max-width: 767px) {
+            .mobile-header {
+                padding: 8px 0;
+            }
+            .mobile-top-row {
+                padding: 0 12px;
+                margin-bottom: 8px;
+            }
+            .mobile-search-row {
+                padding: 0 12px;
+            }
+            .search-container {
+                height: 44px;
+                border-radius: 12px;
+                margin: 4px 0 0;
+            }
+            .meta-actions {
+                gap: 8px;
+            }
+            .meta-link {
+                padding: 8px 12px;
+                gap: 8px;
+            }
+            .mobile-nav-item {
+                font-size: 0.65rem;
+                padding: 4px 6px;
+            }
+            .mobile-nav-item i {
+                font-size: 1.2rem;
+                margin-bottom: 2px;
+            }
+        }
+
+        @media (max-width: 575px) {
+            .mobile-brand {
+                font-size: 1.1rem;
+            }
+            .mobile-signin {
+                font-size: 0.8rem;
+                padding: 6px 10px;
+            }
+            .search-input {
+                font-size: 0.85rem;
+                padding: 0 12px;
+            }
+            .search-cat {
+                padding: 0 12px;
+                font-size: 0.75rem;
+            }
         }
     </style>
 </head>
@@ -278,37 +694,119 @@ $_seo_canonical = rtrim($_seo_canonical, '?&');
 
     <!-- 📱 Mobile Sidebar (Offcanvas) -->
     <div class="offcanvas offcanvas-start" tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
-        <div class="offcanvas-header bg-dark text-white">
+        <div class="offcanvas-header" style="background: linear-gradient(135deg, var(--secondary-color) 0%, #334155 100%); color: white; border-bottom: 1px solid rgba(255,255,255,0.1);">
             <h5 class="offcanvas-title" id="mobileSidebarLabel">
-                <i class="bi bi-person-circle me-2"></i> Hello, <?php echo is_logged_in() ? explode(' ', $_SESSION['user']['full_name'])[0] : 'Sign in'; ?>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="sidebar-user-icon" style="width: 36px; height: 36px; background: linear-gradient(135deg, var(--primary-color), #ff8533); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-person-circle text-white fs-5"></i>
+                    </div>
+                    <div>
+                        <div class="fw-semibold">Hello, <?php echo is_logged_in() ? explode(' ', $_SESSION['user']['full_name'])[0] : 'Sign in'; ?></div>
+                        <div class="small opacity-75"><?php echo is_logged_in() ? 'Welcome back!' : 'Access your account'; ?></div>
+                    </div>
+                </div>
             </h5>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
         <div class="offcanvas-body p-0">
             <div class="list-group list-group-flush">
-                <div class="list-group-item bg-light fw-bold">Shop by Department</div>
-                <?php 
+                <div class="list-group-item fw-bold py-3 px-4" style="background: linear-gradient(135deg, #f8fafc, #f1f5f9); color: #334155; border-bottom: 1px solid #e2e8f0;">
+                    <i class="bi bi-grid me-2 text-primary"></i>Shop by Department
+                </div>
+                <?php
                     $cats = get_categories();
-                    foreach($cats as $c): 
+                    foreach($cats as $c):
                 ?>
-                    <a href="<?php echo url('/shop?category=' . $c['id']); ?>" class="list-group-item list-group-item-action py-3">
-                        <?php echo h($c['name']); ?>
+                    <a href="<?php echo url('/shop?category=' . $c['id']); ?>" class="list-group-item list-group-item-action py-3 px-4 sidebar-nav-item">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="category-icon" style="width: 32px; height: 32px; background: linear-gradient(135deg, rgba(234,108,0,0.1), rgba(255,133,51,0.1)); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                <i class="bi bi-tag text-primary"></i>
+                            </div>
+                            <span class="fw-medium"><?php echo h($c['name']); ?></span>
+                        </div>
                     </a>
                 <?php endforeach; ?>
 
-                <div class="list-group-item bg-light fw-bold">Help & Settings</div>
-                <a href="<?php echo url('/profile'); ?>" class="list-group-item list-group-item-action py-3">Your Account</a>
-                <a href="<?php echo url('/orders'); ?>" class="list-group-item list-group-item-action py-3">Your Orders</a>
-                <a href="<?php echo url('/queries'); ?>" class="list-group-item list-group-item-action py-3">My Queries</a>
-                <a href="<?php echo url('/contact'); ?>" class="list-group-item list-group-item-action py-3">Customer Service</a>
+                <div class="list-group-item fw-bold py-3 px-4 mt-3" style="background: linear-gradient(135deg, #f8fafc, #f1f5f9); color: #334155; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
+                    <i class="bi bi-gear me-2 text-primary"></i>Help & Settings
+                </div>
+                <a href="<?php echo url('/profile'); ?>" class="list-group-item list-group-item-action py-3 px-4 sidebar-nav-item">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="nav-icon" style="width: 32px; height: 32px; background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(96,165,250,0.1)); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-person text-primary"></i>
+                        </div>
+                        <span>Your Account</span>
+                    </div>
+                </a>
+                <a href="<?php echo url('/orders'); ?>" class="list-group-item list-group-item-action py-3 px-4 sidebar-nav-item">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="nav-icon" style="width: 32px; height: 32px; background: linear-gradient(135deg, rgba(34,197,94,0.1), rgba(74,222,128,0.1)); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-receipt text-success"></i>
+                        </div>
+                        <span>Your Orders</span>
+                    </div>
+                </a>
+                <a href="<?php echo url('/queries'); ?>" class="list-group-item list-group-item-action py-3 px-4 sidebar-nav-item">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="nav-icon" style="width: 32px; height: 32px; background: linear-gradient(135deg, rgba(168,85,247,0.1), rgba(196,181,253,0.1)); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-chat-dots text-purple"></i>
+                        </div>
+                        <span>My Queries</span>
+                    </div>
+                </a>
+                <a href="<?php echo url('/contact'); ?>" class="list-group-item list-group-item-action py-3 px-4 sidebar-nav-item">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="nav-icon" style="width: 32px; height: 32px; background: linear-gradient(135deg, rgba(251,146,60,0.1), rgba(253,186,116,0.1)); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-headset text-warning"></i>
+                        </div>
+                        <span>Customer Service</span>
+                    </div>
+                </a>
                 <?php if (is_logged_in()): ?>
-                    <a href="<?php echo url('/backend/logout.php'); ?>" class="list-group-item list-group-item-action py-3 text-danger">Sign Out</a>
+                    <a href="<?php echo url('/backend/logout.php'); ?>" class="list-group-item list-group-item-action py-3 px-4 sidebar-nav-item text-danger">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="nav-icon" style="width: 32px; height: 32px; background: linear-gradient(135deg, rgba(239,68,68,0.1), rgba(252,165,165,0.1)); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                <i class="bi bi-box-arrow-right text-danger"></i>
+                            </div>
+                            <span>Sign Out</span>
+                        </div>
+                    </a>
                 <?php else: ?>
-                    <a href="<?php echo url('/auth/login.php'); ?>" class="list-group-item list-group-item-action py-3 text-primary font-weight-bold">Sign In</a>
+                    <a href="<?php echo url('/auth/login.php'); ?>" class="list-group-item list-group-item-action py-3 px-4 sidebar-nav-item text-primary fw-bold">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="nav-icon" style="width: 32px; height: 32px; background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(96,165,250,0.1)); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                <i class="bi bi-box-arrow-in-right text-primary"></i>
+                            </div>
+                            <span>Sign In</span>
+                        </div>
+                    </a>
                 <?php endif; ?>
             </div>
         </div>
     </div>
+
+    <style>
+        .sidebar-nav-item {
+            transition: all 0.3s ease;
+            border: none;
+            border-radius: 0;
+        }
+
+        .sidebar-nav-item:hover {
+            background: linear-gradient(135deg, rgba(234,108,0,0.05), rgba(255,133,51,0.05));
+            transform: translateX(4px);
+        }
+
+        .sidebar-nav-item:hover .nav-icon,
+        .sidebar-nav-item:hover .category-icon {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .offcanvas {
+            box-shadow: 0 0 40px rgba(0,0,0,0.1);
+        }
+    </style>
 
     <!-- 💻 Desktop Header (Visible only on >= 992px) -->
     <div class="d-none d-lg-block">
