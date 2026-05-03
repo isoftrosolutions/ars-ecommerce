@@ -48,6 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Success: Set session
             unset($user['password']); // Don't store password in session
             $_SESSION['user'] = $user;
+            $_SESSION['session_created'] = time(); // Track session creation time
 
             // Audit log: record login
             require_once __DIR__ . '/../includes/audit-logger.php';

@@ -18,7 +18,9 @@ class ValidationMiddleware {
      */
     public static function validateRequired($data, $fields) {
         foreach ($fields as $field) {
-            if (!isset($data[$field]) || empty(trim($data[$field]))) {
+            if (!isset($data[$field])) {
+                self::$errors[] = "Field '{$field}' is required";
+            } elseif ($data[$field] === '' || ($data[$field] === null && !is_bool($data[$field]))) {
                 self::$errors[] = "Field '{$field}' is required";
             }
         }
@@ -108,6 +110,8 @@ class ValidationMiddleware {
         foreach ($data as $key => $value) {
             if (is_array($value)) {
                 $sanitized[$key] = self::sanitizeArray($value);
+            } elseif (is_bool($value)) {
+                $sanitized[$key] = $value;
             } else {
                 $sanitized[$key] = self::sanitizeString($value);
             }

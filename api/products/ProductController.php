@@ -217,7 +217,7 @@ class ProductController extends BaseController {
                 $this->handleProductImages($data['id'], $data['images']);
             }
 
-            $this->commit();
+$this->commit();
             $this->logAction('update_product', ['product_id' => $data['id'], 'name' => $data['name']]);
 
             Response::success(null, 'Product updated successfully');

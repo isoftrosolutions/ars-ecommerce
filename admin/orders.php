@@ -180,7 +180,7 @@ async function viewOrder(id) {
             <div class="form-group">
                 <label class="form-label">Delivery Status</label>
                 <select id="update-delivery-status" class="form-control">
-                    ${['Pending','Confirmed','Shipped','Out for Delivery','Delivered','Cancelled'].map(s =>
+                    ${['Pending','Processing','Shipped','Delivered','Cancelled'].map(s =>
                         `<option ${o.delivery_status === s ? 'selected' : ''}>${s}</option>`
                     ).join('')}
                 </select>

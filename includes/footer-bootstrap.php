@@ -57,6 +57,13 @@ global $base_url;
                                     </a>
                                 </li>
                                 <li class="mb-3">
+                                    <div class="small text-muted mb-1">WhatsApp</div>
+                                    <a href="https://wa.me/9779746815326" target="_blank" class="text-decoration-none text-light hover-primary d-flex align-items-center gap-2" style="background: #25D366; padding: 6px 12px; border-radius: 20px; width: fit-content;">
+                                        <i class="bi bi-whatsapp" style="color: white;"></i>
+                                        +977 9746815326
+                                    </a>
+                                </li>
+                                <li class="mb-3">
                                     <div class="small text-muted mb-1">Head Office</div>
                                     <a href="tel:+9779812231441" class="text-decoration-none text-light hover-primary d-flex align-items-center gap-2">
                                         <i class="bi bi-telephone-fill" style="color: #ea6c00;"></i>

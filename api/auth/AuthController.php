@@ -109,6 +109,9 @@ class AuthController extends BaseController {
         $this->logger->info('Admin logout', ['user_id' => $user['id']]);
 
         // Clear session
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
         session_destroy();
 
         Response::success(null, 'Logout successful');

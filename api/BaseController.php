@@ -103,7 +103,9 @@ abstract class BaseController {
      * Rollback database transaction
      */
     protected function rollback() {
-        $this->pdo->rollBack();
+        if ($this->pdo->inTransaction()) {
+            $this->pdo->rollBack();
+        }
     }
 
     /**

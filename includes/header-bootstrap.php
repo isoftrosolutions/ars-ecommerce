@@ -656,22 +656,8 @@ async function addToCart(productId, quantity = 1) {
         const data = await response.json();
 
         if (data.success) {
-            // Update all cart count bubbles
-            document.querySelectorAll('.cart-count').forEach(el => {
-                el.textContent = data.cart_count;
-                el.classList.add('bump');
-                setTimeout(() => el.classList.remove('bump'), 300);
-            });
-            
-            // Show mini cart drawer
-            await loadMiniCart();
-            
-            // Show toast
-            showToast('Success', 'Item added to your cart!', 'success');
-            
-            // Open the drawer
-            const drawer = bootstrap.Offcanvas.getOrCreateInstance(document.getElementById('miniCartDrawer'));
-            drawer.show();
+            // Redirect to cart page with product details
+            window.location.href = `${window.BASE_URL}/cart`;
         } else if (data.require_login) {
             // Show login required modal
             const modal = new bootstrap.Modal(document.getElementById('loginRequiredModal'));

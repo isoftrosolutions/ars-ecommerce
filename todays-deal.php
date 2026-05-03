@@ -261,8 +261,15 @@ setInterval(updateCountdown, 1000);
 
 // Add to cart function
 function addToCart(productId) {
-    // Add your cart logic here
-    alert('Added to cart! Product ID: ' + productId);
+    fetch('<?php echo url("/cart-action"); ?>?action=add&id=' + productId)
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            window.location.href = '<?php echo url("/cart"); ?>';
+        } else {
+            alert(data.message || 'Could not add item');
+        }
+    });
 }
 </script>
 

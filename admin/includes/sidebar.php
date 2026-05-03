@@ -36,6 +36,11 @@ function _is_nav_active(string $page): string {
             <span class="nav-icon"><i class="fa-solid fa-cart-shopping"></i></span>
             <span class="nav-text">Orders</span>
         </a>
+
+        <a href="<?php echo url('/admin/billing.php'); ?>" class="nav-item <?php echo _is_nav_active('admin/billing'); ?>">
+            <span class="nav-icon"><i class="fa-solid fa-file-invoice"></i></span>
+            <span class="nav-text">Billing</span>
+        </a>
         
         <a href="<?php echo url('/admin/categories.php'); ?>" class="nav-item <?php echo _is_nav_active('admin/categories'); ?>">
             <span class="nav-icon"><i class="fa-solid fa-layer-group"></i></span>

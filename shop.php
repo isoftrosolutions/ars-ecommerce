@@ -438,12 +438,8 @@ function addToCart(productId, btn) {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            btn.innerHTML = '<i class="bi bi-check"></i>';
-            btn.classList.add('btn-success');
-            btn.classList.remove('bg-dark');
-            
-            // Dispatch event to Update Header Cart Counter
-            window.dispatchEvent(new Event('cartUpdated'));
+            // Redirect to cart page with product details
+            window.location.href = '<?php echo url("/cart"); ?>';
         } else if (data.require_login) {
             const modal = new bootstrap.Modal(document.getElementById('loginRequiredModal'));
             modal.show();

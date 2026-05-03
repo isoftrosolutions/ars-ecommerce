@@ -97,7 +97,11 @@ if (!headers_sent()) {
     }
 }
 
-// ── 5. Check for Remember-Me Token ────────────────────────────────
+// ── 5. Session Validation ─────────────────────────────────────────
+require_once __DIR__ . '/middleware/SessionMiddleware.php';
+SessionMiddleware::validateSession();
+
+// ── 6. Check for Remember-Me Token ────────────────────────────────
 if (!isset($_SESSION['user']) && isset($_COOKIE['remember_token'])) {
     $token = $_COOKIE['remember_token'];
     $hashed_token = hash('sha256', $token);
@@ -111,6 +115,7 @@ if (!isset($_SESSION['user']) && isset($_COOKIE['remember_token'])) {
             // Valid token, log user in
             unset($user['password']);
             $_SESSION['user'] = $user;
+            $_SESSION['session_created'] = time(); // Track session creation time
 
             // Generate new token for security (rotation)
             $new_token = bin2hex(random_bytes(32));

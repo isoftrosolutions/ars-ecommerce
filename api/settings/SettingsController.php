@@ -172,6 +172,9 @@ class SettingsController extends BaseController {
             Response::success(['updated' => $updated], 'Settings updated successfully');
 
         } catch (Exception $e) {
+            $this->logger->error('Bulk update settings failed: ' . $e->getMessage(), [
+                'keys' => array_keys($data['settings'])
+            ]);
             $this->rollback();
             throw $e;
         }

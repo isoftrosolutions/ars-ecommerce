@@ -8,6 +8,10 @@ class AuthMiddleware {
      * Check if user is authenticated and is admin
      */
     public static function authenticate() {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
         if (!isset($_SESSION['user'])) {
             Response::error('Authentication required', 401);
         }
@@ -21,6 +25,9 @@ class AuthMiddleware {
      * Get current authenticated user
      */
     public static function getCurrentUser() {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
         return $_SESSION['user'] ?? null;
     }
 
@@ -28,6 +35,9 @@ class AuthMiddleware {
      * Validate CSRF token
      */
     public static function validateCsrfToken() {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
         $token = $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
 
         if (empty($token) || !isset($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $token)) {

@@ -44,7 +44,7 @@ include_once __DIR__ . '/../includes/header-bootstrap.php';
     <div class="container d-flex justify-content-center">
         <div class="auth-card">
             <h1 class="auth-title">Reset Password</h1>
-            <p class="auth-subtitle">Enter your new password below</p>
+            <p class="auth-subtitle">Resetting password for <strong><?php echo h($user['email']); ?></strong></p>
 
             <?php if (isset($_SESSION['error'])): ?>
                 <div class="auth-alert auth-alert-error">
@@ -61,6 +61,7 @@ include_once __DIR__ . '/../includes/header-bootstrap.php';
             <form action="<?php echo url('/backend/reset-password.php'); ?>" method="POST" class="auth-form" id="resetForm">
                 <input type="hidden" name="csrf_token" value="<?php echo h(generate_csrf_token()); ?>">
                 <input type="hidden" name="token" value="<?php echo h($token); ?>">
+                <input type="hidden" name="email" value="<?php echo h($user['email']); ?>">
 
                 <div class="mb-3">
                     <label for="password" class="form-label">New Password</label>

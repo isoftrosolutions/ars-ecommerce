@@ -42,6 +42,13 @@ include_once __DIR__ . '/../includes/header-bootstrap.php';
                 </div>
             <?php endif; ?>
 
+            <?php if (isset($_GET['expired']) && $_GET['expired'] === '1'): ?>
+                <div class="auth-alert auth-alert-warning">
+                    <i class="bi bi-clock-history"></i>
+                    <span>Your session has expired. Please login again.</span>
+                </div>
+            <?php endif; ?>
+
             <?php if (isset($_SESSION['success'])): ?>
                 <div class="auth-alert auth-alert-success">
                     <i class="bi bi-check-circle-fill"></i>

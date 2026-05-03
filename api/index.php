@@ -191,6 +191,12 @@ try {
             $controller->handleRequest($requestMethod, $action);
             break;
 
+        case 'billing':
+            require_once __DIR__ . '/billing/BillingController.php';
+            $controller = new BillingController();
+            $controller->handleRequest($requestMethod, $action);
+            break;
+
         case 'uploads':
             require_once __DIR__ . '/uploads/UploadController.php';
             $controller = new UploadController();
