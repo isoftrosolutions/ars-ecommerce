@@ -118,6 +118,11 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  // Skip unsupported schemes (like chrome-extension)
+  if (!url.protocol.startsWith('http')) {
+    return;
+  }
+
   // Skip API and backend requests
   if (shouldSkipCache(url.pathname)) {
     return;

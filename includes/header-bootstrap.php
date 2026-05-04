@@ -67,7 +67,7 @@ $_seo_canonical = rtrim($_seo_canonical, '?&');
     <meta name="twitter:description" content="<?php echo $_seo_desc; ?>">
     <meta name="twitter:image"       content="<?php echo h($_seo_image); ?>">
 
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛒</text></svg>">
+    <link rel="icon" href="<?php echo url('/public/assets/img/logo.jpg'); ?>">
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">

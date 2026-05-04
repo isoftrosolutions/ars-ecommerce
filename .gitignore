@@ -1,6 +1,7 @@
 # ── Environment & Secrets ──
 .env
 *.env.local
+includes/db.php
 
 # ── Logs ──
 logs/*.log

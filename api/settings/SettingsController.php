@@ -187,7 +187,7 @@ class SettingsController extends BaseController {
         $allowedKeys = [
             // General
             'site_name', 'site_description', 'site_url', 'admin_email', 'support_email',
-            'currency_symbol', 'currency_code', 'timezone', 'maintenance_mode',
+            'currency_symbol', 'currency_code', 'timezone', 'maintenance_mode', 'maintenance_message',
 
             // Company
             'company_name', 'company_address', 'company_phone', 'company_email',

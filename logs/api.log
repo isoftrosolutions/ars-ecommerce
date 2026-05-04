@@ -3,3 +3,6 @@
 [2026-04-11 14:13:02] INFO: Admin action: create_product {"product_id":"2","name":"Eleceq","user_id":3,"user_name":"Admin (pdewbrath)","ip":"::1"}
 [2026-04-11 14:14:16] INFO: Admin action: update_product {"product_id":"2","name":"Eleceq","user_id":3,"user_name":"Admin (pdewbrath)","ip":"::1"}
 [2026-04-12 07:47:40] INFO: Admin action: create_product {"product_id":"2","name":"APPLE","user_id":3,"user_name":"Admin (pdewbrath)","ip":"::1"}
+[2026-05-04 01:32:23] INFO: Admin action: bulk_update_settings {"count":38,"user_id":12,"user_name":"Devbarat","ip":"::1"}
+[2026-05-04 01:34:10] INFO: Admin action: create_product {"product_id":"3","name":"Nepal","user_id":12,"user_name":"Devbarat","ip":"::1"}
+[2026-05-04 01:39:01] INFO: Admin action: update_product {"product_id":"3","name":"Nepal","user_id":12,"user_name":"Devbarat","ip":"::1"}

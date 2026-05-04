@@ -19,6 +19,7 @@ $admin_initial = strtoupper(substr($admin_name, 0, 1));
     <meta name="csrf-token" content="<?php echo $csrf_token; ?>">
     <script>window.BASE_URL = '<?php echo rtrim(url(''), '/'); ?>';</script>
     <title><?php echo $page_title ?? 'Admin Dashboard'; ?> - Easy Shopping A.R.S</title>
+    <link rel="icon" href="<?php echo url('/public/assets/img/logo.jpg'); ?>">
     
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
