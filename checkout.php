@@ -298,7 +298,7 @@ include 'includes/header-bootstrap.php';
                 <div class="card-body">
                     <div class="d-flex align-items-center mb-2">
                         <i class="bi bi-truck text-success me-2"></i>
-                        <span class="small">Free shipping on orders over Rs. 1,000</span>
+                        <span class="small">Free shipping on orders over Rs. <?php echo number_format($free_shipping_threshold); ?></span>
                     </div>
                     <div class="d-flex align-items-center mb-2">
                         <i class="bi bi-shield-check text-success me-2"></i>
