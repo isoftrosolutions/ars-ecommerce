@@ -89,20 +89,20 @@ global $base_url;
                                         <div class="phone-icon mb-1" style="width: 28px; height: 28px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 8px; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
                                             <i class="bi bi-headset text-white" style="font-size: 12px;"></i>
                                         </div>
-                                        <div class="text-light-600 small mb-1" style="font-size: 9px; color: rgba(255,255,255,0.6);">SUPPORT</div>
-                                        <a href="tel:+9779820210361" class="text-decoration-none text-light fw-semibold small contact-link" style="font-size: 11px;">
-                                            +977 982-0210361
+                                        <div class="text-light-600 small mb-1" style="font-size: 9px; color: rgba(255,255,255,0.6);">HEAD OFFICE</div>
+                                        <a href="tel:+9779812231441" class="text-decoration-none text-light fw-semibold small contact-link" style="font-size: 11px;">
+                                            +977 9812231441
                                         </a>
                                     </div>
                                 </div>
                                 <div class="col-6">
-                                    <div class="phone-card p-2 rounded-2 text-center" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);">
+                                     <div class="phone-card p-2 rounded-2 text-center" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);">
                                         <div class="phone-icon mb-1" style="width: 28px; height: 28px; background: linear-gradient(135deg, #8b5cf6, #7c3aed); border-radius: 8px; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
                                             <i class="bi bi-telephone-fill text-white" style="font-size: 12px;"></i>
                                         </div>
-                                        <div class="text-light-600 small mb-1" style="font-size: 9px; color: rgba(255,255,255,0.6);">HEAD OFFICE</div>
-                                        <a href="tel:+9779812231441" class="text-decoration-none text-light fw-semibold small contact-link" style="font-size: 11px;">
-                                            +977 9812231441
+                                        <div class="text-light-600 small mb-1" style="font-size: 9px; color: rgba(255,255,255,0.6);">SUPPORT</div>
+                                        <a href="tel:+9779820210361" class="text-decoration-none text-light fw-semibold small contact-link" style="font-size: 11px;">
+                                            +977 982-0210361
                                         </a>
                                     </div>
                                 </div>
