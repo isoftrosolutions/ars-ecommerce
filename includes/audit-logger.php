@@ -16,8 +16,14 @@ class AuditLogger {
      */
     private static function ensureTable() {
         if (self::$tableChecked) return;
-        
         global $pdo;
+        
+        // DDL statements like CREATE TABLE cause implicit commits in MySQL.
+        // If we are in a transaction, we MUST NOT run this, otherwise it breaks the transaction.
+        if ($pdo->inTransaction()) {
+            return;
+        }
+
         try {
             $pdo->exec("
                 CREATE TABLE IF NOT EXISTS `audit_log` (
