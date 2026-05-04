@@ -61,7 +61,7 @@ class SettingsController extends BaseController {
             // General
             'site_name' => 'Easy Shopping A.R.S',
             'site_description' => 'Your one-stop shop for quality products',
-            'site_url' => 'http://localhost/ars',
+            'site_url' => 'https://easyshoppingars.com',
             'admin_email' => 'admin@easyshoppingars.com',
             'support_email' => 'support@easyshoppingars.com',
             'currency_symbol' => 'Rs.',
