@@ -49,9 +49,15 @@ try {
 }
 
 $site_name = get_setting('site_name', 'Easy Shopping A.R.S');
-$site_email = get_setting('admin_email', 'support@ars.com');
-$site_phone = get_setting('site_phone', '+977-980-0000000');
-$site_address = get_setting('site_address', 'Birgunj-13 Radhemai, Parsa, Nepal');
+$site_email = get_setting('admin_email', 'easyshoppinga.r.s1@gmail.com');
+$site_phone = get_setting('site_phone', '+977-982-0210361');
+$site_address = get_setting('site_address', 'Birgunj-13, Radhemai, Parsa, Nepal');
+
+// Invoice number format: ARS-2026-0001
+$invoice_number = 'ARS-' . date('Y', strtotime($order['created_at'])) . '-' . str_pad($order['id'], 4, '0', STR_PAD_LEFT);
+
+// Format date: 4 May 2026
+$invoice_date = date('j M Y', strtotime($order['created_at']));
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -424,16 +430,18 @@ $site_address = get_setting('site_address', 'Birgunj-13 Radhemai, Parsa, Nepal')
         <div class="d-flex justify-content-between align-items-start">
             <div>
                 <div class="brand-logo mb-3">
-                    <img src="<?php echo url('/public/assets/img/logo.jpg'); ?>" alt="ARS Logo" onerror="this.style.display='none'">
-                    <span class="brand-logo-text"><span>ARS</span> Shop</span>
+                    <img src="<?php echo url('/public/assets/img/logo.jpg'); ?>" alt="ARS Logo" onerror="this.style.display='none'" style="width: 60px; height: 60px;">
+                    <div>
+                        <span class="brand-logo-text"><?php echo h($site_name); ?></span>
+                    </div>
                 </div>
                 <p class="small text-white-50 mb-0">Nepal's Trusted Online Marketplace</p>
             </div>
             <div class="text-end">
                 <div class="invoice-badge mb-2">INVOICE</div>
-                <h1 class="invoice-title">#<?php echo str_pad($order['id'], 6, '0', STR_PAD_LEFT); ?></h1>
+                <h1 class="invoice-title"><?php echo $invoice_number; ?></h1>
                 <ul class="meta-list">
-                    <li><strong>Date:</strong> <?php echo date('d M, Y', strtotime($order['created_at'])); ?></li>
+                    <li><strong>Date:</strong> <?php echo $invoice_date; ?></li>
                     <li><strong>Order ID:</strong> #<?php echo $order['id']; ?></li>
                 </ul>
             </div>
@@ -444,18 +452,18 @@ $site_address = get_setting('site_address', 'Birgunj-13 Radhemai, Parsa, Nepal')
         <div class="billing-box">
             <h6>Billed From</h6>
             <p><strong><?php echo h($site_name); ?></strong></p>
-            <p><?php echo nl2br(h($site_address)); ?></p>
-            <p>Email: <?php echo h($site_email); ?></p>
-            <p>Phone: <?php echo h($site_phone); ?></p>
+            <p class="mb-1"><?php echo nl2br(h($site_address)); ?></p>
+            <p class="mb-1"><small class="text-muted">Email: <?php echo h($site_email); ?></small></p>
+            <p><small class="text-muted">Phone: <?php echo h($site_phone); ?></small></p>
         </div>
         <div class="billing-box text-end">
             <h6>Billed To</h6>
             <p><strong><?php echo h($order['customer_name']); ?></strong></p>
-            <p><?php echo h($order['shipping_address']); ?></p>
-            <p><?php echo h($order['shipping_city']); ?>, Nepal</p>
-            <p>Phone: <?php echo h($order['customer_phone']); ?></p>
+            <p class="mb-1"><?php echo h($order['shipping_address']); ?></p>
+            <p class="mb-1"><small class="text-muted"><?php echo h($order['shipping_city']); ?>, Nepal</small></p>
+            <p class="mb-1"><small class="text-muted">Phone: <?php echo h($order['customer_phone']); ?></small></p>
             <?php if (!empty($order['customer_email'])): ?>
-            <p>Email: <?php echo h($order['customer_email']); ?></p>
+            <p><small class="text-muted">Email: <?php echo h($order['customer_email']); ?></small></p>
             <?php endif; ?>
         </div>
     </div>
@@ -511,8 +519,8 @@ $site_address = get_setting('site_address', 'Birgunj-13 Radhemai, Parsa, Nepal')
                 </td>
                 <td class="text-center">
                     <?php if (!empty($item['item_discount_price']) && $item['item_discount_price'] < $item['unit_price']): ?>
-                        <span class="text-decoration-line-through text-muted small">Rs. <?php echo number_format($item['unit_price'], 2); ?></span><br>
                         <span class="text-success fw-bold">Rs. <?php echo number_format($item['item_discount_price'], 2); ?></span>
+                        <span class="d-block text-muted text-decoration-line-through small">Rs. <?php echo number_format($item['unit_price'], 2); ?></span>
                     <?php else: ?>
                         Rs. <?php echo number_format($item['unit_price'], 2); ?>
                     <?php endif; ?>
@@ -525,25 +533,49 @@ $site_address = get_setting('site_address', 'Birgunj-13 Radhemai, Parsa, Nepal')
     </table>
 
     <div class="totals-section">
-        <div class="total-row">
-            <span class="text-muted">Subtotal:</span>
-            <span>Rs. <?php echo number_format($subtotal, 2); ?></span>
-        </div>
         <?php 
+        // Calculate original subtotal (before item discounts)
+        $original_subtotal = 0;
+        foreach ($items as $item) {
+            $original_subtotal += $item['unit_price'] * $item['quantity'];
+        }
+        
+        // Calculate item-level discount
         $itemDiscount = 0;
         foreach ($items as $item) {
-            if (!empty($item['item_discount_price'])) {
+            if (!empty($item['item_discount_price']) && $item['item_discount_price'] < $item['unit_price']) {
                 $itemDiscount += ($item['unit_price'] - $item['item_discount_price']) * $item['quantity'];
             }
         }
+        
+        // Get coupon discount
         $orderDiscount = $order['discount_amount'] ?? 0;
+        
+        // Ensure discount doesn't exceed subtotal
+        $maxDiscount = $original_subtotal;
+        if (($itemDiscount + $orderDiscount) > $maxDiscount) {
+            $excess = ($itemDiscount + $orderDiscount) - $maxDiscount;
+            if ($orderDiscount >= $excess) {
+                $orderDiscount -= $excess;
+            } else {
+                $itemDiscount -= ($excess - $orderDiscount);
+                $orderDiscount = 0;
+            }
+        }
+        
         $totalDiscount = $itemDiscount + $orderDiscount;
         ?>
+        <div class="total-row">
+            <span class="text-muted">Subtotal:</span>
+            <span>Rs. <?php echo number_format($original_subtotal, 2); ?></span>
+        </div>
         <?php if ($totalDiscount > 0): ?>
+        <?php if ($itemDiscount > 0): ?>
         <div class="total-row">
             <span class="text-muted">Item Discount:</span>
             <span class="text-success">-Rs. <?php echo number_format($itemDiscount, 2); ?></span>
         </div>
+        <?php endif; ?>
         <?php if ($orderDiscount > 0): ?>
         <div class="total-row">
             <span class="text-muted">Coupon (<?php echo h($order['coupon_code']); ?>):</span>
@@ -564,7 +596,7 @@ $site_address = get_setting('site_address', 'Birgunj-13 Radhemai, Parsa, Nepal')
             <span>Rs. <?php echo number_format($order['total_amount'], 2); ?></span>
         </div>
         <div class="mt-2 text-end small text-muted">
-            Payment via: <strong><?php echo strtoupper($order['payment_method']); ?></strong>
+            <strong>Payment Method:</strong> <?php echo strtoupper(str_replace(['COD', 'esewa', 'BankQR'], ['Cash on Delivery (COD)', 'eSewa', 'Bank QR'], $order['payment_method'])); ?>
             <?php if (!empty($order['transaction_id'])): ?>
             <br><span class="text-muted">Transaction ID: <?php echo h($order['transaction_id']); ?></span>
             <?php endif; ?>
