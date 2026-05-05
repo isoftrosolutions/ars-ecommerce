@@ -121,22 +121,41 @@ include 'includes/header-bootstrap.php';
 
 .team-member {
     background: white;
-    border-radius: 15px;
+    border-radius: 20px;
     overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.08);
     text-align: center;
     height: 100%;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.team-member:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 45px rgba(0,0,0,0.12);
 }
 
 .team-photo {
     width: 100%;
-    height: 250px;
+    height: 280px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 3rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.team-photo::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.1);
+    transition: opacity 0.3s ease;
+}
+
+.team-member:hover .team-photo::before {
+    opacity: 0.3;
 }
 
 .cta-section {
@@ -379,54 +398,119 @@ include 'includes/header-bootstrap.php';
             </div>
         </div>
 
-        <div class="row g-4">
-            <div class="col-md-4">
-                <div class="team-member">
-                    <div class="team-photo">
-                        <i class="bi bi-person-circle"></i>
-                    </div>
-                    <div class="p-4">
-                        <h5 class="mb-2">Admin Team</h5>
-                        <p class="text-muted mb-3">Operations & Management</p>
-                        <div class="social-links">
-                            <a href="#" class="text-muted me-3"><i class="bi bi-facebook"></i></a>
-                            <a href="#" class="text-muted me-3"><i class="bi bi-twitter"></i></a>
-                            <a href="#" class="text-muted"><i class="bi bi-linkedin"></i></a>
+        <?php
+        // Team members data - in production this would come from database
+        $team_members = [
+            [
+                'name' => 'Aaditya Kumar Kushwaha (A.R.K)',
+                'position' => 'Founder & CEO',
+                'role' => 'admin',
+                'image' => 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=face',
+                'fb_link' => 'https://www.facebook.com/share/1E6Gn8hf6Z/',
+                'bio' => 'Experienced entrepreneur leading Easy Shopping A.R.S with passion for quality products and customer satisfaction.'
+            ],
+            [
+                'name' => 'Devbarat Prasad Patel',
+                'position' => 'Operations Manager',
+                'role' => 'admin',
+                'image' => 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=300&fit=crop&crop=face',
+                'fb_link' => 'https://facebook.com/devbarat',
+                'bio' => 'Dedicated operations manager ensuring smooth logistics and customer satisfaction across Nepal.'
+            ],
+            [
+                'name' => 'Roshan Kushwaha',
+                'position' => 'Customer Support Lead',
+                'role' => 'support',
+                'image' => 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=300&h=300&fit=crop&crop=face',
+                'fb_link' => 'https://www.facebook.com/share/1PZkU2JsD5/',
+                'bio' => 'Leading our customer support team, ensuring every customer query is resolved with care and efficiency.'
+            ],
+            [
+                'name' => 'Sushil Shah',
+                'position' => 'Technical Support Specialist',
+                'role' => 'support',
+                'image' => 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&h=300&fit=crop&crop=face',
+                'fb_link' => 'https://www.facebook.com/share/1LPtsG1odR/',
+                'bio' => 'Expert in troubleshooting technical issues and providing IT support for our online platform.'
+            ],
+            [
+                'name' => 'Mukesh Yadav',
+                'position' => 'Customer Service Representative',
+                'role' => 'support',
+                'image' => 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=300&h=300&fit=crop&crop=face',
+                'fb_link' => 'https://www.facebook.com/share/18qtWAMbgf/',
+                'bio' => 'Committed to providing exceptional customer service and building long-lasting relationships with our valued customers.'
+            ]
+        ];
+
+        // Separate admin and support team members
+        $admin_members = array_filter($team_members, function($member) { return $member['role'] === 'admin'; });
+        $support_members = array_filter($team_members, function($member) { return $member['role'] === 'support'; });
+        ?>
+
+        <!-- Admin Team Section -->
+        <div class="mb-5">
+            <h3 class="text-center mb-4" style="color: var(--ember); font-weight: 600;">Management Team</h3>
+            <div class="row g-4 justify-content-center">
+                <?php foreach ($admin_members as $member): ?>
+                <div class="col-md-6 col-lg-4">
+                    <div class="team-member">
+                        <div class="team-photo" style="background-image: url('<?php echo $member['image']; ?>'); background-size: cover; background-position: center;">
+                            <!-- Fallback icon in case image fails to load -->
+                        </div>
+                        <div class="p-4">
+                            <h5 class="mb-1"><?php echo h($member['name']); ?></h5>
+                            <p class="text-primary mb-2 fw-semibold"><?php echo h($member['position']); ?></p>
+                            <p class="text-muted small mb-3"><?php echo h($member['bio']); ?></p>
+                            <div class="social-links">
+                                <a href="<?php echo h($member['fb_link']); ?>" target="_blank" class="text-muted me-3" title="Facebook">
+                                    <i class="bi bi-facebook"></i>
+                                </a>
+                                <a href="mailto:easyshoppinga.r.s1@gmail.com" class="text-muted me-3" title="Email">
+                                    <i class="bi bi-envelope"></i>
+                                </a>
+                                <a href="tel:+9779820210361" class="text-muted" title="Phone">
+                                    <i class="bi bi-telephone"></i>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
+                <?php endforeach; ?>
             </div>
-            <div class="col-md-4">
-                <div class="team-member">
-                    <div class="team-photo">
-                        <i class="bi bi-person-circle"></i>
-                    </div>
-                    <div class="p-4">
-                        <h5 class="mb-2">Support Team</h5>
-                        <p class="text-muted mb-3">Customer Service</p>
-                        <div class="social-links">
-                            <a href="#" class="text-muted me-3"><i class="bi bi-facebook"></i></a>
-                            <a href="#" class="text-muted me-3"><i class="bi bi-twitter"></i></a>
-                            <a href="#" class="text-muted"><i class="bi bi-envelope"></i></a>
+        </div>
+
+        <!-- Support Team Section -->
+        <div>
+            <h3 class="text-center mb-4" style="color: var(--gold); font-weight: 600;">Support Team</h3>
+            <div class="row g-4">
+                <?php foreach ($support_members as $member): ?>
+                <div class="col-md-4">
+                    <div class="team-member">
+                        <div class="team-photo" style="background-image: url('<?php echo $member['image']; ?>'); background-size: cover; background-position: center;">
+                            <div style="width: 100%; height: 100%; background: rgba(255,193,7,0.1); display: flex; align-items: center; justify-content: center;">
+                                <i class="bi bi-person-circle" style="font-size: 3rem; color: rgba(255,255,255,0.8);"></i>
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <h5 class="mb-1"><?php echo h($member['name']); ?></h5>
+                            <p class="text-warning mb-2 fw-semibold"><?php echo h($member['position']); ?></p>
+                            <p class="text-muted small mb-3"><?php echo h($member['bio']); ?></p>
+                            <div class="social-links">
+                                <a href="<?php echo h($member['fb_link']); ?>" target="_blank" class="text-muted me-3" title="Facebook">
+                                    <i class="bi bi-facebook"></i>
+                                </a>
+                                <a href="mailto:easyshoppinga.r.s1@gmail.com" class="text-muted me-3" title="Email">
+                                    <i class="bi bi-envelope"></i>
+                                </a>
+                                <a href="tel:+9779820210361" class="text-muted" title="Phone">
+                                    <i class="bi bi-telephone"></i>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="col-md-4">
-                <div class="team-member">
-                    <div class="team-photo">
-                        <i class="bi bi-person-circle"></i>
-                    </div>
-                    <div class="p-4">
-                        <h5 class="mb-2">Technical Team</h5>
-                        <p class="text-muted mb-3">Development & Maintenance</p>
-                        <div class="social-links">
-                            <a href="#" class="text-muted me-3"><i class="bi bi-facebook"></i></a>
-                            <a href="#" class="text-muted me-3"><i class="bi bi-github"></i></a>
-                            <a href="#" class="text-muted"><i class="bi bi-linkedin"></i></a>
-                        </div>
-                    </div>
-                </div>
+                <?php endforeach; ?>
             </div>
         </div>
     </div>

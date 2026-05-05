@@ -373,6 +373,34 @@ insert  into `users`(`id`,`full_name`,`email`,`mobile`,`password`,`address`,`rol
 (2,'Devbarat Prasad Patel','mind59024@gmail.com','9811144402','$2y$12$VPBoIR19Sf70449AXW8D/eO4BWAUX03RSjDF1nRMIz0c/JR0m4C.u','Bahudramai-07, Phulkaul, Parsa','customer',NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-11 15:04:48'),
 (3,'Admin (pdewbrath)','pdewbrath@gmail.com','9800000000','$2y$12$RTKZfH6MghcesA4zgNCI1.JZYSIlPPx8/nU4o9Na6WXzseITGRNS.','Admin Office','admin','33c45f4e5d8a34ec8d6e7cb874a1542244891e5f83707c1e9f671f73756875de','2026-04-11 12:41:39',NULL,0,NULL,NULL,NULL,NULL,'859f39c1772a2d7a531702362414dc286b8f2fa470b5bf94c18c217fa68951ec',NULL,NULL,'2026-04-11 16:57:00');
 
+/*Table structure for table `team_members` */
+
+DROP TABLE IF EXISTS `team_members`;
+CREATE TABLE `team_members` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  `role` enum('admin','support','technical','manager') DEFAULT 'support',
+  `position` varchar(255) DEFAULT NULL,
+  `profile_image` varchar(500) DEFAULT NULL,
+  `fb_link` varchar(500) DEFAULT NULL,
+  `bio` text DEFAULT NULL,
+  `is_active` tinyint(1) DEFAULT 1,
+  `display_order` int(11) DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_team_members_role` (`role`),
+  KEY `idx_team_members_active` (`is_active`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+/*Data for the table `team_members` */
+
+insert  into `team_members`(`id`,`name`,`role`,`position`,`profile_image`,`fb_link`,`bio`,`is_active`,`display_order`,`created_at`) values
+(1,'Aaditya Kumar Kushwaha (A.R.K)','admin','Founder & CEO','/public/assets/img/team/aaditya.jpg','https://www.facebook.com/share/1E6Gn8hf6Z/','Experienced entrepreneur leading Easy Shopping A.R.S with passion for quality products and customer satisfaction.','1','1','2026-05-05 21:48:48'),
+(2,'Devbarat Prasad Patel','admin','Operations Manager','/public/assets/img/team/devbarat.jpg','https://facebook.com/devbarat','Dedicated operations manager ensuring smooth logistics and customer satisfaction across Nepal.','1','2','2026-05-05 21:48:48'),
+(3,'Roshan Kushwaha','support','Customer Support Lead','/public/assets/img/team/roshan.jpg','https://www.facebook.com/share/1PZkU2JsD5/','Leading our customer support team, ensuring every customer query is resolved with care and efficiency.','1','3','2026-05-05 21:48:48'),
+(4,'Sushil Shah','support','Technical Support Specialist','/public/assets/img/team/sushil.jpg','https://www.facebook.com/share/1LPtsG1odR/','Expert in troubleshooting technical issues and providing IT support for our online platform.','1','4','2026-05-05 21:48:48'),
+(5,'Mukesh Yadav','support','Customer Service Representative','/public/assets/img/team/mukesh.jpg','https://www.facebook.com/share/18qtWAMbgf/','Committed to providing exceptional customer service and building long-lasting relationships with our valued customers.','1','5','2026-05-05 21:48:48');
+
 /*Table structure for table `wishlist` */
 
 DROP TABLE IF EXISTS `wishlist`;

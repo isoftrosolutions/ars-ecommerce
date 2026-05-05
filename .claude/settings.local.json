@@ -2,7 +2,13 @@
   "permissions": {
     "allow": [
       "Bash(/c/Program Files/MariaDB 12.0/bin/mysql.exe:*)",
-      "PowerShell(irm https://claude.ai/install.ps1 | iex)"
+      "PowerShell(irm https://claude.ai/install.ps1 | iex)",
+      "Bash(git -C \"C:\\\\Apache24\\\\htdocs\\\\ars\" status)",
+      "Bash(git -C \"C:\\\\Apache24\\\\htdocs\\\\ars\" diff --stat)",
+      "Bash(git -C \"C:\\\\Apache24\\\\htdocs\\\\ars\" add invoice.php)",
+      "Bash(git -C 'C:\\\\Apache24\\\\htdocs\\\\ars' commit -m ' *)",
+      "Bash(git *)",
+      "Bash(findstr pwa *)"
     ]
   }
 }
