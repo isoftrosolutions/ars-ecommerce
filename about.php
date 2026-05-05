@@ -34,32 +34,7 @@ include 'includes/header-bootstrap.php';
     z-index: 2;
 }
 
-.about-stats {
-    background: white;
-    border-radius: 20px;
-    padding: 40px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.1);
-    margin-top: -60px;
-    position: relative;
-    z-index: 3;
-}
 
-.stat-item {
-    text-align: center;
-    padding: 20px;
-}
-
-.stat-number {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: var(--gold);
-    margin-bottom: 10px;
-}
-
-.stat-label {
-    color: #64748b;
-    font-weight: 500;
-}
 
 .mission-section {
     background: #f8fafc;
@@ -177,15 +152,6 @@ include 'includes/header-bootstrap.php';
     .hero-about {
         padding: 60px 0;
     }
-
-    .about-stats {
-        margin-top: -40px;
-        padding: 30px 20px;
-    }
-
-    .stat-number {
-        font-size: 2rem;
-    }
 }
 </style>
 
@@ -216,38 +182,6 @@ include 'includes/header-bootstrap.php';
                     <i class="bi bi-bag-heart display-1 text-white mb-3"></i>
                     <h4 class="text-white">Premium Quality</h4>
                     <p class="text-white-50 mb-0">Curated products for the modern lifestyle</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Stats Section -->
-<section class="about-stats">
-    <div class="container">
-        <div class="row g-4">
-            <div class="col-md-3 col-6">
-                <div class="stat-item">
-                    <div class="stat-number">500+</div>
-                    <div class="stat-label">Quality Products</div>
-                </div>
-            </div>
-            <div class="col-md-3 col-6">
-                <div class="stat-item">
-                    <div class="stat-number">10K+</div>
-                    <div class="stat-label">Happy Customers</div>
-                </div>
-            </div>
-            <div class="col-md-3 col-6">
-                <div class="stat-item">
-                    <div class="stat-number">24/7</div>
-                    <div class="stat-label">Customer Support</div>
-                </div>
-            </div>
-            <div class="col-md-3 col-6">
-                <div class="stat-item">
-                    <div class="stat-number">4.8</div>
-                    <div class="stat-label">Average Rating</div>
                 </div>
             </div>
         </div>
