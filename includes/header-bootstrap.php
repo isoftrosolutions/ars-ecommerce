@@ -1106,8 +1106,6 @@ window.BASE_URL = '<?php echo rtrim(url(''), '/'); ?>';
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('/ars/sw.js')
                 .then(registration => {
-                    console.log('PWA Service Worker registered:', registration.scope);
-                    
                     // Check for updates periodically
                     setInterval(() => {
                         registration.update();
@@ -1126,9 +1124,7 @@ window.BASE_URL = '<?php echo rtrim(url(''), '/'); ?>';
                         });
                     });
                 })
-                .catch(error => {
-                    console.error('PWA Service Worker registration failed:', error);
-                });
+                .catch(() => {});
         });
         
         // Handle controller change (when new SW takes over)
@@ -1571,8 +1567,7 @@ async function installPWA() {
     deferredPrompt.prompt();
     
     const { outcome } = await deferredPrompt.userChoice;
-    console.log('PWA Install:', outcome);
-    
+
     if (outcome === 'accepted') {
         showToast('Success', 'ARS Shop app installed successfully!', 'success');
     }
@@ -1610,8 +1605,6 @@ function dismissUpdateBanner() {
 // Service Worker Message Listener
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('message', (event) => {
-        console.log('SW Message:', event.data);
-        
         if (event.data.type === 'SW_ACTIVATED') {
             document.getElementById('pwaUpdateBanner').dataset.version = event.data.version;
             

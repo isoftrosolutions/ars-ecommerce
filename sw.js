@@ -1,6 +1,5 @@
 /**
  * Service Worker for Easy Shopping A.R.S
- * Production-ready PWA Service Worker
  * Version: 2.0.0
  */
 
@@ -24,7 +23,6 @@ const STATIC_ASSETS = [
   'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css'
 ];
 
-// CDN assets to cache
 const CDN_ASSETS = [
   'https://cdn.jsdelivr.net/',
   'https://fonts.googleapis.com/'
@@ -43,65 +41,39 @@ const SKIP_CACHE_PATTERNS = [
 
 // Install Event - Cache static assets
 self.addEventListener('install', event => {
-  console.log('[SW] Installing Service Worker...');
-  
   event.waitUntil(
     caches.open(STATIC_CACHE)
       .then(async cache => {
-        console.log('[SW] Caching static assets');
-        // Use Promise.allSettled to not fail if some assets don't exist
-        const results = await Promise.allSettled(
-          STATIC_ASSETS.map(url => 
-            cache.add(url).catch(err => {
-              console.warn('[SW] Skipping cache for:', url, err);
-              return null;
-            })
-          )
+        await Promise.allSettled(
+          STATIC_ASSETS.map(url => cache.add(url).catch(() => null))
         );
-        console.log('[SW] Static caching complete');
       })
-      .then(() => {
-        console.log('[SW] Skip waiting to activate immediately');
-        return self.skipWaiting();
-      })
-      .catch(err => {
-        console.error('[SW] Cache install failed:', err);
-        // Don't fail the install, just proceed
-        return self.skipWaiting();
-      })
+      .then(() => self.skipWaiting())
+      .catch(() => self.skipWaiting())
   );
 });
 
 // Activate Event - Clean up old caches
 self.addEventListener('activate', event => {
-  console.log('[SW] Activating Service Worker...');
-  
   event.waitUntil(
     caches.keys()
       .then(cacheNames => {
         return Promise.all(
           cacheNames
-            .filter(cacheName => {
-              return cacheName.startsWith('ars-') && 
-                     cacheName !== STATIC_CACHE && 
-                     cacheName !== DYNAMIC_CACHE && 
-                     cacheName !== IMAGE_CACHE;
-            })
-            .map(cacheName => {
-              console.log('[SW] Deleting old cache:', cacheName);
-              return caches.delete(cacheName);
-            })
+            .filter(cacheName =>
+              cacheName.startsWith('ars-') &&
+              cacheName !== STATIC_CACHE &&
+              cacheName !== DYNAMIC_CACHE &&
+              cacheName !== IMAGE_CACHE
+            )
+            .map(cacheName => caches.delete(cacheName))
         );
       })
       .then(() => self.clients.claim())
       .then(() => {
-        // Notify all clients about the update
         self.clients.matchAll().then(clients => {
           clients.forEach(client => {
-            client.postMessage({
-              type: 'SW_ACTIVATED',
-              version: CACHE_VERSION
-            });
+            client.postMessage({ type: 'SW_ACTIVATED', version: CACHE_VERSION });
           });
         });
       })
@@ -113,22 +85,10 @@ self.addEventListener('fetch', event => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET requests
-  if (request.method !== 'GET') {
-    return;
-  }
+  if (request.method !== 'GET') return;
+  if (!url.protocol.startsWith('http')) return;
+  if (shouldSkipCache(url.pathname)) return;
 
-  // Skip unsupported schemes (like chrome-extension)
-  if (!url.protocol.startsWith('http')) {
-    return;
-  }
-
-  // Skip API and backend requests
-  if (shouldSkipCache(url.pathname)) {
-    return;
-  }
-
-  // Handle different request types
   if (isImageRequest(request)) {
     event.respondWith(cacheFirstImage(request));
   } else if (isStaticAsset(url.pathname)) {
@@ -142,12 +102,10 @@ self.addEventListener('fetch', event => {
   }
 });
 
-// Cache-First Strategy (for images and static assets)
+// Cache-First Strategy
 async function cacheFirst(request, cacheName = IMAGE_CACHE) {
   const cachedResponse = await caches.match(request);
-  if (cachedResponse) {
-    return cachedResponse;
-  }
+  if (cachedResponse) return cachedResponse;
 
   try {
     const networkResponse = await fetch(request);
@@ -161,12 +119,11 @@ async function cacheFirst(request, cacheName = IMAGE_CACHE) {
   }
 }
 
-// Cache-First for Images with fallback
+// Cache-First for Images with background refresh
 async function cacheFirstImage(request) {
   try {
     const cachedResponse = await caches.match(request);
     if (cachedResponse) {
-      // Refresh cache in background
       fetchAndCache(request, IMAGE_CACHE);
       return cachedResponse;
     }
@@ -178,7 +135,6 @@ async function cacheFirstImage(request) {
     }
     return networkResponse;
   } catch (error) {
-    // Return placeholder for failed images
     return new Response(
       `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
         <rect fill="#f1f5f9" width="400" height="400"/>
@@ -189,7 +145,7 @@ async function cacheFirstImage(request) {
   }
 }
 
-// Network-First Strategy (for HTML pages)
+// Network-First Strategy (HTML pages)
 async function networkFirst(request) {
   try {
     const networkResponse = await fetch(request);
@@ -199,33 +155,26 @@ async function networkFirst(request) {
     }
     return networkResponse;
   } catch (error) {
-    // Try to serve from cache, then offline page
     const cachedResponse = await caches.match(request);
-    if (cachedResponse) {
-      return cachedResponse;
-    }
-    
+    if (cachedResponse) return cachedResponse;
+
     if (request.mode === 'navigate') {
       const offlinePage = await caches.match(OFFLINE_URL);
-      if (offlinePage) {
-        return offlinePage;
-      }
+      if (offlinePage) return offlinePage;
     }
-    
+
     return new Response('Offline', { status: 503 });
   }
 }
 
-// Stale-While-Revalidate Strategy (for API and dynamic content)
+// Stale-While-Revalidate Strategy
 async function staleWhileRevalidate(request) {
   const cachedResponse = await caches.match(request);
-  
   const fetchPromise = fetchAndCache(request, DYNAMIC_CACHE);
-  
   return cachedResponse || fetchPromise;
 }
 
-// Network-Only Strategy (for API endpoints)
+// Network-Only Strategy
 async function networkOnly(request) {
   return fetch(request);
 }
@@ -244,13 +193,12 @@ async function fetchAndCache(request, cacheName) {
   }
 }
 
-// Helper Functions
 function shouldSkipCache(pathname) {
   return SKIP_CACHE_PATTERNS.some(pattern => pathname.includes(pattern));
 }
 
 function isImageRequest(request) {
-  return request.destination === 'image' || 
+  return request.destination === 'image' ||
          /\.(jpg|jpeg|png|gif|webp|svg|ico)$/i.test(request.url);
 }
 
@@ -260,20 +208,17 @@ function isStaticAsset(pathname) {
 }
 
 function isNavigationRequest(request) {
-  return request.mode === 'navigate' || 
-         (request.destination === 'document');
+  return request.mode === 'navigate' || request.destination === 'document';
 }
 
 function isAPIRequest(pathname) {
-  return pathname.includes('/api/') || 
+  return pathname.includes('/api/') ||
          pathname.includes('cart-action') ||
          pathname.includes('wishlist');
 }
 
 // Background Sync for Cart Operations
 self.addEventListener('sync', event => {
-  console.log('[SW] Background Sync:', event.tag);
-  
   if (event.tag === 'sync-cart') {
     event.waitUntil(syncCart());
   }
@@ -283,17 +228,14 @@ async function syncCart() {
   try {
     const clients = await self.clients.matchAll();
     clients.forEach(client => {
-      client.postMessage({
-        type: 'CART_SYNC',
-        success: true
-      });
+      client.postMessage({ type: 'CART_SYNC', success: true });
     });
   } catch (error) {
-    console.error('[SW] Cart sync failed:', error);
+    // sync failed — browser will retry
   }
 }
 
-// Push Notification Handler (placeholder for future)
+// Push Notification Handler
 self.addEventListener('push', event => {
   if (!event.data) return;
 
@@ -303,9 +245,7 @@ self.addEventListener('push', event => {
     icon: '/ars/public/assets/img/pwa-icon-192.png',
     badge: '/ars/public/assets/img/pwa-icon-192.png',
     vibrate: [100, 50, 100],
-    data: {
-      url: data.url || '/ars/'
-    },
+    data: { url: data.url || '/ars/' },
     actions: [
       { action: 'open', title: 'View' },
       { action: 'close', title: 'Dismiss' }
@@ -320,7 +260,6 @@ self.addEventListener('push', event => {
 // Notification Click Handler
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-
   if (event.action === 'close') return;
 
   const url = event.notification.data?.url || '/ars/';
@@ -328,52 +267,37 @@ self.addEventListener('notificationclick', event => {
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true })
       .then(clientList => {
-        // Focus existing window if available
         for (const client of clientList) {
-          if (client.url === url && 'focus' in client) {
-            return client.focus();
-          }
+          if (client.url === url && 'focus' in client) return client.focus();
         }
-        // Open new window
-        if (self.clients.openWindow) {
-          return self.clients.openWindow(url);
-        }
+        if (self.clients.openWindow) return self.clients.openWindow(url);
       })
   );
 });
 
-// Message Handler for communication with main app
+// Message Handler
 self.addEventListener('message', event => {
-  console.log('[SW] Message received:', event.data);
-
   switch (event.data.type) {
     case 'SKIP_WAITING':
       self.skipWaiting();
       break;
-      
     case 'GET_VERSION':
       event.ports[0].postMessage({ version: CACHE_VERSION });
       break;
-      
     case 'CLEAR_CACHE':
       event.waitUntil(
-        caches.keys().then(names => {
-          return Promise.all(names.map(name => caches.delete(name)));
-        })
+        caches.keys().then(names => Promise.all(names.map(n => caches.delete(n))))
       );
       break;
-      
     case 'CACHE_URLS':
       event.waitUntil(
-        caches.open(DYNAMIC_CACHE).then(cache => {
-          return cache.addAll(event.data.urls);
-        })
+        caches.open(DYNAMIC_CACHE).then(cache => cache.addAll(event.data.urls))
       );
       break;
   }
 });
 
-// Periodic Background Sync (if supported)
+// Periodic Background Sync
 self.addEventListener('periodicsync', event => {
   if (event.tag === 'update-content') {
     event.waitUntil(updateContent());
@@ -382,23 +306,14 @@ self.addEventListener('periodicsync', event => {
 
 async function updateContent() {
   try {
-    // Pre-cache important pages
-    const pagesToCache = [
-      '/ars/index.php',
-      '/ars/shop.php'
-    ];
-    
+    const pagesToCache = ['/ars/index.php', '/ars/shop.php'];
     const cache = await caches.open(DYNAMIC_CACHE);
     await Promise.all(
-      pagesToCache.map(url => 
-        fetch(url).then(response => {
-          if (response.ok) cache.put(url, response);
-        }).catch(() => {})
+      pagesToCache.map(url =>
+        fetch(url).then(response => { if (response.ok) cache.put(url, response); }).catch(() => {})
       )
     );
   } catch (error) {
-    console.error('[SW] Periodic sync failed:', error);
+    // periodic sync failed — will retry next interval
   }
 }
-
-console.log('[SW] Service Worker loaded - Version', CACHE_VERSION);
