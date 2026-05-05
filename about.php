@@ -8,12 +8,78 @@ $page_meta_desc = "Learn about Easy Shopping A.R.S - Nepal's trusted online stor
 include 'includes/header-bootstrap.php';
 ?>
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+
 <style>
-/* About Page Styles */
+/* ═══ CSS Variables — Consistent with Website ════════════════════ */
+:root {
+  --void:        #ffffff;
+  --deep:        #f8fafc;
+  --surface:     #ffffff;
+  --glass:       rgba(255,255,255,0.85);
+  --ember:       #ea6c00;
+  --ember-glow:  rgba(234,108,0,0.10);
+  --gold:        #d97706;
+  --gold-glow:   rgba(217,119,6,0.10);
+  --ice:         #0f172a;
+  --muted:       #64748b;
+  --edge:        rgba(15,23,42,0.08);
+  --shadow-sm:   0 2px 8px rgba(15,23,42,0.06);
+  --shadow-md:   0 8px 32px rgba(15,23,42,0.10);
+  --shadow-lg:   0 24px 64px rgba(15,23,42,0.12);
+  --font-d:      'Fraunces', Georgia, serif;
+  --font-b:      'DM Sans', sans-serif;
+  --ease-out:    cubic-bezier(0.22,1,0.36,1);
+}
+
+/* ═══ About Page Styles — Aligned with Website ═════════════════════ */
+
+/* Section Components - Consistent with Website */
+.sec-eyebrow {
+  font-size: 10px; letter-spacing: 3.5px; text-transform: uppercase;
+  color: var(--ember); font-weight: 700; display: block; margin-bottom: 10px;
+}
+.sec-h2 {
+  font-family: var(--font-d);
+  font-size: clamp(2rem, 4.5vw, 3.2rem);
+  font-weight: 900; color: var(--ice);
+  line-height: 1.0; margin-bottom: 0;
+  letter-spacing: -1px;
+}
+.sec-sub { color: var(--muted); font-size: 14px; font-weight: 300; margin-top: 10px; }
+
+/* Button Styles - Consistent with Website */
+.btn-void {
+  display: inline-flex; align-items: center;
+  background: var(--ice); color: white;
+  border: 1px solid var(--ice);
+  border-radius: 12px; padding: 12px 20px;
+  font-size: 13px; font-weight: 600; letter-spacing: 0.5px;
+  text-decoration: none; transition: all 0.3s var(--ease-out);
+}
+.btn-void:hover {
+  background: var(--ember); border-color: var(--ember);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(234,108,0,0.2);
+}
+.btn-outline {
+  display: inline-flex; align-items: center;
+  background: transparent; color: var(--ice);
+  border: 1px solid var(--ice);
+  border-radius: 12px; padding: 12px 20px;
+  font-size: 13px; font-weight: 600; letter-spacing: 0.5px;
+  text-decoration: none; transition: all 0.3s var(--ease-out);
+}
+.btn-outline:hover {
+  background: var(--ice); color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(15,23,42,0.1);
+}
+
 .hero-about {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 80px 0;
+    background: #fffbf5;
+    padding: 90px 0;
     position: relative;
     overflow: hidden;
 }
@@ -25,7 +91,7 @@ include 'includes/header-bootstrap.php';
     left: 0;
     right: 0;
     bottom: 0;
-    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="%23ffffff" opacity="0.03"/><circle cx="75" cy="75" r="1" fill="%23ffffff" opacity="0.03"/><circle cx="50" cy="50" r="0.5" fill="%23ffffff" opacity="0.02"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grain)"/></svg>');
+    background: linear-gradient(135deg, rgba(234,108,0,0.05), rgba(217,119,6,0.03));
     pointer-events: none;
 }
 
@@ -36,84 +102,97 @@ include 'includes/header-bootstrap.php';
 
 
 
+/* Mission Section */
 .mission-section {
-    background: #f8fafc;
-    padding: 80px 0;
+    background: var(--deep);
+    padding: 90px 0;
+    border-top: 1px solid var(--edge);
+    border-bottom: 1px solid var(--edge);
 }
 
 .mission-card {
-    background: white;
+    background: var(--surface);
+    border: 1px solid var(--edge);
     border-radius: 20px;
-    padding: 40px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+    padding: 32px 24px;
     height: 100%;
+    transition: all 0.3s var(--ease-out);
+    text-align: center;
+}
+
+.mission-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-lg);
 }
 
 .mission-icon {
-    width: 80px;
-    height: 80px;
-    border-radius: 20px;
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2rem;
-    margin-bottom: 20px;
+    font-size: 24px;
+    margin: 0 auto 20px;
 }
 
+/* Values Section */
 .values-section {
-    padding: 80px 0;
-    background: white;
+    background: var(--void);
+    padding: 90px 0;
 }
 
 .value-card {
+    background: var(--surface);
+    border: 1px solid var(--edge);
     text-align: center;
-    padding: 30px 20px;
-    border-radius: 15px;
-    transition: all 0.3s;
+    padding: 32px 24px;
+    border-radius: 20px;
+    transition: all 0.3s var(--ease-out);
     height: 100%;
 }
 
 .value-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-lg);
 }
 
 .value-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 15px;
+    width: 54px;
+    height: 54px;
+    border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
     margin: 0 auto 20px;
-    font-size: 1.5rem;
+    font-size: 24px;
 }
 
+/* Team Section */
 .team-section {
-    background: #f8fafc;
-    padding: 80px 0;
+    background: var(--deep);
+    padding: 90px 0;
 }
 
 .team-member {
-    background: white;
+    background: var(--surface);
+    border: 1px solid var(--edge);
     border-radius: 20px;
     overflow: hidden;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.08);
     text-align: center;
     height: 100%;
-    transition: all 0.3s ease;
-    border: 1px solid rgba(0,0,0,0.05);
+    transition: all 0.3s var(--ease-out);
 }
 
 .team-member:hover {
     transform: translateY(-8px);
-    box-shadow: 0 20px 45px rgba(0,0,0,0.12);
+    box-shadow: var(--shadow-lg);
 }
 
 .team-photo {
     width: 100%;
     height: 280px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, rgba(234,108,0,0.1), rgba(217,119,6,0.1));
     position: relative;
     overflow: hidden;
 }
@@ -125,32 +204,52 @@ include 'includes/header-bootstrap.php';
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0,0,0,0.1);
+    background: rgba(0,0,0,0.05);
     transition: opacity 0.3s ease;
 }
 
 .team-member:hover .team-photo::before {
-    opacity: 0.3;
+    opacity: 0.1;
 }
 
+/* CTA Section */
 .cta-section {
     background: linear-gradient(135deg, var(--ember) 0%, var(--gold) 100%);
     color: white;
-    padding: 80px 0;
+    padding: 90px 0;
     text-align: center;
 }
 
 .cta-card {
-    background: rgba(255,255,255,0.1);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    padding: 40px;
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    padding: 48px 32px;
     border: 1px solid rgba(255,255,255,0.2);
+    max-width: 600px;
+    margin: 0 auto;
+    box-shadow: var(--shadow-lg);
 }
 
+/* Responsive Design */
 @media (max-width: 768px) {
     .hero-about {
         padding: 60px 0;
+    }
+
+    .mission-section,
+    .values-section,
+    .team-section,
+    .cta-section {
+        padding: 60px 0;
+    }
+
+    .cta-card {
+        padding: 32px 24px;
+    }
+
+    .sec-h2 {
+        font-size: clamp(1.8rem, 6vw, 2.5rem);
     }
 }
 </style>
@@ -159,29 +258,29 @@ include 'includes/header-bootstrap.php';
 <section class="hero-about">
     <div class="container">
         <div class="row align-items-center">
-            <div class="col-lg-8">
-                <h1 class="display-4 fw-bold mb-4">
-                    About Easy Shopping A.R.S
+            <div class="col-lg-7">
+                <h1 style="font-family: var(--font-d); font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 900; color: var(--ice); line-height: 1.0; margin-bottom: 24px; letter-spacing: -2px;">
+                    About Easy<br>Shopping A.R.S
                 </h1>
-                <p class="lead mb-4">
+                <p style="font-size: 18px; color: var(--muted); line-height: 1.6; margin-bottom: 32px;">
                     Nepal's trusted online marketplace connecting quality products with discerning customers.
                     We're committed to delivering exceptional shopping experiences with reliable service,
                     authentic products, and unbeatable value.
                 </p>
                 <div class="d-flex flex-wrap gap-3">
-                    <a href="<?php echo url('/shop'); ?>" class="btn btn-light btn-lg px-4">
-                        <i class="bi bi-shop me-2"></i>Start Shopping
+                    <a href="<?php echo url('/shop'); ?>" class="btn-void">
+                        Start Shopping &nbsp; <i class="bi bi-arrow-right"></i>
                     </a>
-                    <a href="#contact" class="btn btn-outline-light btn-lg px-4">
-                        <i class="bi bi-envelope me-2"></i>Contact Us
+                    <a href="#contact" class="btn-outline">
+                        Contact Us &nbsp; <i class="bi bi-arrow-right"></i>
                     </a>
                 </div>
             </div>
-            <div class="col-lg-4 d-none d-lg-block">
-                <div style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 20px; padding: 40px; text-align: center; border: 1px solid rgba(255,255,255,0.2);">
-                    <i class="bi bi-bag-heart display-1 text-white mb-3"></i>
-                    <h4 class="text-white">Premium Quality</h4>
-                    <p class="text-white-50 mb-0">Curated products for the modern lifestyle</p>
+            <div class="col-lg-5 d-none d-lg-block">
+                <div style="background: var(--glass); backdrop-filter: blur(20px); border-radius: 24px; padding: 48px 32px; text-align: center; border: 1px solid rgba(255,255,255,0.2); box-shadow: var(--shadow-lg);">
+                    <i class="bi bi-bag-heart" style="font-size: 4rem; color: var(--ember); margin-bottom: 20px;"></i>
+                    <h4 style="color: var(--ice); font-family: var(--font-d); font-weight: 700; margin-bottom: 12px;">Premium Quality</h4>
+                    <p style="color: var(--muted); margin-bottom: 0;">Curated products for the modern lifestyle</p>
                 </div>
             </div>
         </div>
@@ -193,8 +292,9 @@ include 'includes/header-bootstrap.php';
     <div class="container">
         <div class="row align-items-center mb-5">
             <div class="col-lg-6">
-                <h2 class="display-5 fw-bold mb-4">Our Mission</h2>
-                <p class="lead text-muted mb-4">
+                <span class="sec-eyebrow">Our Story</span>
+                <h2 class="sec-h2">Mission<br>& Vision</h2>
+                <p class="sec-sub mb-4">
                     To revolutionize online shopping in Nepal by providing a seamless, trustworthy,
                     and enjoyable shopping experience that brings quality products closer to every home.
                 </p>
@@ -219,11 +319,55 @@ include 'includes/header-bootstrap.php';
         </div>
 
         <div class="row g-4">
-            <div class="col-md-4">
+            <div class="col-md-6 col-lg-3">
+                <div class="mission-card">
+                    <div class="mission-icon" style="background: var(--ember-glow); color: var(--ember);">
+                        <i class="bi bi-bullseye"></i>
+                    </div>
+                    <h5 class="mb-3">Customer First</h5>
+                    <p class="text-muted mb-0">
+                        Every decision we make is guided by our commitment to our customers.
+                        From product selection to delivery, your satisfaction is our top priority.
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
                 <div class="mission-card">
                     <div class="mission-icon" style="background: rgba(34,197,94,0.1); color: #22c55e;">
                         <i class="bi bi-shield-check"></i>
                     </div>
+                    <h5 class="mb-3">Authentic Products</h5>
+                    <p class="text-muted mb-0">
+                        We carefully curate and verify all products to ensure authenticity,
+                        quality, and value for money.
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="mission-card">
+                    <div class="mission-icon" style="background: rgba(59,130,246,0.1); color: #3b82f6;">
+                        <i class="bi bi-truck"></i>
+                    </div>
+                    <h5 class="mb-3">Fast Delivery</h5>
+                    <p class="text-muted mb-0">
+                        Quick and reliable delivery across Nepal with real-time tracking
+                        and secure packaging.
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="mission-card">
+                    <div class="mission-icon" style="background: rgba(168,85,247,0.1); color: #a855f7;">
+                        <i class="bi bi-headset"></i>
+                    </div>
+                    <h5 class="mb-3">24/7 Support</h5>
+                    <p class="text-muted mb-0">
+                        Round-the-clock customer support to assist you with any questions
+                        or concerns you may have.
+                    </p>
+                </div>
+            </div>
+        </div>
                     <h5 class="mb-3">Authentic Products</h5>
                     <p class="text-muted mb-0">
                         We carefully curate and verify all products to ensure authenticity,
@@ -259,13 +403,14 @@ include 'includes/header-bootstrap.php';
     </div>
 </section>
 
-<!-- Values Section -->
+<!-- ════ VALUES ════════════════════════════════════════════════ -->
 <section class="values-section">
     <div class="container">
         <div class="row text-center mb-5">
             <div class="col-12">
-                <h2 class="display-5 fw-bold mb-4">Our Core Values</h2>
-                <p class="lead text-muted">
+                <span class="sec-eyebrow">Our Principles</span>
+                <h2 class="sec-h2">Core<br>Values</h2>
+                <p class="sec-sub">
                     The principles that guide everything we do at Easy Shopping A.R.S
                 </p>
             </div>
@@ -320,13 +465,14 @@ include 'includes/header-bootstrap.php';
     </div>
 </section>
 
-<!-- Team Section -->
+<!-- ════ TEAM ══════════════════════════════════════════════════ -->
 <section class="team-section">
     <div class="container">
         <div class="row text-center mb-5">
             <div class="col-12">
-                <h2 class="display-5 fw-bold mb-4">Meet Our Team</h2>
-                <p class="lead text-muted">
+                <span class="sec-eyebrow">Our People</span>
+                <h2 class="sec-h2">Meet Our<br>Team</h2>
+                <p class="sec-sub">
                     The dedicated professionals behind Easy Shopping A.R.S
                 </p>
             </div>
@@ -450,21 +596,21 @@ include 'includes/header-bootstrap.php';
     </div>
 </section>
 
-<!-- CTA Section -->
+<!-- ════ CTA ════════════════════════════════════════════════════ -->
 <section class="cta-section">
     <div class="container">
         <div class="cta-card">
-            <h2 class="display-5 fw-bold mb-4">Ready to Start Shopping?</h2>
-            <p class="lead mb-4">
+            <h2 class="sec-h2 mb-4">Ready to Start<br>Shopping?</h2>
+            <p class="sec-sub mb-4">
                 Join thousands of satisfied customers who trust Easy Shopping A.R.S
                 for their online shopping needs.
             </p>
             <div class="d-flex flex-wrap justify-content-center gap-3">
-                <a href="<?php echo url('/shop'); ?>" class="btn btn-light btn-lg px-4">
-                    <i class="bi bi-shop me-2"></i>Browse Products
+                <a href="<?php echo url('/shop'); ?>" class="btn-void">
+                    Browse Products &nbsp; <i class="bi bi-arrow-right"></i>
                 </a>
-                <a href="<?php echo url('/auth/signup'); ?>" class="btn btn-outline-light btn-lg px-4">
-                    <i class="bi bi-person-plus me-2"></i>Create Account
+                <a href="<?php echo url('/auth/signup'); ?>" class="btn-outline">
+                    Create Account &nbsp; <i class="bi bi-arrow-right"></i>
                 </a>
             </div>
         </div>
