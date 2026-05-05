@@ -3,40 +3,41 @@
  * Version: 2.0.0
  */
 
-const CACHE_VERSION = 'v2.0.0';
+const CACHE_VERSION = 'v2.0.1';
 const STATIC_CACHE = `ars-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `ars-dynamic-${CACHE_VERSION}`;
 const IMAGE_CACHE = `ars-images-${CACHE_VERSION}`;
-const OFFLINE_URL = '/ars/offline.php';
 
-// Static assets to cache on install
+// Derive base path from SW scope so this works on any deployment path.
+// On localhost: scope = "http://localhost/ars/"  → BASE = "/ars"
+// On production: scope = "https://easyshoppingars.com/" → BASE = ""
+const _scopeURL = new URL(self.registration.scope);
+const BASE = _scopeURL.pathname.replace(/\/$/, ''); // "/ars" or ""
+
+const OFFLINE_URL = BASE + '/offline.php';
+
 const STATIC_ASSETS = [
-  '/ars/',
-  '/ars/index.php',
-  '/ars/manifest.json',
-  '/ars/offline.php',
-  '/ars/shop.php',
-  '/ars/public/assets/img/pwa-icon-192.png',
-  '/ars/public/assets/img/pwa-icon-512.png',
+  BASE + '/',
+  BASE + '/index.php',
+  BASE + '/manifest.php',
+  BASE + '/offline.php',
+  BASE + '/shop.php',
+  BASE + '/public/assets/img/pwa-icon-192.png',
+  BASE + '/public/assets/img/pwa-icon-512.png',
   'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css',
   'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js',
   'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css'
 ];
 
-const CDN_ASSETS = [
-  'https://cdn.jsdelivr.net/',
-  'https://fonts.googleapis.com/'
-];
-
-// API endpoints to bypass cache
+// API / backend paths to never cache (prefix-agnostic substrings)
 const SKIP_CACHE_PATTERNS = [
-  '/ars/admin/',
-  '/ars/auth/',
-  '/ars/backend/',
-  '/ars/api/',
-  '/ars/cart-action',
-  '/ars/checkout.php',
-  '/ars/wishlist'
+  '/admin/',
+  '/auth/',
+  '/backend/',
+  '/api/',
+  '/cart-action',
+  '/checkout.php',
+  '/wishlist'
 ];
 
 // Install Event - Cache static assets
@@ -306,7 +307,7 @@ self.addEventListener('periodicsync', event => {
 
 async function updateContent() {
   try {
-    const pagesToCache = ['/ars/index.php', '/ars/shop.php'];
+    const pagesToCache = [BASE + '/index.php', BASE + '/shop.php'];
     const cache = await caches.open(DYNAMIC_CACHE);
     await Promise.all(
       pagesToCache.map(url =>

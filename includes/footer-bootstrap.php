@@ -744,28 +744,27 @@ global $base_url;
         }
     })();
 
-    // Footer install button — delegates to installPWA() defined in header
+    // Footer install button — one click, no pop-ups
     (function () {
         const installBtn = document.getElementById('pwa-install-btn-footer');
         const installedMsg = document.getElementById('pwa-installed-msg');
 
         if (!installBtn) return;
 
-        // Show button when install prompt is available
-        window.addEventListener('beforeinstallprompt', function () {
+        // Show button only when browser confirms install is possible
+        window.addEventListener('pwaInstallReady', function () {
             installBtn.style.display = 'flex';
         });
 
-        // Trigger install via shared header function
+        // One click → native browser install dialog
         installBtn.addEventListener('click', async function () {
-            if (typeof installPWA === 'function') {
-                await installPWA();
-                installBtn.style.display = 'none';
-                if (installedMsg) installedMsg.classList.remove('d-none');
-            }
+            installBtn.disabled = true;
+            await installPWA();
+            installBtn.style.display = 'none';
+            if (installedMsg) installedMsg.classList.remove('d-none');
         });
 
-        // Hide button once installed
+        // Hide when already installed
         window.addEventListener('appinstalled', function () {
             installBtn.style.display = 'none';
             if (installedMsg) installedMsg.classList.remove('d-none');

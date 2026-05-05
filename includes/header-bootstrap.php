@@ -28,7 +28,7 @@ $_seo_canonical = rtrim($_seo_canonical, '?&');
     <link rel="canonical" href="<?php echo h($_seo_canonical); ?>">
 
     <!-- PWA Settings -->
-    <link rel="manifest" href="<?php echo $base_url; ?>/manifest.json">
+    <link rel="manifest" href="<?php echo url('/manifest.php'); ?>">
     <meta name="theme-color" content="#ea6c00">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1104,7 +1104,7 @@ window.BASE_URL = '<?php echo rtrim(url(''), '/'); ?>';
 (function() {
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/ars/sw.js')
+            navigator.serviceWorker.register('<?php echo url("/sw.js"); ?>')
                 .then(registration => {
                     // Check for updates periodically
                     setInterval(() => {
@@ -1328,87 +1328,6 @@ function showToast(title, message, type = 'success') {
     animation: bump 0.3s ease-out;
 }
 
-/* PWA Install Banner */
-.pwa-install-banner {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-    color: white;
-    padding: 16px 20px;
-    display: none;
-    z-index: 9999;
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
-}
-.pwa-install-banner.show {
-    display: block;
-    animation: slideUp 0.3s ease-out;
-}
-@keyframes slideUp {
-    from { transform: translateY(100%); }
-    to { transform: translateY(0); }
-}
-.pwa-install-content {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    max-width: 1200px;
-    margin: 0 auto;
-    gap: 16px;
-    flex-wrap: wrap;
-}
-.pwa-install-text {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex: 1;
-}
-.pwa-install-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 10px;
-    object-fit: cover;
-}
-.pwa-install-info h5 {
-    margin: 0 0 2px 0;
-    font-weight: 700;
-    font-size: 0.95rem;
-}
-.pwa-install-info p {
-    margin: 0;
-    font-size: 0.8rem;
-    opacity: 0.8;
-}
-.pwa-install-actions {
-    display: flex;
-    gap: 10px;
-}
-.pwa-install-btn {
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 0.85rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    border: none;
-}
-.pwa-install-btn.primary {
-    background: #ea6c00;
-    color: white;
-}
-.pwa-install-btn.primary:hover {
-    background: #ff7d2b;
-}
-.pwa-install-btn.secondary {
-    background: transparent;
-    color: rgba(255,255,255,0.7);
-    border: 1px solid rgba(255,255,255,0.3);
-}
-.pwa-install-btn.secondary:hover {
-    background: rgba(255,255,255,0.1);
-    color: white;
-}
 
 /* PWA Update Banner */
 .pwa-update-banner {
@@ -1477,19 +1396,6 @@ function showToast(title, message, type = 'success') {
 }
 
 @media (max-width: 767px) {
-    .pwa-install-content {
-        flex-direction: column;
-        text-align: center;
-    }
-    .pwa-install-text {
-        flex-direction: column;
-    }
-    .pwa-install-actions {
-        width: 100%;
-    }
-    .pwa-install-btn {
-        flex: 1;
-    }
     .pwa-update-banner {
         top: auto;
         bottom: 80px;
@@ -1500,27 +1406,6 @@ function showToast(title, message, type = 'success') {
     }
 }
 </style>
-
-<!-- PWA Install Banner -->
-<div class="pwa-install-banner" id="pwaInstallBanner">
-    <div class="pwa-install-content">
-        <div class="pwa-install-text">
-            <img src="<?php echo url('/public/assets/img/pwa-icon-192.png'); ?>" alt="ARS Shop" class="pwa-install-icon">
-            <div class="pwa-install-info">
-                <h5>Install ARS Shop App</h5>
-                <p>Get the best shopping experience with our app</p>
-            </div>
-        </div>
-        <div class="pwa-install-actions">
-            <button class="pwa-install-btn primary" onclick="installPWA()">
-                <i class="bi bi-download me-1"></i> Install
-            </button>
-            <button class="pwa-install-btn secondary" onclick="dismissInstallBanner()">
-                Not now
-            </button>
-        </div>
-    </div>
-</div>
 
 <!-- PWA Update Banner -->
 <div class="pwa-update-banner" id="pwaUpdateBanner">
@@ -1539,100 +1424,60 @@ function showToast(title, message, type = 'success') {
 </div>
 
 <script>
-// PWA Install Prompt Variables
+// Global deferred prompt — captured once, used by any install button on the page
 let deferredPrompt = null;
-const PWA_INSTALL_KEY = 'pwa_install_dismissed';
 const PWA_UPDATE_KEY = 'pwa_update_dismissed';
 
-// PWA Install Prompt Handler
+// Capture the browser's install prompt; do NOT auto-show anything
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
-    
-    // Check if user already dismissed
-    if (!localStorage.getItem(PWA_INSTALL_KEY)) {
-        setTimeout(() => {
-            document.getElementById('pwaInstallBanner').classList.add('show');
-        }, 3000);
-    }
+    // Dispatch event so footer button (and any other UI) can reveal itself
+    window.dispatchEvent(new Event('pwaInstallReady'));
 });
 
-// PWA Install Function
+// One-click install — called directly by any install button
 async function installPWA() {
-    if (!deferredPrompt) {
-        showToast('Info', 'Install feature not available. Try adding to home screen manually.', 'info');
-        return;
-    }
-    
+    if (!deferredPrompt) return;
     deferredPrompt.prompt();
-    
-    const { outcome } = await deferredPrompt.userChoice;
-
-    if (outcome === 'accepted') {
-        showToast('Success', 'ARS Shop app installed successfully!', 'success');
-    }
-    
+    await deferredPrompt.userChoice;
     deferredPrompt = null;
-    dismissInstallBanner();
 }
 
-// Dismiss Install Banner
-function dismissInstallBanner() {
-    document.getElementById('pwaInstallBanner').classList.remove('show');
-    localStorage.setItem(PWA_INSTALL_KEY, Date.now());
-}
+// Update banner
+const PWA_UPDATE_BANNER = document.getElementById('pwaUpdateBanner');
 
-// PWA Update Handler
 window.addEventListener('sw_updated', (e) => {
     if (e.detail && !localStorage.getItem(PWA_UPDATE_KEY + '_' + e.detail.version)) {
-        document.getElementById('pwaUpdateBanner').classList.add('show');
+        PWA_UPDATE_BANNER.classList.add('show');
     }
 });
 
-// Refresh for Update
 function refreshForUpdate() {
-    localStorage.removeItem(PWA_UPDATE_KEY);
     window.location.reload();
 }
 
-// Dismiss Update Banner
 function dismissUpdateBanner() {
-    document.getElementById('pwaUpdateBanner').classList.remove('show');
-    const version = document.getElementById('pwaUpdateBanner').dataset.version || 'current';
+    PWA_UPDATE_BANNER.classList.remove('show');
+    const version = PWA_UPDATE_BANNER.dataset.version || 'current';
     localStorage.setItem(PWA_UPDATE_KEY + '_' + version, Date.now());
 }
 
-// Service Worker Message Listener
+// SW messages
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('message', (event) => {
         if (event.data.type === 'SW_ACTIVATED') {
-            document.getElementById('pwaUpdateBanner').dataset.version = event.data.version;
-            
-            // Only show update banner if it's a real update (not first install)
+            PWA_UPDATE_BANNER.dataset.version = event.data.version;
             if (navigator.serviceWorker.controller) {
-                const dismissedKey = PWA_UPDATE_KEY + '_' + event.data.version;
-                if (!localStorage.getItem(dismissedKey)) {
-                    setTimeout(() => {
-                        document.getElementById('pwaUpdateBanner').classList.add('show');
-                    }, 1000);
+                const key = PWA_UPDATE_KEY + '_' + event.data.version;
+                if (!localStorage.getItem(key)) {
+                    setTimeout(() => PWA_UPDATE_BANNER.classList.add('show'), 1000);
                 }
             }
         }
-        
         if (event.data.type === 'CART_SYNC') {
             window.dispatchEvent(new Event('cartUpdated'));
         }
     });
 }
-
-// Clear dismissed install banner after 7 days
-(function() {
-    const dismissed = localStorage.getItem(PWA_INSTALL_KEY);
-    if (dismissed) {
-        const daysSinceDismissed = (Date.now() - parseInt(dismissed)) / (1000 * 60 * 60 * 24);
-        if (daysSinceDismissed > 7) {
-            localStorage.removeItem(PWA_INSTALL_KEY);
-        }
-    }
-})();
 </script>
