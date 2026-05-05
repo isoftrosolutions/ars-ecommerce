@@ -66,7 +66,7 @@ $shipping       = $order['shipping_charge'] ?? 0;
 $total_amount   = $order['total_amount'];
 
 // Payment method label
-$pay_method_map = ['COD' => 'Cash on Delivery', 'esewa' => 'eSewa', 'BankQR' => 'Bank QR'];
+$pay_method_map = ['cod' => 'Cash on Delivery', 'COD' => 'Cash on Delivery', 'esewa' => 'eSewa', 'BankQR' => 'Bank QR'];
 $pay_method = $pay_method_map[$order['payment_method']] ?? strtoupper($order['payment_method']);
 ?>
 <!DOCTYPE html>

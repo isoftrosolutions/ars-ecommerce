@@ -13,7 +13,7 @@ $cart_total = get_cart_total();
 $cart_count = get_cart_count();
 
 // Calculate shipping charge
-$free_shipping_threshold = (float)get_setting('free_shipping_threshold', 1000);
+$free_shipping_threshold = (float)get_setting('free_shipping_threshold', 5000);
 $shipping_cost = (float)get_setting('shipping_cost', 100);
 $shipping_charge = ($cart_total >= $free_shipping_threshold || $cart_total == 0) ? 0 : $shipping_cost;
 $grand_total = $cart_total + $shipping_charge;

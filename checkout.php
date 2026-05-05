@@ -80,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $pdo->prepare("INSERT INTO orders (user_id, total_amount, shipping_charge, payment_method, payment_proof, delivery_status, shipping_address, shipping_city, customer_name, customer_email, customer_phone, created_at) VALUES (?, ?, ?, ?, ?, 'Pending', ?, ?, ?, ?, ?, NOW())");
             $stmt->execute([
                 $user ? $user['id'] : null,
-                $cart_total,
+                $grand_total,
                 $shipping_charge,
                 $payment_method,
                 $payment_proof_path,
@@ -106,7 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Audit log: record order creation
             require_once 'includes/audit-logger.php';
-            AuditLogger::logOrderCreate($order_id, $cart_total);
+            AuditLogger::logOrderCreate($order_id, $grand_total);
 
             clear_cart();
             $pdo->commit();
@@ -121,7 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $host = $_SERVER['HTTP_HOST'];
                 $invoice_url = $protocol . "://" . $host . url('/invoice?id=' . $order_id);
                 
-                $emailService->sendOrderConfirmation($email, $name, $order_id, $cart_total, $invoice_url);
+                $emailService->sendOrderConfirmation($email, $name, $order_id, $grand_total, $invoice_url);
             } catch (Exception $e) {
                 // Log error but don't stop the user from seeing their success page
                 error_log("Failed to send order email: " . $e->getMessage());
