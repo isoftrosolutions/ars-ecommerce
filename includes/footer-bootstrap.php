@@ -112,7 +112,7 @@ global $base_url;
                                     </div>
                                     <div class="text-light-600 small mb-1"
                                         style="font-size: 9px; color: rgba(255,255,255,0.6);">HEAD OFFICE</div>
-                                    <a href="tel:+9779812231441"
+                                    <a href="tel:+9779820210361"
                                         class="text-decoration-none text-light fw-semibold small contact-link"
                                         style="font-size: 11px;">
                                         +977 982-0210361
@@ -128,7 +128,7 @@ global $base_url;
                                     </div>
                                     <div class="text-light-600 small mb-1"
                                         style="font-size: 9px; color: rgba(255,255,255,0.6);">SUPPORT</div>
-                                    <a href="tel:+9779820210361"
+                                    <a href="tel:+9779812231441"
                                         class="text-decoration-none text-light fw-semibold small contact-link"
                                         style="font-size: 11px;">
                                         +977 9812231441
@@ -445,7 +445,7 @@ global $base_url;
                             </div>
                             <button id="pwa-install-btn-footer"
                                 class="btn btn-primary w-100 d-flex align-items-center justify-content-center gap-2 fw-semibold position-relative overflow-hidden"
-                                style="background: linear-gradient(135deg, #ea6c00, #ff8533); border: none; height: 40px; border-radius: 10px; font-size: 13px; box-shadow: 0 4px 12px rgba(234,108,0,0.3);">
+                                style="display: none; background: linear-gradient(135deg, #ea6c00, #ff8533); border: none; height: 40px; border-radius: 10px; font-size: 13px; box-shadow: 0 4px 12px rgba(234,108,0,0.3);">
                                 <i class="bi bi-download"></i>
                                 <span>Install App</span>
                                 <div class="btn-glow position-absolute inset-0"
