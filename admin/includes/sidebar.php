@@ -52,6 +52,11 @@ function _is_nav_active(string $page): string {
             <span class="nav-text">Customers</span>
         </a>
 
+        <a href="<?php echo url('/admin/team.php'); ?>" class="nav-item <?php echo _is_nav_active('admin/team'); ?>">
+            <span class="nav-icon"><i class="fa-solid fa-user-group"></i></span>
+            <span class="nav-text">Team Members</span>
+        </a>
+
         <a href="<?php echo url('/admin/reviews.php'); ?>" class="nav-item <?php echo _is_nav_active('admin/reviews'); ?>">
             <span class="nav-icon"><i class="fa-solid fa-star"></i></span>
             <span class="nav-text">Reviews</span>

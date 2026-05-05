@@ -479,49 +479,68 @@ include 'includes/header-bootstrap.php';
         </div>
 
         <?php
-        // Team members data - in production this would come from database
-        $team_members = [
-            [
-                'name' => 'Aaditya Kumar Kushwaha (A.R.K)',
-                'position' => 'Founder & CEO',
-                'role' => 'admin',
-                'image' => 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=face',
-                'fb_link' => 'https://www.facebook.com/share/1E6Gn8hf6Z/',
-                'bio' => 'Experienced entrepreneur leading Easy Shopping A.R.S with passion for quality products and customer satisfaction.'
-            ],
-            [
-                'name' => 'Devbarat Prasad Patel',
-                'position' => 'Operations Manager',
-                'role' => 'admin',
-                'image' => 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=300&fit=crop&crop=face',
-                'fb_link' => 'https://facebook.com/devbarat',
-                'bio' => 'Dedicated operations manager ensuring smooth logistics and customer satisfaction across Nepal.'
-            ],
-            [
-                'name' => 'Roshan Kushwaha',
-                'position' => 'Customer Support Lead',
-                'role' => 'support',
-                'image' => 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=300&h=300&fit=crop&crop=face',
-                'fb_link' => 'https://www.facebook.com/share/1PZkU2JsD5/',
-                'bio' => 'Leading our customer support team, ensuring every customer query is resolved with care and efficiency.'
-            ],
-            [
-                'name' => 'Sushil Shah',
-                'position' => 'Technical Support Specialist',
-                'role' => 'support',
-                'image' => 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&h=300&fit=crop&crop=face',
-                'fb_link' => 'https://www.facebook.com/share/1LPtsG1odR/',
-                'bio' => 'Expert in troubleshooting technical issues and providing IT support for our online platform.'
-            ],
-            [
-                'name' => 'Mukesh Yadav',
-                'position' => 'Customer Service Representative',
-                'role' => 'support',
-                'image' => 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=300&h=300&fit=crop&crop=face',
-                'fb_link' => 'https://www.facebook.com/share/18qtWAMbgf/',
-                'bio' => 'Committed to providing exceptional customer service and building long-lasting relationships with our valued customers.'
-            ]
-        ];
+        // Fetch team members from database
+        try {
+            $stmt = $pdo->prepare("
+                SELECT name, role, position, profile_image, fb_link, bio
+                FROM team_members
+                WHERE is_active = 1
+                ORDER BY display_order ASC, created_at ASC
+            ");
+            $stmt->execute();
+            $team_members = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Fallback to default image if not set
+            foreach ($team_members as &$member) {
+                if (empty($member['profile_image'])) {
+                    $member['profile_image'] = '/public/assets/img/default-avatar.png';
+                }
+            }
+        } catch (Exception $e) {
+            // Fallback data if database is not available
+            $team_members = [
+                [
+                    'name' => 'Aaditya Kumar Kushwaha (A.R.K)',
+                    'position' => 'Founder & CEO',
+                    'role' => 'admin',
+                    'profile_image' => 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=face',
+                    'fb_link' => 'https://www.facebook.com/share/1E6Gn8hf6Z/',
+                    'bio' => 'Experienced entrepreneur leading Easy Shopping A.R.S with passion for quality products and customer satisfaction.'
+                ],
+                [
+                    'name' => 'Devbarat Prasad Patel',
+                    'position' => 'Operations Manager',
+                    'role' => 'admin',
+                    'profile_image' => 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=300&fit=crop&crop=face',
+                    'fb_link' => 'https://facebook.com/devbarat',
+                    'bio' => 'Dedicated operations manager ensuring smooth logistics and customer satisfaction across Nepal.'
+                ],
+                [
+                    'name' => 'Roshan Kushwaha',
+                    'position' => 'Customer Support Lead',
+                    'role' => 'support',
+                    'profile_image' => 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=300&h=300&fit=crop&crop=face',
+                    'fb_link' => 'https://www.facebook.com/share/1PZkU2JsD5/',
+                    'bio' => 'Leading our customer support team, ensuring every customer query is resolved with care and efficiency.'
+                ],
+                [
+                    'name' => 'Sushil Shah',
+                    'position' => 'Technical Support Specialist',
+                    'role' => 'support',
+                    'profile_image' => 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&h=300&fit=crop&crop=face',
+                    'fb_link' => 'https://www.facebook.com/share/1LPtsG1odR/',
+                    'bio' => 'Expert in troubleshooting technical issues and providing IT support for our online platform.'
+                ],
+                [
+                    'name' => 'Mukesh Yadav',
+                    'position' => 'Customer Service Representative',
+                    'role' => 'support',
+                    'profile_image' => 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=300&h=300&fit=crop&crop=face',
+                    'fb_link' => 'https://www.facebook.com/share/18qtWAMbgf/',
+                    'bio' => 'Committed to providing exceptional customer service and building long-lasting relationships with our valued customers.'
+                ]
+            ];
+        }
 
         // Separate admin and support team members
         $admin_members = array_filter($team_members, function($member) { return $member['role'] === 'admin'; });
