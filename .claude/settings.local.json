@@ -10,7 +10,10 @@
       "Bash(git *)",
       "Bash(findstr pwa *)",
       "Bash(Get-ChildItem -Recurse -Filter \"team-members*\" -Path \"C:\\\\Apache24\\\\htdocs\\\\ars\")",
-      "Bash(Select-Object FullName)"
+      "Bash(Select-Object FullName)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Apache24\\\\htdocs\\\\ars\" -Recurse -Include \"*.php\", \"*.sql\" -File)",
+      "Bash(Select-Object FullName, Length)",
+      "Bash(Sort-Object FullName)"
     ]
   }
 }

@@ -19,12 +19,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
 }
 
-// Validate CSRF token for state-changing operations
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action'])) {
-    $input = json_decode(file_get_contents('php://input'), true);
-    if (!$input || !isset($input['csrf_token'])) {
-        validate_csrf_token();
+// Merge JSON body into $_POST so all handlers can use $_POST uniformly.
+// Skip for multipart/file-upload requests — those already populate $_POST.
+if (empty($_FILES)) {
+    $rawInput = file_get_contents('php://input');
+    if (!empty($rawInput)) {
+        $jsonBody = json_decode($rawInput, true) ?? [];
+        $_POST = array_merge($jsonBody, $_POST);
     }
+}
+
+// Validate CSRF for all state-changing POST requests.
+// admin-core.js automatically sends X-CSRF-Token header; form submits include hidden csrf_token field.
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    validate_csrf_token();
 }
 
 try {

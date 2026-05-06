@@ -51,6 +51,7 @@ include __DIR__ . '/includes/header.php';
             <button class="btn btn-ghost btn-sm" onclick="applyBulkAction()">Apply</button>
         </div>
     </div>
+    <div id="team-pagination" style="padding: 12px 16px;"></div>
     <div class="table-container">
         <table class="table">
             <thead>
@@ -85,6 +86,8 @@ include __DIR__ . '/includes/header.php';
         <form id="teamForm" enctype="multipart/form-data">
             <input type="hidden" id="member_id" name="member_id">
             <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
+
+            <div style="padding: 0 24px 8px;">
 
             <div class="form-group">
                 <label for="name">Full Name *</label>
@@ -133,7 +136,12 @@ include __DIR__ . '/includes/header.php';
                 <input type="file" id="profile_image" name="profile_image" class="form-control" accept="image/*">
                 <small class="form-text">Recommended: Square image, max 2MB, JPG/PNG format</small>
                 <div id="current-image" style="display: none; margin-top: 10px;">
-                    <img id="current-image-preview" src="" alt="Current image" style="max-width: 100px; max-height: 100px; border-radius: 8px;">
+                    <p style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">Current photo:</p>
+                    <img id="current-image-preview" src="" alt="Current image" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-color);">
+                </div>
+                <div id="new-image-preview" style="display: none; margin-top: 10px;">
+                    <p style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">New photo preview:</p>
+                    <img id="new-image-preview-img" src="" alt="Preview" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-color);">
                 </div>
             </div>
 
@@ -150,6 +158,8 @@ include __DIR__ . '/includes/header.php';
                     </select>
                 </div>
             </div>
+
+            </div><!-- /form padding wrapper -->
 
             <div class="modal-actions">
                 <button type="button" class="btn btn-ghost" onclick="closeTeamModal()">Cancel</button>
@@ -169,8 +179,22 @@ let statusFilter = '';
 document.addEventListener('DOMContentLoaded', function() {
     loadTeamMembers(1);
 
-    // Form submission
     document.getElementById('teamForm').addEventListener('submit', handleFormSubmit);
+
+    // Live preview when a new image file is selected
+    document.getElementById('profile_image').addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('new-image-preview-img').src = e.target.result;
+                document.getElementById('new-image-preview').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        } else {
+            document.getElementById('new-image-preview').style.display = 'none';
+        }
+    });
 });
 
 function loadTeamMembers(page = 1) {
@@ -291,6 +315,7 @@ function openTeamModal(memberId = null) {
 
     form.reset();
     document.getElementById('current-image').style.display = 'none';
+    document.getElementById('new-image-preview').style.display = 'none';
 
     if (memberId) {
         title.textContent = 'Edit Team Member';
@@ -345,9 +370,13 @@ function populateForm(member) {
     document.getElementById('display_order').value = member.display_order;
     document.getElementById('is_active').value = member.is_active;
 
+    document.getElementById('new-image-preview').style.display = 'none';
     if (member.profile_image) {
+        const base = window.BASE_URL || '';
         document.getElementById('current-image').style.display = 'block';
-        document.getElementById('current-image-preview').src = member.profile_image;
+        document.getElementById('current-image-preview').src = base + member.profile_image;
+    } else {
+        document.getElementById('current-image').style.display = 'none';
     }
 }
 
@@ -355,6 +384,12 @@ function handleFormSubmit(e) {
     e.preventDefault();
 
     const formData = new FormData(e.target);
+    const memberId = document.getElementById('member_id').value;
+    formData.append('action', memberId ? 'update' : 'create');
+
+    const submitBtn = e.target.querySelector('[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Saving...';
 
     fetch(`${window.BASE_URL}/admin/api/team-members.php`, {
         method: 'POST',
@@ -373,6 +408,10 @@ function handleFormSubmit(e) {
     .catch(error => {
         console.error('Error:', error);
         showToast('Error saving team member', 'error');
+    })
+    .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Save Team Member';
     });
 }
 
@@ -461,13 +500,32 @@ function clearFilters() {
 }
 
 function updatePagination(pagination) {
-    // Add pagination logic here if needed
-    console.log('Pagination:', pagination);
+    const count = document.getElementById('team-count');
+    const total = pagination.total_items ?? 0;
+    count.textContent = `${total} team member${total !== 1 ? 's' : ''}`;
+
+    let pagerEl = document.getElementById('team-pagination');
+    if (!pagerEl) return;
+
+    if (pagination.total_pages <= 1) {
+        pagerEl.innerHTML = '';
+        return;
+    }
+
+    let html = '<div class="pagination-wrap">';
+    if (pagination.current_page > 1) {
+        html += `<button class="btn btn-ghost btn-sm" onclick="loadTeamMembers(${pagination.current_page - 1})">‹ Prev</button>`;
+    }
+    html += `<span style="padding:0 12px;color:var(--text-secondary);font-size:13px;">Page ${pagination.current_page} of ${pagination.total_pages}</span>`;
+    if (pagination.current_page < pagination.total_pages) {
+        html += `<button class="btn btn-ghost btn-sm" onclick="loadTeamMembers(${pagination.current_page + 1})">Next ›</button>`;
+    }
+    html += '</div>';
+    pagerEl.innerHTML = html;
 }
 
 function showToast(message, type = 'info') {
-    // Add toast notification logic here
-    alert(message);
+    Toast.show(message, type);
 }
 </script>
 
@@ -640,7 +698,7 @@ function showToast(message, type = 'info') {
     padding: 20px 24px;
     border-bottom: 1px solid var(--border-color);
     display: flex;
-    justify-content: between;
+    justify-content: space-between;
     align-items: center;
 }
 
