@@ -56,17 +56,18 @@ ServerSignature Off
     # RewriteCond %{HTTPS} off
     # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-    # Route API requests to api/index.php
+    # Allow access to real files and directories FIRST (admin/api/*.php, CSS, JS, images, uploads)
+    # This must come before the API routing rule so admin/api/ files are served directly.
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Route API requests to api/index.php (only reaches here for non-existent virtual paths)
     RewriteRule ^(?:.*/)?api/(.*)$ api/index.php [L,QSA]
 
     # Route backend clean URLs explicitly (backend is a real directory)
     RewriteRule ^backend/check-login$ index.php [L,QSA]
     RewriteRule ^backend/dashboard-stats$ index.php [L,QSA]
-
-    # Allow access to real files and directories (CSS, JS, Images, uploads)
-    RewriteCond %{REQUEST_FILENAME} -f [OR]
-    RewriteCond %{REQUEST_FILENAME} -d
-    RewriteRule ^ - [L]
 
     # Allow PWA critical files
     RewriteRule ^sw\.js$ - [L]
