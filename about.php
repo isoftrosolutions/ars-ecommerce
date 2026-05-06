@@ -669,7 +669,7 @@ include 'includes/header-bootstrap.php';
             <div class="col-12">
                 <span class="sec-eyebrow">Our People</span>
                 <h2 class="sec-h2">Meet Our<br>Team</h2>
-                <p class="sec-sub">
+                <p class="sec-sub text-center">
                     The dedicated professionals behind Easy Shopping A.R.S
                 </p>
             </div>
