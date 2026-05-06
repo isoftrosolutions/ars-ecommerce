@@ -255,10 +255,11 @@ function renderTeamTable(members) {
             <td><input type="checkbox" class="member-checkbox" value="${member.id}"></td>
             <td>
                 <div class="d-flex align-items-center">
-                    <img src="${member.profile_image || '/public/assets/img/default-avatar.png'}"
+                    <img src="${member.profile_image || window.BASE_URL + '/public/assets/img/default-avatar.png'}"
                          alt="${member.name}"
                          class="rounded-circle me-3"
-                         style="width: 40px; height: 40px; object-fit: cover;">
+                         style="width: 40px; height: 40px; object-fit: cover;"
+                         onerror="this.src='${window.BASE_URL}/public/assets/img/default-avatar.png'">
                     <div>
                         <div class="fw-semibold">${member.name}</div>
                         <div class="text-sm text-muted">${member.position}</div>

@@ -127,11 +127,10 @@ function handleList() {
     $stmt->execute($params);
     $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Process profile images
+    // Normalize paths and fall back to default avatar
     foreach ($members as &$member) {
-        if (empty($member['profile_image'])) {
-            $member['profile_image'] = '/public/assets/img/default-avatar.png';
-        }
+        $img = str_replace('\\', '/', $member['profile_image'] ?? '');
+        $member['profile_image'] = !empty($img) ? $img : '/public/assets/img/default-avatar.png';
     }
 
     $totalPages = ceil($total / $perPage);
@@ -168,6 +167,8 @@ function handleGet() {
     if (!$member) {
         throw new Exception('Team member not found');
     }
+
+    $member['profile_image'] = str_replace('\\', '/', $member['profile_image'] ?? '');
 
     echo json_encode([
         'success' => true,

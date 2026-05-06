@@ -490,12 +490,13 @@ include 'includes/header-bootstrap.php';
             $stmt->execute();
             $team_members = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // Fallback to default image if not set
+            // Normalize backslash paths (Windows DB entries) and fallback for missing images
+            $default_avatar = url('/public/assets/img/default-avatar.png');
             foreach ($team_members as &$member) {
-                if (empty($member['profile_image'])) {
-                    $member['profile_image'] = '/public/assets/img/default-avatar.png';
-                }
+                $img = str_replace('\\', '/', $member['profile_image'] ?? '');
+                $member['profile_image'] = !empty($img) ? url($img) : $default_avatar;
             }
+            unset($member);
         } catch (Exception $e) {
             // Fallback data if database is not available
             $team_members = [
@@ -554,8 +555,11 @@ include 'includes/header-bootstrap.php';
                 <?php foreach ($admin_members as $member): ?>
                 <div class="col-md-6 col-lg-4">
                     <div class="team-member">
-                        <div class="team-photo" style="background-image: url('<?php echo h($member['profile_image']); ?>'); background-size: cover; background-position: center;">
-                            <!-- Fallback icon in case image fails to load -->
+                        <div class="team-photo">
+                            <img src="<?php echo h($member['profile_image']); ?>"
+                                 alt="<?php echo h($member['name']); ?>"
+                                 style="width:100%;height:100%;object-fit:cover;display:block;"
+                                 onerror="this.style.display='none'">
                         </div>
                         <div class="p-4">
                             <h5 class="mb-1"><?php echo h($member['name']); ?></h5>
@@ -586,10 +590,11 @@ include 'includes/header-bootstrap.php';
                 <?php foreach ($support_members as $member): ?>
                 <div class="col-md-4">
                     <div class="team-member">
-                        <div class="team-photo" style="background-image: url('<?php echo h($member['profile_image']); ?>'); background-size: cover; background-position: center;">
-                            <div style="width: 100%; height: 100%; background: rgba(255,193,7,0.1); display: flex; align-items: center; justify-content: center;">
-                                <i class="bi bi-person-circle" style="font-size: 3rem; color: rgba(255,255,255,0.8);"></i>
-                            </div>
+                        <div class="team-photo">
+                            <img src="<?php echo h($member['profile_image']); ?>"
+                                 alt="<?php echo h($member['name']); ?>"
+                                 style="width:100%;height:100%;object-fit:cover;display:block;"
+                                 onerror="this.style.display='none'">
                         </div>
                         <div class="p-4">
                             <h5 class="mb-1"><?php echo h($member['name']); ?></h5>
