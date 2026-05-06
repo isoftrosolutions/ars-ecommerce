@@ -218,21 +218,25 @@ function handleSave() {
         }
     }
 
-    // Handle profile image upload
+    // Handle profile image upload or removal
     $profileImage = null;
+    $removePhoto  = !empty($_POST['remove_photo']) && $_POST['remove_photo'] === '1';
+
     if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] === UPLOAD_ERR_OK) {
         $profileImage = handleImageUpload($_FILES['profile_image'], $id);
+    } elseif ($removePhoto) {
+        $profileImage = '';
     }
 
     global $pdo;
 
     if ($isUpdate) {
-        // Update existing member
+        $updateImage = ($profileImage !== null);
         $stmt = $pdo->prepare("
             UPDATE team_members SET
                 name = ?, email = ?, mobile = ?, role = ?, position = ?,
                 fb_link = ?, bio = ?, is_active = ?, display_order = ?
-                " . ($profileImage ? ", profile_image = ?" : "") . "
+                " . ($updateImage ? ", profile_image = ?" : "") . "
             WHERE id = ?
         ");
 
@@ -248,8 +252,8 @@ function handleSave() {
             (int)$_POST['display_order']
         ];
 
-        if ($profileImage) {
-            $params[] = $profileImage;
+        if ($updateImage) {
+            $params[] = $profileImage ?: null;
         }
         $params[] = $id;
 
