@@ -209,6 +209,13 @@ try {
             $controller->handleRequest($requestMethod, $action);
             break;
 
+        case 'team-members':
+        case 'team-members.php':
+            require_once __DIR__ . '/team-members/TeamMembersController.php';
+            $controller = new TeamMembersController();
+            $controller->handleRequest($requestMethod, $action);
+            break;
+
         default:
             Response::error('Endpoint not found', 404);
             break;

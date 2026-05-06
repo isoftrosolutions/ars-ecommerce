@@ -8,7 +8,9 @@
       "Bash(git -C \"C:\\\\Apache24\\\\htdocs\\\\ars\" add invoice.php)",
       "Bash(git -C 'C:\\\\Apache24\\\\htdocs\\\\ars' commit -m ' *)",
       "Bash(git *)",
-      "Bash(findstr pwa *)"
+      "Bash(findstr pwa *)",
+      "Bash(Get-ChildItem -Recurse -Filter \"team-members*\" -Path \"C:\\\\Apache24\\\\htdocs\\\\ars\")",
+      "Bash(Select-Object FullName)"
     ]
   }
 }
