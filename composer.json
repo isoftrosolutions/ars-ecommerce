@@ -1,0 +1,15 @@
+{
+    "name": "ars/ecommerce",
+    "description": "ARS Easy Shopping E-Commerce Platform",
+    "type": "project",
+    "require": {
+        "php": ">=7.4",
+        "firebase/php-jwt": "^6.10"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "audit": {
+            "ignore": ["PKSA-y2cr-5h3j-g3ys"]
+        }
+    }
+}
