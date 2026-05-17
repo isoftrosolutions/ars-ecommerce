@@ -1,18 +1,32 @@
 <?php
 /**
  * Create banners table and seed sample data.
- * 
- * Usage (from project root on server):
- *   php scratch/create_banners.php
- * 
+ *
+ * Usage (from project root):
+ *   php create_banners.php
+ *
  * Safe to re-run — skips if banners already exist.
  * Delete this file after successful execution.
  */
 
-$host = 'localhost';
-$dbname = 'ektamultp_easyshoping';
-$user = 'root';
-$pass = '_Q~tnE4(V8+VqIk}';
+$envPath = __DIR__ . '/.env';
+if (!file_exists($envPath)) {
+    die("✗ .env not found at $envPath\n");
+}
+
+$env = parse_ini_file($envPath, false, INI_SCANNER_RAW);
+if (!$env) {
+    die("✗ Failed to parse .env file\n");
+}
+
+$host = $env['DB_HOST'] ?? 'localhost';
+$dbname = $env['DB_NAME'] ?? '';
+$user = $env['DB_USER'] ?? 'root';
+$pass = $env['DB_PASS'] ?? '';
+
+if (empty($dbname)) {
+    die("✗ DB_NAME not set in .env\n");
+}
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $user, $pass, [
@@ -51,16 +65,16 @@ if ($count > 0) {
 }
 
 // 3. Ensure uploads/banners directory
-$bannerDir = __DIR__ . '/../../public/uploads/banners';
+$bannerDir = __DIR__ . '/public/uploads/banners';
 if (!is_dir($bannerDir)) {
     mkdir($bannerDir, 0755, true);
-    echo "✓ Created directory: uploads/banners\n";
+    echo "✓ Created directory: public/uploads/banners\n";
 }
 
 // 4. Create sample banner images (1200x600 PNGs via GD)
 function createBannerImage($filepath, $bgColor, $accentColor, $title, $subtitle) {
     if (!function_exists('imagecreatetruecolor')) {
-        return false; // GD not available
+        return false;
     }
     $width = 1200;
     $height = 600;
@@ -71,22 +85,17 @@ function createBannerImage($filepath, $bgColor, $accentColor, $title, $subtitle)
     $white = imagecolorallocate($img, 255, 255, 255);
 
     imagefill($img, 0, 0, $bg);
-
     imagefilledrectangle($img, 0, 0, 20, $height, $accent);
 
     for ($i = 0; $i < 5; $i++) {
-        $cx = 900 + rand(-80, 80);
         $cy = 80 + $i * 100;
         $r = 50 + rand(-15, 15);
-        $alpha = 70 + rand(-20, 20);
-        $col = imagecolorallocatealpha($img, $accentColor[0], $accentColor[1], $accentColor[2], $alpha);
-        imagefilledellipse($img, $cx, $cy, $r * 2, $r * 2, $col);
+        $col = imagecolorallocatealpha($img, $accentColor[0], $accentColor[1], $accentColor[2], 70 + rand(-20, 20));
+        imagefilledellipse($img, 900 + rand(-80, 80), $cy, $r * 2, $r * 2, $col);
     }
 
-    $textX = 60;
-    $textY = 220;
-    imagestring($img, 5, $textX, $textY, $title, $white);
-    imagestring($img, 3, $textX, $textY + 40, $subtitle, $white);
+    imagestring($img, 5, 60, 220, $title, $white);
+    imagestring($img, 3, 60, 260, $subtitle, $white);
 
     imagepng($img, $filepath);
     imagedestroy($img);
