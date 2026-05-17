@@ -180,6 +180,7 @@ function step1() {
     }
 
     pass("All system checks passed");
+    return true;
 }
 
 // ──────────────────────────────────────────────────────────────
