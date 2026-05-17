@@ -160,10 +160,10 @@ try {
                                     <div class="fw-bold small"><?php echo date('M d, Y', strtotime($order['created_at'])); ?></div>
                                 </div>
                                 <div class="col-6 col-md-3">
-                                    <?php
-                                        $s = $order['status'] ?? 'Pending';
-                                        $c = (strtolower($s) == 'delivered') ? 'success' : ((strtolower($s) == 'cancelled') ? 'danger' : 'warning');
-                                    ?>
+                                     <?php
+                                         $s = $order['delivery_status'] ?? 'Pending';
+                                         $c = (strtolower($s) == 'delivered') ? 'success' : ((strtolower($s) == 'cancelled') ? 'danger' : 'warning');
+                                     ?>
                                     <div class="small text-muted mb-1">Status</div>
                                     <span class="badge rounded-pill bg-<?php echo $c; ?>-soft text-<?php echo $c; ?> px-3" style="background:rgba(var(--bs-<?php echo $c; ?>-rgb), 0.1); border:1px solid rgba(var(--bs-<?php echo $c; ?>-rgb), 0.2);">
                                         <?php echo ucfirst($s); ?>

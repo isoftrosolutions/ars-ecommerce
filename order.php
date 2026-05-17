@@ -89,13 +89,31 @@ try {
                                 $s = $order['delivery_status'] ?? 'Pending';
                                 $c = (strtolower($s) == 'delivered') ? 'success' : ((strtolower($s) == 'cancelled') ? 'danger' : 'warning');
                             ?>
-                            <span class="badge rounded-pill bg-<?php echo $c; ?> px-3 py-2"><?php echo ucfirst($s); ?></span>
-                        </div>
-                        <div class="mb-3">
-                            <a href="<?php echo url('/invoice?id=' . $order['id']); ?>" target="_blank" class="btn btn-outline-dark btn-sm rounded-pill">
-                                <i class="bi bi-file-earmark-pdf me-1"></i> Download Invoice
-                            </a>
-                        </div>
+                             <span class="badge rounded-pill bg-<?php echo $c; ?> px-3 py-2"><?php echo ucfirst($s); ?></span>
+                         </div>
+                         <div class="mb-3 d-flex gap-2 flex-wrap">
+                             <a href="<?php echo url('/invoice?id=' . $order['id']); ?>" target="_blank" class="btn btn-outline-dark btn-sm rounded-pill">
+                                 <i class="bi bi-file-earmark-pdf me-1"></i> Download Invoice
+                             </a>
+                             <?php
+                                 $ds = strtolower($order['delivery_status'] ?? 'pending');
+                                 $canCancel = in_array($ds, ['pending', 'confirmed', 'shipped']);
+                                 $canRefund = ($ds === 'delivered');
+                                 $daysSinceDelivery = 0;
+                                 if ($canRefund && $order['location_updated_at']) {
+                                     $deliveredAt = strtotime($order['location_updated_at']);
+                                     $daysSinceDelivery = floor((time() - $deliveredAt) / 86400);
+                                     $canRefund = $daysSinceDelivery <= 5;
+                                 }
+                             ?>
+                             <?php if ($canCancel): ?>
+                                 <button class="btn btn-outline-danger btn-sm rounded-pill" onclick="cancelOrder(<?php echo $order['id']; ?>)">
+                                     <i class="bi bi-x-circle me-1"></i> Cancel Order
+                                 </button>
+                             <?php elseif ($canRefund): ?>
+                                 <span class="badge bg-info-subtle text-info px-3 py-2">Refund eligible for <?php echo max(0, 5 - $daysSinceDelivery); ?> more days</span>
+                             <?php endif; ?>
+                         </div>
 
                         <hr class="my-4">
 
@@ -132,11 +150,18 @@ try {
                             <div class="fw-bold small">Shipped</div>
                             <div class="text-muted x-small">Package has left our facility.</div>
                         </div>
-                        <div class="timeline-item <?php echo (strtolower($order['delivery_status']) == 'delivered') ? 'active' : ''; ?>">
-                            <span class="timeline-dot"></span>
-                            <div class="fw-bold small">Delivered</div>
-                            <div class="text-muted x-small">Successfully reached your doorstep.</div>
-                        </div>
+                         <div class="timeline-item <?php echo (strtolower($order['delivery_status']) == 'delivered') ? 'active' : ''; ?>">
+                             <span class="timeline-dot"></span>
+                             <div class="fw-bold small">Delivered</div>
+                             <div class="text-muted x-small">Successfully reached your doorstep.</div>
+                         </div>
+                         <?php if (strtolower($order['delivery_status']) === 'cancelled'): ?>
+                         <div class="timeline-item active">
+                             <span class="timeline-dot" style="background:#dc3545; box-shadow:0 0 0 2px #dc3545;"></span>
+                             <div class="fw-bold small text-danger">Cancelled</div>
+                             <div class="text-muted x-small">This order has been cancelled.</div>
+                         </div>
+                         <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -179,11 +204,31 @@ try {
                 </div>
                 
                 <a href="<?php echo url('/shop'); ?>" class="btn btn-dark w-100 py-3 rounded-pill mt-4 fw-bold shadow-sm">
-                    Back to Shopping
-                </a>
-            </div>
-        </div>
-    <?php endif; ?>
-</div>
+     Back to Shopping
+     </a>
+ </div>
+         </div>
+     <?php endif; ?>
+ </div>
 
-<?php include 'includes/footer-bootstrap.php'; ?>
+ <script>
+ function cancelOrder(orderId) {
+     if (!confirm('Cancel this order? This cannot be undone.')) return;
+     fetch('/api/cancel-order.php', {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({ order_id: orderId })
+     })
+     .then(r => r.json())
+     .then(data => {
+         if (data.success) {
+             location.reload();
+         } else {
+             alert(data.message || 'Failed to cancel order');
+         }
+     })
+     .catch(() => alert('Network error'));
+ }
+ </script>
+ 
+ <?php include 'includes/footer-bootstrap.php'; ?>
