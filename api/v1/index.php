@@ -38,6 +38,7 @@ $routes = [
     ['GET',  '/orders',                  'OrderController.php', 'OrderController', 'index'],
     ['GET',  '/orders/{id}',             'OrderController.php', 'OrderController', 'show'],
     ['GET',  '/orders/{id}/invoice',     'OrderController.php', 'OrderController', 'invoice'],
+    ['POST', '/orders/{id}/cancel',      'OrderController.php', 'OrderController', 'cancel'],
 
     // Wishlist (protected)
     ['GET',  '/wishlist',                'WishlistController.php', 'WishlistController', 'index'],
@@ -50,6 +51,9 @@ $routes = [
     ['POST', '/cart',                    'CartController.php', 'CartController', 'store'],
     ['DELETE','/cart/{id}',              'CartController.php', 'CartController', 'destroy'],
     ['POST', '/cart/sync',               'CartController.php', 'CartController', 'sync'],
+
+    // Shipping settings (public)
+    ['GET',  '/settings/shipping',       'SettingsController.php', 'SettingsController', 'shipping'],
 
     // Coupon (protected)
     ['POST', '/coupons/validate',        'CouponController.php', 'CouponController', 'validate'],

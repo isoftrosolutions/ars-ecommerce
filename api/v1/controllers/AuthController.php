@@ -66,30 +66,13 @@ class AuthController
         // Hash password
         $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
 
-        // Insert user with status pending
+        // Insert user with status active
         $stmt = $this->pdo->prepare(
-            "INSERT INTO users (full_name, email, mobile, address, password, role, created_at) VALUES (?, ?, ?, ?, ?, 'customer', NOW())"
+            "INSERT INTO users (full_name, email, mobile, address, password, role, status, created_at) VALUES (?, ?, ?, ?, ?, 'customer', 'active', NOW())"
         );
         $stmt->execute([$name, $email, $phone, $address, $hashedPassword]);
-        $userId = $this->pdo->lastInsertId();
 
-        // Generate and store OTP
-        $otp = sprintf('%06d', mt_rand(100000, 999999));
-        $hashedOtp = password_hash($otp, PASSWORD_DEFAULT);
-        $expiresAt = date('Y-m-d H:i:s', time() + 300); // 5 minutes
-
-        $stmt = $this->pdo->prepare(
-            "INSERT INTO otps (phone, otp_code, hashed_otp, expires_at, created_at) VALUES (?, ?, ?, ?, NOW())"
-        );
-        $stmt->execute([$phone, $otp, $hashedOtp, $expiresAt]);
-
-        // Send OTP via SMS
-        $this->sendOtpSms($phone, $otp);
-
-        json_success([
-            'user_id' => (int)$userId,
-            'otp_sent' => true,
-        ], 'Registration successful. Please verify OTP.', 201);
+        json_success(null, 'Registration successful. Please login.', 201);
     }
 
     /**
@@ -200,8 +183,8 @@ class AuthController
             json_error('Invalid credentials', 401);
         }
 
-        if ($user['status'] === 'pending' && $user['role'] !== 'admin') {
-            json_error('Account not verified. Please verify OTP first.', 403);
+        if ($user['status'] === 'suspended') {
+            json_error('Account suspended. Contact support.', 403);
         }
 
         $token = generate_token($user['id'], $user['role']);

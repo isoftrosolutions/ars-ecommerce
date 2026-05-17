@@ -23,10 +23,18 @@ class OrderController
      */
     public function store($params)
     {
-        $user = require_auth();
         $data = get_json_input();
+        $isGuest = !empty($data['guest_name']);
+        $user = null;
 
-        validate_required($data, ['items', 'payment_method']);
+        if ($isGuest) {
+            validate_required($data, ['items', 'payment_method', 'guest_name', 'guest_phone']);
+            check_rate_limit('guest_order', $_SERVER['REMOTE_ADDR']);
+        } else {
+            $user = require_auth();
+            validate_required($data, ['items', 'payment_method']);
+        }
+
         if (!is_array($data['items']) || empty($data['items'])) {
             json_error('Order must contain at least one item', 400);
         }
@@ -39,7 +47,7 @@ class OrderController
 
         // Resolve address
         $addressData = null;
-        if ($addressId) {
+        if (!$isGuest && $addressId) {
             $stmt = $this->pdo->prepare("SELECT * FROM user_addresses WHERE id = ? AND user_id = ?");
             $stmt->execute([$addressId, $user['id']]);
             $addressData = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -49,9 +57,18 @@ class OrderController
         }
 
         // Fetch user info
-        $stmt = $this->pdo->prepare("SELECT full_name, email, mobile FROM users WHERE id = ?");
-        $stmt->execute([$user['id']]);
-        $userInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+        $guestName = '';
+        $guestEmail = '';
+        $guestPhone = '';
+        if ($isGuest) {
+            $guestName = sanitize_string($data['guest_name']);
+            $guestPhone = preg_replace('/[^0-9]/', '', $data['guest_phone']);
+            $guestEmail = isset($data['guest_email']) ? sanitize_string($data['guest_email']) : '';
+            $addressStr = isset($data['guest_address']) ? sanitize_string($data['guest_address']) : '';
+        } else {
+            $stmt = $this->pdo->prepare("SELECT full_name, email, mobile FROM users WHERE id = ?");
+            $stmt->execute([$user['id']]);
+            $userInfo = $stmt->fetch(PDO::FETCH_ASSOC);
 
         $this->pdo->beginTransaction();
 
@@ -120,12 +137,12 @@ class OrderController
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Pending', 'Pending', ?, NOW())
             ");
             $stmt->execute([
-                $user['id'],
+                $isGuest ? null : $user['id'],
                 $orderNumber,
-                $userInfo['full_name'],
-                $userInfo['email'],
-                $userInfo['mobile'],
-                $addressStr,
+                $isGuest ? $guestName : $userInfo['full_name'],
+                $isGuest ? $guestEmail : $userInfo['email'],
+                $isGuest ? $guestPhone : $userInfo['mobile'],
+                $isGuest ? $addressStr : ($addressStr ?: ($addressData ? implode(', ', array_filter([$addressData['full_name'], $addressData['phone'], $addressData['street'], $addressData['ward'] . ', ' . $addressData['municipality'], $addressData['district'] . ', ' . $addressData['province']])) : '')),
                 $totalAmount,
                 $paymentMethod,
                 $notes,
@@ -404,5 +421,47 @@ class OrderController
             'payment_status' => $order['payment_status'],
             'delivery_status' => $order['delivery_status'],
         ]);
+    }
+
+    /**
+     * POST /orders/{id}/cancel
+     * Cancel an order if its status allows it.
+     */
+    public function cancel($params)
+    {
+        $user = require_auth();
+        $id = (int)($params['id'] ?? 0);
+
+        if (!$id) {
+            json_error('Order ID is required', 400);
+        }
+
+        $stmt = $this->pdo->prepare("SELECT id, delivery_status FROM orders WHERE id = ? AND user_id = ?");
+        $stmt->execute([$id, $user['id']]);
+        $order = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$order) {
+            json_error('Order not found', 404);
+        }
+
+        $cancellable = ['Pending', 'Confirmed', 'Shipped'];
+        if (!in_array($order['delivery_status'], $cancellable)) {
+            json_error('Order cannot be cancelled in its current state', 400);
+        }
+
+        $this->pdo->beginTransaction();
+        try {
+            $stmt = $this->pdo->prepare("UPDATE orders SET delivery_status = 'Cancelled' WHERE id = ?");
+            $stmt->execute([$id]);
+
+            $stmt = $this->pdo->prepare("INSERT INTO order_status_history (order_id, status, note, created_at) VALUES (?, 'Cancelled', 'Cancelled by customer', NOW())");
+            $stmt->execute([$id]);
+
+            $this->pdo->commit();
+            json_success(null, 'Order cancelled successfully');
+        } catch (\Exception $e) {
+            $this->pdo->rollBack();
+            json_error('Failed to cancel order', 500);
+        }
     }
 }
