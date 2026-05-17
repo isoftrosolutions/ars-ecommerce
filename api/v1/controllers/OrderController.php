@@ -28,7 +28,7 @@ class OrderController
         $user = null;
 
         if ($isGuest) {
-            validate_required($data, ['items', 'payment_method', 'guest_name', 'guest_phone']);
+            validate_required($data, ['items', 'payment_method', 'guest_name', 'guest_phone', 'guest_address']);
             check_rate_limit('guest_order', $_SERVER['REMOTE_ADDR']);
         } else {
             $user = require_auth();
@@ -60,6 +60,7 @@ class OrderController
         $guestName = '';
         $guestEmail = '';
         $guestPhone = '';
+        $addressStr = '';
         if ($isGuest) {
             $guestName = sanitize_string($data['guest_name']);
             $guestPhone = preg_replace('/[^0-9]/', '', $data['guest_phone']);
@@ -69,6 +70,7 @@ class OrderController
             $stmt = $this->pdo->prepare("SELECT full_name, email, mobile FROM users WHERE id = ?");
             $stmt->execute([$user['id']]);
             $userInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+        }
 
         $this->pdo->beginTransaction();
 
@@ -120,7 +122,6 @@ class OrderController
             $orderNumber = 'ARS-' . $year . '-' . str_pad($orderCount, 6, '0', STR_PAD_LEFT);
 
             // Build address string
-            $addressStr = null;
             if ($addressData) {
                 $parts = [$addressData['full_name'], $addressData['phone']];
                 if ($addressData['street']) $parts[] = $addressData['street'];
@@ -142,7 +143,7 @@ class OrderController
                 $isGuest ? $guestName : $userInfo['full_name'],
                 $isGuest ? $guestEmail : $userInfo['email'],
                 $isGuest ? $guestPhone : $userInfo['mobile'],
-                $isGuest ? $addressStr : ($addressStr ?: ($addressData ? implode(', ', array_filter([$addressData['full_name'], $addressData['phone'], $addressData['street'], $addressData['ward'] . ', ' . $addressData['municipality'], $addressData['district'] . ', ' . $addressData['province']])) : '')),
+                $addressStr,
                 $totalAmount,
                 $paymentMethod,
                 $notes,
