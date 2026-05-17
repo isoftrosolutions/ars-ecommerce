@@ -25,7 +25,7 @@ class AuthController
     {
         $data = get_json_input();
         check_rate_limit('register', $data['phone'] ?? '');
-        validate_required($data, ['name', 'phone', 'password', 'email', 'address']);
+        validate_required($data, ['name', 'phone', 'password', 'email']);
         validate_phone($data['phone']);
         validate_min_length($data['password'], 'password', 8);
         validate_email($data['email']);
@@ -34,7 +34,17 @@ class AuthController
         $name = sanitize_string($data['name']);
         $phone = preg_replace('/[^0-9]/', '', $data['phone']);
         $email = sanitize_string($data['email']);
-        $address = sanitize_string($data['address']);
+
+        // Build address — accept flat string or structured fields
+        $address = build_address_string(
+            $data['address'] ?? '',
+            $data['province'] ?? '',
+            $data['district'] ?? '',
+            $data['municipality'] ?? '',
+            $data['ward'] ?? '',
+            $data['street'] ?? ''
+        );
+
         $password = $data['password'];
 
         // Check phone uniqueness

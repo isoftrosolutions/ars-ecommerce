@@ -196,8 +196,13 @@ include 'includes/header-bootstrap.php';
                             </div>
 
                             <div class="mb-3">
-                                <label for="address" class="form-label">Shipping Address *</label>
-                                <textarea class="form-control" id="address" name="address" rows="3" required><?php echo h($user['address'] ?? ''); ?></textarea>
+                                <label class="form-label">Shipping Address <span class="text-danger">*</span></label>
+                                <?php
+                                $addressData = [
+                                    'combined' => $user['address'] ?? ''
+                                ];
+                                include 'includes/address-selector.php';
+                                ?>
                             </div>
 
                             <h5 class="mb-3 mt-4">Payment Method</h5>

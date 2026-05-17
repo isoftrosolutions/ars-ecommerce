@@ -139,6 +139,31 @@ function sanitize_string($value)
     return trim(htmlspecialchars(strip_tags($value), ENT_QUOTES, 'UTF-8'));
 }
 
+/**
+ * Build a combined address string from structured fields or fall back to flat string.
+ *
+ * Accepts either a flat $flatAddress or the structured fields.
+ * Returns the combined string for storage in users.address / orders.address.
+ */
+function build_address_string($flatAddress, $province, $district, $municipality, $ward, $street)
+{
+    if (!empty($flatAddress)) {
+        return sanitize_string($flatAddress);
+    }
+
+    if (empty($province) || empty($district) || empty($municipality)) {
+        ValidationErrors::add('address', 'Address or province/district/municipality is required');
+        ValidationErrors::throwIfInvalid();
+    }
+
+    $parts = [];
+    if (!empty($street)) $parts[] = sanitize_string($street);
+    $parts[] = sanitize_string($municipality) . ($ward ? '-' . sanitize_string($ward) : '');
+    $parts[] = sanitize_string($district);
+    $parts[] = sanitize_string($province);
+    return implode(', ', $parts);
+}
+
 function sanitize_array($data)
 {
     $sanitized = [];

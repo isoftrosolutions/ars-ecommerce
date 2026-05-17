@@ -20,6 +20,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email     = trim($_POST['email'] ?? '');
     $mobile    = trim($_POST['mobile'] ?? '');
     $address   = trim($_POST['address'] ?? '');
+    $addr_province    = trim($_POST['address_province'] ?? '');
+    $addr_district    = trim($_POST['address_district'] ?? '');
+    $addr_municipality = trim($_POST['address_municipality'] ?? '');
+    $addr_ward        = trim($_POST['address_ward'] ?? '');
+    $addr_street      = trim($_POST['address_street'] ?? '');
     $password  = $_POST['password'] ?? '';
     $confirm_password = $_POST['confirm_password'] ?? '';
 

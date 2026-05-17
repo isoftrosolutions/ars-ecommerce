@@ -61,10 +61,10 @@ include_once __DIR__ . '/../includes/header-bootstrap.php';
                     </div>
                 </div>
 
-                <div class="mb-3">
-                    <label for="address" class="form-label">Shipping Address</label>
-                    <input type="text" name="address" id="address" class="form-control" placeholder="Street, City, Nepal" required>
-                </div>
+                <?php
+                $addressData = [];
+                include __DIR__ . '/../includes/address-selector.php';
+                ?>
 
                 <div class="row">
                     <div class="col-md-6 mb-3">

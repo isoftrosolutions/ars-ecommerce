@@ -76,9 +76,17 @@ class UserController
             $fields[] = 'email = ?';
             $bindings[] = sanitize_string($data['email']);
         }
-        if (isset($data['address'])) {
+        if (isset($data['address']) || isset($data['province'])) {
+            $address = build_address_string(
+                $data['address'] ?? '',
+                $data['province'] ?? '',
+                $data['district'] ?? '',
+                $data['municipality'] ?? '',
+                $data['ward'] ?? '',
+                $data['street'] ?? ''
+            );
             $fields[] = 'address = ?';
-            $bindings[] = sanitize_string($data['address']);
+            $bindings[] = $address;
         }
 
         if (empty($fields)) {

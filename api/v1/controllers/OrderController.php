@@ -287,10 +287,32 @@ class OrderController
         $stmt->execute([$id]);
         $statusHistory = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Parse address
+        // Parse address — return both flat and structured
         $address = null;
         if ($order['address']) {
+            $parts = array_map('trim', explode(',', $order['address']));
             $address = ['full' => $order['address']];
+            // If address has 4+ comma-separated parts, try structured parse
+            if (count($parts) >= 3) {
+                $last = $parts[count($parts) - 1]; // province
+                $second = $parts[count($parts) - 2]; // district
+                $addr = [
+                    'full' => $order['address'],
+                    'province' => $last,
+                    'district' => $second,
+                ];
+                // municipality-ward is the third-from-last
+                if (count($parts) >= 3) {
+                    $mw = explode('-', $parts[count($parts) - 3]);
+                    $addr['municipality'] = $mw[0];
+                    $addr['ward'] = $mw[1] ?? '';
+                }
+                // everything before that is street
+                if (count($parts) > 3) {
+                    $addr['street'] = implode(', ', array_slice($parts, 0, count($parts) - 3));
+                }
+                $address = $addr;
+            }
         }
 
         // Payment info

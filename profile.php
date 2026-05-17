@@ -211,9 +211,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <label class="form-label small fw-bold">Mobile</label>
                                 <input type="tel" class="form-control" name="mobile" value="<?php echo h($user['mobile']); ?>" required>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-12">
                                 <label class="form-label small fw-bold">Default Address</label>
-                                <input type="text" class="form-control" name="address" value="<?php echo h($user['address'] ?? ''); ?>">
+                                <?php
+                                $addressData = [
+                                    'province' => $_POST['address_province'] ?? '',
+                                    'district' => $_POST['address_district'] ?? '',
+                                    'municipality' => $_POST['address_municipality'] ?? '',
+                                    'ward' => $_POST['address_ward'] ?? '',
+                                    'street' => $_POST['address_street'] ?? '',
+                                    'combined' => $user['address'] ?? ''
+                                ];
+                                include 'includes/address-selector.php';
+                                ?>
                             </div>
                         </div>
 
