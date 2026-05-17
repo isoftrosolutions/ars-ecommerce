@@ -25,17 +25,16 @@ class AuthController
     {
         $data = get_json_input();
         check_rate_limit('register', $data['phone'] ?? '');
-        validate_required($data, ['name', 'phone', 'password']);
+        validate_required($data, ['name', 'phone', 'password', 'email', 'address']);
         validate_phone($data['phone']);
         validate_min_length($data['password'], 'password', 8);
-        if (!empty($data['email'])) {
-            validate_email($data['email']);
-        }
+        validate_email($data['email']);
         ValidationErrors::throwIfInvalid();
 
         $name = sanitize_string($data['name']);
         $phone = preg_replace('/[^0-9]/', '', $data['phone']);
-        $email = !empty($data['email']) ? sanitize_string($data['email']) : null;
+        $email = sanitize_string($data['email']);
+        $address = sanitize_string($data['address']);
         $password = $data['password'];
 
         // Check phone uniqueness
@@ -59,9 +58,9 @@ class AuthController
 
         // Insert user with status pending
         $stmt = $this->pdo->prepare(
-            "INSERT INTO users (full_name, email, mobile, password, role, created_at) VALUES (?, ?, ?, ?, 'customer', NOW())"
+            "INSERT INTO users (full_name, email, mobile, address, password, role, created_at) VALUES (?, ?, ?, ?, ?, 'customer', NOW())"
         );
-        $stmt->execute([$name, $email, $phone, $hashedPassword]);
+        $stmt->execute([$name, $email, $phone, $address, $hashedPassword]);
         $userId = $this->pdo->lastInsertId();
 
         // Generate and store OTP
@@ -146,21 +145,45 @@ class AuthController
 
     /**
      * POST /auth/login
-     * Login with phone and password.
+     * Login with email OR phone and password.
+     * Accepts {login_id,password}; also accepts legacy {phone,password}.
      */
     public function login($params)
     {
         $data = get_json_input();
-        check_rate_limit('login', $data['phone'] ?? '');
-        validate_required($data, ['phone', 'password']);
-        validate_phone($data['phone']);
+
+        // Back-compat: legacy clients send `phone`; new clients send `login_id`.
+        $loginId = '';
+        if (isset($data['login_id']) && trim($data['login_id']) !== '') {
+            $loginId = trim($data['login_id']);
+        } elseif (isset($data['phone']) && trim($data['phone']) !== '') {
+            $loginId = trim($data['phone']);
+        }
+
+        check_rate_limit('login', $loginId);
+
+        if ($loginId === '') {
+            ValidationErrors::add('login_id', 'The login_id field is required');
+        }
+        validate_required($data, ['password']);
+
+        $isEmail = filter_var($loginId, FILTER_VALIDATE_EMAIL) !== false;
+        if (!$isEmail && $loginId !== '') {
+            // Not an email — must be a valid Nepali phone.
+            validate_phone($loginId, 'login_id');
+        }
         ValidationErrors::throwIfInvalid();
 
-        $phone = preg_replace('/[^0-9]/', '', $data['phone']);
         $password = $data['password'];
 
-        $stmt = $this->pdo->prepare("SELECT id, full_name, email, mobile, password, role, status FROM users WHERE mobile = ?");
-        $stmt->execute([$phone]);
+        if ($isEmail) {
+            $stmt = $this->pdo->prepare("SELECT id, full_name, email, mobile, password, role, status FROM users WHERE email = ?");
+            $stmt->execute([$loginId]);
+        } else {
+            $phone = preg_replace('/[^0-9]/', '', $loginId);
+            $stmt = $this->pdo->prepare("SELECT id, full_name, email, mobile, password, role, status FROM users WHERE mobile = ?");
+            $stmt->execute([$phone]);
+        }
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$user || !password_verify($password, $user['password'])) {
@@ -255,6 +278,86 @@ class AuthController
         $stmt->execute([$hashed, $user['id']]);
 
         json_success(null, 'Password changed successfully');
+    }
+
+    /**
+     * POST /auth/forgot-password
+     * Send OTP to email for password reset.
+     */
+    public function forgotPassword($params)
+    {
+        $data = get_json_input();
+        validate_required($data, ['email']);
+        validate_email($data['email']);
+        ValidationErrors::throwIfInvalid();
+
+        $email = sanitize_string($data['email']);
+
+        // Check if email exists (anti-enumeration: always return same message)
+        $stmt = $this->pdo->prepare("SELECT id FROM users WHERE email = ?");
+        $stmt->execute([$email]);
+        $user = $stmt->fetch();
+
+        if ($user) {
+            // Generate and store OTP
+            $otp = sprintf('%06d', mt_rand(100000, 999999));
+            $hashedOtp = password_hash($otp, PASSWORD_DEFAULT);
+            $expiresAt = date('Y-m-d H:i:s', time() + 300);
+
+            $stmt = $this->pdo->prepare(
+                "INSERT INTO otps (phone, otp_code, hashed_otp, expires_at, created_at) VALUES (?, ?, ?, ?, NOW())"
+            );
+            $stmt->execute([$email, $otp, $hashedOtp, $expiresAt]);
+
+            $this->sendOtpSms($email, $otp);
+        }
+
+        json_success(null, 'If your email is registered, you will receive an OTP');
+    }
+
+    /**
+     * POST /auth/reset-password
+     * Reset password using OTP.
+     */
+    public function resetPassword($params)
+    {
+        $data = get_json_input();
+        validate_required($data, ['email', 'otp', 'new_password']);
+        validate_email($data['email']);
+        validate_min_length($data['new_password'], 'new_password', 8);
+        ValidationErrors::throwIfInvalid();
+
+        $email = sanitize_string($data['email']);
+        $otp = trim($data['otp']);
+
+        // Find valid OTP
+        $stmt = $this->pdo->prepare(
+            "SELECT * FROM otps WHERE phone = ? AND used = 0 AND expires_at > NOW() ORDER BY created_at DESC LIMIT 1"
+        );
+        $stmt->execute([$email]);
+        $otpRecord = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$otpRecord) {
+            json_error('No valid OTP found. Request a new one.', 400);
+        }
+
+        // Verify OTP
+        if ($otpRecord['otp_code'] !== $otp) {
+            if (!password_verify($otp, $otpRecord['hashed_otp'])) {
+                json_error('Invalid OTP', 400);
+            }
+        }
+
+        // Mark OTP as used
+        $stmt = $this->pdo->prepare("UPDATE otps SET used = 1 WHERE id = ?");
+        $stmt->execute([$otpRecord['id']]);
+
+        // Hash new password and update
+        $hashed = password_hash($data['new_password'], PASSWORD_BCRYPT);
+        $stmt = $this->pdo->prepare("UPDATE users SET password = ? WHERE email = ?");
+        $stmt->execute([$hashed, $email]);
+
+        json_success(null, 'Password reset successfully');
     }
 
     /**

@@ -13,7 +13,9 @@
       "Bash(Select-Object FullName)",
       "Bash(Get-ChildItem -Path \"C:\\\\Apache24\\\\htdocs\\\\ars\" -Recurse -Include \"*.php\", \"*.sql\" -File)",
       "Bash(Select-Object FullName, Length)",
-      "Bash(Sort-Object FullName)"
+      "Bash(Sort-Object FullName)",
+      "Bash(dir C:\\\\Apache24\\\\htdocs\\\\ars\\\\public\\\\assets\\\\img\\\\team *)",
+      "Bash(dir *)"
     ]
   }
 }

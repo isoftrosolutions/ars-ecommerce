@@ -13,6 +13,8 @@ $routes = [
     ['POST', '/auth/register',           'AuthController.php', 'AuthController', 'register'],
     ['POST', '/auth/verify-otp',         'AuthController.php', 'AuthController', 'verifyOtp'],
     ['POST', '/auth/login',              'AuthController.php', 'AuthController', 'login'],
+    ['POST', '/auth/forgot-password',    'AuthController.php', 'AuthController', 'forgotPassword'],
+    ['POST', '/auth/reset-password',     'AuthController.php', 'AuthController', 'resetPassword'],
     ['POST', '/auth/resend-otp',         'AuthController.php', 'AuthController', 'resendOtp'],
 
     // Auth (protected)
@@ -35,6 +37,25 @@ $routes = [
     ['POST', '/orders',                  'OrderController.php', 'OrderController', 'store'],
     ['GET',  '/orders',                  'OrderController.php', 'OrderController', 'index'],
     ['GET',  '/orders/{id}',             'OrderController.php', 'OrderController', 'show'],
+    ['GET',  '/orders/{id}/invoice',     'OrderController.php', 'OrderController', 'invoice'],
+
+    // Wishlist (protected)
+    ['GET',  '/wishlist',                'WishlistController.php', 'WishlistController', 'index'],
+    ['POST', '/wishlist',                'WishlistController.php', 'WishlistController', 'store'],
+    ['DELETE','/wishlist/{id}',          'WishlistController.php', 'WishlistController', 'destroy'],
+    ['GET',  '/wishlist/check/{product_id}', 'WishlistController.php', 'WishlistController', 'check'],
+
+    // Cart (protected)
+    ['GET',  '/cart',                    'CartController.php', 'CartController', 'index'],
+    ['POST', '/cart',                    'CartController.php', 'CartController', 'store'],
+    ['DELETE','/cart/{id}',              'CartController.php', 'CartController', 'destroy'],
+    ['POST', '/cart/sync',               'CartController.php', 'CartController', 'sync'],
+
+    // Coupon (protected)
+    ['POST', '/coupons/validate',        'CouponController.php', 'CouponController', 'validate'],
+
+    // Contact (protected)
+    ['POST', '/contact',                 'ContactController.php', 'ContactController', 'store'],
 
     // User (protected)
     ['GET',  '/user/me',                 'UserController.php', 'UserController', 'me'],

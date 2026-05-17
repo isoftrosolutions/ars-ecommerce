@@ -318,4 +318,69 @@ class OrderController
             'payment' => $payment,
         ]);
     }
+
+    /**
+     * GET /orders/{id}/invoice
+     * Returns full invoice data for an order.
+     */
+    public function invoice($params)
+    {
+        $user = require_auth();
+        $id = (int)($params['id'] ?? 0);
+
+        if (!$id) {
+            json_error('Order ID is required', 400);
+        }
+
+        // Fetch order with user info
+        $stmt = $this->pdo->prepare("
+            SELECT o.*, u.full_name, u.email, u.mobile
+            FROM orders o
+            JOIN users u ON o.user_id = u.id
+            WHERE o.id = ? AND o.user_id = ?
+        ");
+        $stmt->execute([$id, $user['id']]);
+        $order = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$order) {
+            json_error('Order not found', 404);
+        }
+
+        // Fetch items
+        $stmt = $this->pdo->prepare("
+            SELECT oi.product_id, oi.quantity, oi.price as unit_price,
+                   oi.discount_price, p.name as product_name, p.sku
+            FROM order_items oi
+            JOIN products p ON oi.product_id = p.id
+            WHERE oi.order_id = ?
+        ");
+        $stmt->execute([$id]);
+        $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $subtotal = 0;
+        foreach ($items as &$item) {
+            $item['total'] = (float)$item['unit_price'] * (int)$item['quantity'];
+            $subtotal += $item['total'];
+        }
+        unset($item);
+
+        json_success([
+            'order_number' => $order['order_number'],
+            'date' => $order['created_at'],
+            'customer' => [
+                'name' => $order['full_name'],
+                'email' => $order['email'],
+                'phone' => $order['mobile'],
+            ],
+            'shipping_address' => $order['address'],
+            'items' => $items,
+            'subtotal' => round($subtotal, 2),
+            'shipping_charge' => (float)($order['shipping_charge'] ?? 0),
+            'discount' => (float)($order['discount'] ?? 0),
+            'total' => (float)$order['total_amount'],
+            'payment_method' => $order['payment_method'],
+            'payment_status' => $order['payment_status'],
+            'delivery_status' => $order['delivery_status'],
+        ]);
+    }
 }
