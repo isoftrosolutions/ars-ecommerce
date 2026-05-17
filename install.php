@@ -290,12 +290,35 @@ function step2_composer() {
         $download_msg = 'Already present (' . number_format(filesize(COMPOSER_PHAR)) . ' bytes)';
     } else {
         $url = 'https://getcomposer.org/composer.phar';
-        $data = @file_get_contents($url);
+        $data = false;
+
+        // Try 1: file_get_contents (needs allow_url_fopen)
+        if (ini_get('allow_url_fopen')) {
+            $data = @file_get_contents($url);
+        }
+
+        // Try 2: cURL (more widely available on shared hosts)
+        if ($data === false && function_exists('curl_init')) {
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT        => 60,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_SSL_VERIFYPEER => false,
+            ]);
+            $data = curl_exec($ch);
+            $curl_err = curl_error($ch);
+            curl_close($ch);
+            if ($data === false) {
+                $download_msg = "cURL error: $curl_err";
+            }
+        }
+
+        // Try 3: copy() as last resort
         if ($data === false) {
-            // Try copy()
             $copy_ok = @copy($url, COMPOSER_PHAR);
             if ($copy_ok) {
-                $data = file_get_contents(COMPOSER_PHAR);
+                $data = @file_get_contents(COMPOSER_PHAR);
             }
         } else {
             file_put_contents(COMPOSER_PHAR, $data);
@@ -305,7 +328,7 @@ function step2_composer() {
             $download_ok = true;
             $download_msg = 'Downloaded (' . number_format(strlen($data)) . ' bytes)';
         } else {
-            $download_msg = 'Download failed or file too small';
+            $download_msg = $download_msg ?: 'Download failed or file too small';
         }
     }
     run_check('Download composer.phar', $download_ok, $download_msg);
