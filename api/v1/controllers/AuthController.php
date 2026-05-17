@@ -146,21 +146,45 @@ class AuthController
 
     /**
      * POST /auth/login
-     * Login with phone and password.
+     * Login with email OR phone and password.
+     * Accepts {login_id,password}; also accepts legacy {phone,password}.
      */
     public function login($params)
     {
         $data = get_json_input();
-        check_rate_limit('login', $data['phone'] ?? '');
-        validate_required($data, ['phone', 'password']);
-        validate_phone($data['phone']);
+
+        // Back-compat: legacy clients send `phone`; new clients send `login_id`.
+        $loginId = '';
+        if (isset($data['login_id']) && trim($data['login_id']) !== '') {
+            $loginId = trim($data['login_id']);
+        } elseif (isset($data['phone']) && trim($data['phone']) !== '') {
+            $loginId = trim($data['phone']);
+        }
+
+        check_rate_limit('login', $loginId);
+
+        if ($loginId === '') {
+            ValidationErrors::add('login_id', 'The login_id field is required');
+        }
+        validate_required($data, ['password']);
+
+        $isEmail = filter_var($loginId, FILTER_VALIDATE_EMAIL) !== false;
+        if (!$isEmail && $loginId !== '') {
+            // Not an email — must be a valid Nepali phone.
+            validate_phone($loginId, 'login_id');
+        }
         ValidationErrors::throwIfInvalid();
 
-        $phone = preg_replace('/[^0-9]/', '', $data['phone']);
         $password = $data['password'];
 
-        $stmt = $this->pdo->prepare("SELECT id, full_name, email, mobile, password, role, status FROM users WHERE mobile = ?");
-        $stmt->execute([$phone]);
+        if ($isEmail) {
+            $stmt = $this->pdo->prepare("SELECT id, full_name, email, mobile, password, role, status FROM users WHERE email = ?");
+            $stmt->execute([$loginId]);
+        } else {
+            $phone = preg_replace('/[^0-9]/', '', $loginId);
+            $stmt = $this->pdo->prepare("SELECT id, full_name, email, mobile, password, role, status FROM users WHERE mobile = ?");
+            $stmt->execute([$phone]);
+        }
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$user || !password_verify($password, $user['password'])) {
