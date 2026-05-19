@@ -155,11 +155,11 @@ try {
                                     <div class="small text-muted mb-1">Order ID</div>
                                     <div class="fw-bold fs-6">#<?php echo $order['id']; ?></div>
                                 </div>
-                                <div class="col-6 col-md-3">
+                                <div class="col-6 col-md-2">
                                     <div class="small text-muted mb-1">Date</div>
                                     <div class="fw-bold small"><?php echo date('M d, Y', strtotime($order['created_at'])); ?></div>
                                 </div>
-                                <div class="col-6 col-md-3">
+                                <div class="col-6 col-md-2">
                                      <?php
                                          $s = $order['delivery_status'] ?? 'Pending';
                                          $c = (strtolower($s) == 'delivered') ? 'success' : ((strtolower($s) == 'cancelled') ? 'danger' : 'warning');
@@ -169,14 +169,38 @@ try {
                                         <?php echo ucfirst($s); ?>
                                     </span>
                                 </div>
-                                <div class="col-6 col-md-3 text-md-end">
+                                <div class="col-6 col-md-2 text-md-end">
                                     <div class="small text-muted mb-1">Total</div>
                                     <div class="fw-bold fs-5 text-dark">Rs. <?php echo number_format($order['total_amount'], 0); ?></div>
+                                </div>
+                                <div class="col-6 col-md-3 text-md-end">
+<?php
+    $actionDs = strtolower($order['delivery_status'] ?? 'pending');
+    $orderCanCancel = in_array($actionDs, ['pending', 'confirmed', 'shipped']);
+    $orderCanReturn = ($actionDs === 'delivered');
+    $returnDaysSince = 0;
+    if ($orderCanReturn && $order['location_updated_at']) {
+        $returnDeliveredAt = strtotime($order['location_updated_at']);
+        $returnDaysSince = floor((time() - $returnDeliveredAt) / 86400);
+        $orderCanReturn = $returnDaysSince <= 5;
+    }
+?>
+<?php if ($orderCanCancel): ?>
+    <div class="small text-muted mb-1">Action</div>
+    <button class="btn btn-outline-danger btn-sm rounded-pill" onclick="cancelOrder(<?php echo $order['id']; ?>)">
+        <i class="bi bi-x-circle me-1"></i> Cancel
+    </button>
+<?php elseif ($orderCanReturn): ?>
+    <div class="small text-muted mb-1">Action</div>
+    <button class="btn btn-outline-primary btn-sm rounded-pill" onclick="returnOrder(<?php echo $order['id']; ?>)">
+        <i class="bi bi-arrow-return-left me-1"></i> Return (<?php echo max(0, 5 - $returnDaysSince); ?>d)
+    </button>
+<?php endif; ?>
                                 </div>
                             </div>
                             <hr class="my-3 opacity-50">
                             <div class="d-flex justify-content-between align-items-center">
-                                <div class="text-muted text-truncate small" style="max-width: 70%;">
+                                <div class="text-muted text-truncate small" style="max-width: 60%;">
                                     <i class="bi bi-box-seam me-1"></i> <?php echo h($order['product_names']); ?>
                                 </div>
                                 <a href="<?php echo url('/order.php?id=' . $order['id']); ?>" class="btn btn-light btn-sm rounded-pill px-3 fw-bold">Details</a>
@@ -188,5 +212,37 @@ try {
         </div>
     </div>
 </div>
+
+<script>
+function cancelOrder(orderId) {
+    if (!confirm('Cancel this order? This cannot be undone.')) return;
+    fetch('/api/cancel-order.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order_id: orderId })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) { location.reload(); }
+        else { alert(data.message || 'Failed to cancel order'); }
+    })
+    .catch(() => alert('Network error'));
+}
+
+function returnOrder(orderId) {
+    if (!confirm('Request a return for this order?')) return;
+    fetch('/api/return-order.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order_id: orderId })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) { location.reload(); }
+        else { alert(data.message || 'Failed to request return'); }
+    })
+    .catch(() => alert('Network error'));
+}
+</script>
 
 <?php include 'includes/footer-bootstrap.php'; ?>

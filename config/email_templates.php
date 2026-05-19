@@ -152,7 +152,52 @@ return [
     ],
 
     /* -------------------------------------------------------------------------- */
-    /* 5. PASSWORD RESET SUCCESS (SECURITY ALERT)                                 */
+    /* 5. ORDER CANCELLATION EMAIL                                                 */
+    /* -------------------------------------------------------------------------- */
+    'order_cancellation' => [
+        'subject' => 'Order #{{order_id}} has been cancelled',
+        'content_html' => '
+        <div style="background-color: #fdfaf7; padding: 40px 20px; font-family: sans-serif; color: #1a0e05; line-height: 1.6;">
+            <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid #e4d9d0;">
+                <div style="background: #130c06; padding: 30px; text-align: center;">
+                    <h1 style="color: #ffffff; margin: 0; font-family: serif; font-size: 24px; letter-spacing: 2px;">ARS<span style="color: #ea580c;">SHOP</span></h1>
+                </div>
+
+                <div style="padding: 40px 30px;">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <div style="width: 60px; height: 60px; background: rgba(234,88,12,0.1); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+                            <span style="color: #ea580c; font-size: 32px;">✕</span>
+                        </div>
+                        <h2 style="font-family: serif; font-size: 28px; margin: 0; color: #130c06;">Order Cancelled</h2>
+                        <p style="color: #a89688; font-size: 14px;">Order #{{order_id}}</p>
+                    </div>
+
+                    <p style="color: #6b5c4e; font-size: 16px;">Hi {{name}},</p>
+                    <p style="color: #6b5c4e; font-size: 16px;">Your order #{{order_id}} has been cancelled as requested. If you paid for this order, the refund will be processed to your original payment method within 5-7 business days.</p>
+
+                    <div style="border: 1px solid #e4d9d0; border-radius: 12px; padding: 20px; margin: 25px 0;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span style="color: #a89688;">Total Amount:</span>
+                            <span style="color: #130c06; font-weight: bold;">{{total}}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: #a89688;">Status:</span>
+                            <span style="color: #ea580c; font-weight: bold;">Cancelled</span>
+                        </div>
+                    </div>
+
+                    <p style="color: #a89688; font-size: 14px;">If you have any questions, reply to this email or visit our support portal.</p>
+                </div>
+
+                <div style="padding: 30px; background: #130c06; color: #a89688; font-size: 12px; text-align: center;">
+                    <p>&copy; ' . date('Y') . ' ARS E-Commerce. Nepal</p>
+                </div>
+            </div>
+        </div>'
+    ],
+
+    /* -------------------------------------------------------------------------- */
+    /* 6. PASSWORD RESET SUCCESS (SECURITY ALERT)                                 */
     /* -------------------------------------------------------------------------- */
     'password_reset_success' => [
         'subject' => 'Your ARS password has been changed',

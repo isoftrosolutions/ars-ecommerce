@@ -2,7 +2,6 @@
 require_once __DIR__ . '/../../includes/db.php';
 require_once __DIR__ . '/../../includes/functions.php';
 require_once __DIR__ . '/../../includes/audit-logger.php';
-require_once __DIR__ . '/../../includes/email-service.php';
 
 header('Content-Type: application/json');
 
@@ -24,7 +23,6 @@ if (!$orderId) {
 try {
     $pdo->beginTransaction();
 
-    // Verify ownership and cancellable status
     $stmt = $pdo->prepare("SELECT * FROM orders WHERE id = ? AND (user_id = ? OR customer_email = ?) FOR UPDATE");
     $stmt->execute([$orderId, $user['id'], $user['email']]);
     $order = $stmt->fetch();
@@ -36,45 +34,29 @@ try {
     }
 
     $ds = strtolower($order['delivery_status']);
-    if (!in_array($ds, ['pending', 'confirmed', 'shipped'])) {
+    if ($ds !== 'delivered') {
         $pdo->rollBack();
-        echo json_encode(['success' => false, 'message' => 'Order cannot be cancelled']);
+        echo json_encode(['success' => false, 'message' => 'Only delivered orders can be returned']);
         exit;
     }
 
-    // Restore product stock
-    $stmt = $pdo->prepare("
-        UPDATE products p
-        JOIN order_items oi ON p.id = oi.product_id AND oi.order_id = ?
-        SET p.stock = p.stock + oi.quantity
-    ");
-    $stmt->execute([$orderId]);
-
-    // Update payment status to Refunded if it was Paid
-    $oldPaymentStatus = $order['payment_status'];
-    if (strtolower($oldPaymentStatus) === 'paid') {
-        $stmt = $pdo->prepare("UPDATE orders SET payment_status = 'Refunded' WHERE id = ?");
-        $stmt->execute([$orderId]);
+    // Check 5-day window
+    if ($order['location_updated_at']) {
+        $deliveredAt = strtotime($order['location_updated_at']);
+        $daysSince = floor((time() - $deliveredAt) / 86400);
+        if ($daysSince > 5) {
+            $pdo->rollBack();
+            echo json_encode(['success' => false, 'message' => 'Return period has expired (5 days from delivery)']);
+            exit;
+        }
     }
 
-    // Cancel the order
-    $oldDeliveryStatus = $order['delivery_status'];
-    $stmt = $pdo->prepare("UPDATE orders SET delivery_status = 'Cancelled' WHERE id = ?");
+    $stmt = $pdo->prepare("UPDATE orders SET delivery_status = 'Return Requested' WHERE id = ?");
     $stmt->execute([$orderId]);
 
     $pdo->commit();
 
-    // Audit log (outside transaction — safe failure)
-    AuditLogger::logOrderStatusChange($orderId, $oldDeliveryStatus, 'Cancelled');
-
-    // Send cancellation email (outside transaction — safe failure)
-    $emailService = EmailService::getInstance();
-    $emailService->sendOrderCancellation(
-        $order['customer_email'],
-        $order['customer_name'],
-        $orderId,
-        $order['total_amount']
-    );
+    AuditLogger::logOrderStatusChange($orderId, 'Delivered', 'Return Requested');
 
     echo json_encode(['success' => true]);
 } catch (Exception $e) {

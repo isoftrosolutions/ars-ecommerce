@@ -106,13 +106,15 @@ try {
                                      $canRefund = $daysSinceDelivery <= 5;
                                  }
                              ?>
-                             <?php if ($canCancel): ?>
-                                 <button class="btn btn-outline-danger btn-sm rounded-pill" onclick="cancelOrder(<?php echo $order['id']; ?>)">
-                                     <i class="bi bi-x-circle me-1"></i> Cancel Order
-                                 </button>
-                             <?php elseif ($canRefund): ?>
-                                 <span class="badge bg-info-subtle text-info px-3 py-2">Refund eligible for <?php echo max(0, 5 - $daysSinceDelivery); ?> more days</span>
-                             <?php endif; ?>
+                              <?php if ($canCancel): ?>
+                                  <button class="btn btn-outline-danger btn-sm rounded-pill" onclick="cancelOrder(<?php echo $order['id']; ?>)">
+                                      <i class="bi bi-x-circle me-1"></i> Cancel Order
+                                  </button>
+                              <?php elseif ($canRefund): ?>
+                                  <button class="btn btn-outline-primary btn-sm rounded-pill" onclick="returnOrder(<?php echo $order['id']; ?>)">
+                                      <i class="bi bi-arrow-return-left me-1"></i> Request Return (<?php echo max(0, 5 - $daysSinceDelivery); ?>d left)
+                                  </button>
+                              <?php endif; ?>
                          </div>
 
                         <hr class="my-4">
@@ -211,24 +213,42 @@ try {
      <?php endif; ?>
  </div>
 
- <script>
- function cancelOrder(orderId) {
-     if (!confirm('Cancel this order? This cannot be undone.')) return;
-     fetch('/api/cancel-order.php', {
-         method: 'POST',
-         headers: { 'Content-Type': 'application/json' },
-         body: JSON.stringify({ order_id: orderId })
-     })
-     .then(r => r.json())
-     .then(data => {
-         if (data.success) {
-             location.reload();
-         } else {
-             alert(data.message || 'Failed to cancel order');
-         }
-     })
-     .catch(() => alert('Network error'));
- }
- </script>
+  <script>
+  function cancelOrder(orderId) {
+      if (!confirm('Cancel this order? This cannot be undone.')) return;
+      fetch('/api/cancel-order.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ order_id: orderId })
+      })
+      .then(r => r.json())
+      .then(data => {
+          if (data.success) {
+              location.reload();
+          } else {
+              alert(data.message || 'Failed to cancel order');
+          }
+      })
+      .catch(() => alert('Network error'));
+  }
+
+  function returnOrder(orderId) {
+      if (!confirm('Request a return for this order?')) return;
+      fetch('/api/return-order.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ order_id: orderId })
+      })
+      .then(r => r.json())
+      .then(data => {
+          if (data.success) {
+              location.reload();
+          } else {
+              alert(data.message || 'Failed to request return');
+          }
+      })
+      .catch(() => alert('Network error'));
+  }
+  </script>
  
  <?php include 'includes/footer-bootstrap.php'; ?>

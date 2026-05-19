@@ -80,6 +80,17 @@ class EmailService {
     }
 
     /**
+     * Send Order Cancellation email
+     */
+    public function sendOrderCancellation($email, $name, $order_id, $total) {
+        return $this->processAndSend('order_cancellation', $email, [
+            'name' => $name,
+            'order_id' => $order_id,
+            'total' => format_price($total),
+        ]);
+    }
+
+    /**
      * Send Order Confirmation email
      */
     public function sendOrderConfirmation($email, $name, $order_id, $total, $invoice_url = '') {
