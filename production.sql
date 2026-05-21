@@ -16,6 +16,37 @@ CREATE DATABASE /*!32312 IF NOT EXISTS*/`ars_ecommerce` /*!40100 DEFAULT CHARACT
 
 USE `ars_ecommerce`;
 
+/*Table structure for table `audit_log` */
+
+DROP TABLE IF EXISTS `audit_log`;
+
+CREATE TABLE `audit_log` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) DEFAULT NULL,
+  `user_name` varchar(255) DEFAULT NULL,
+  `action` varchar(100) NOT NULL,
+  `entity_type` varchar(50) DEFAULT NULL COMMENT 'e.g. product, order, user, category',
+  `entity_id` int(11) DEFAULT NULL,
+  `description` text DEFAULT NULL,
+  `old_values` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`old_values`)),
+  `new_values` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`new_values`)),
+  `ip_address` varchar(45) DEFAULT NULL,
+  `user_agent` varchar(500) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_audit_user` (`user_id`),
+  KEY `idx_audit_action` (`action`),
+  KEY `idx_audit_entity` (`entity_type`,`entity_id`),
+  KEY `idx_audit_created` (`created_at`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `audit_log` */
+
+insert  into `audit_log`(`id`,`user_id`,`user_name`,`action`,`entity_type`,`entity_id`,`description`,`old_values`,`new_values`,`ip_address`,`user_agent`,`created_at`) values 
+(1,4,'Devbarat Prasad Patel','user.login','user',4,'Devbarat Prasad Patel logged in',NULL,NULL,'::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-05-03 17:25:37'),
+(2,4,'Devbarat Prasad Patel','user.logout','user',4,'Devbarat Prasad Patel logged out',NULL,NULL,'::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-05-04 07:11:45'),
+(3,12,'Devbarat','user.login','user',12,'Devbarat logged in',NULL,NULL,'::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-05-04 07:15:46');
+
 /*Table structure for table `cart_items` */
 
 DROP TABLE IF EXISTS `cart_items`;
@@ -34,9 +65,13 @@ CREATE TABLE `cart_items` (
   KEY `product_id` (`product_id`),
   CONSTRAINT `cart_items_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   CONSTRAINT `cart_items_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 /*Data for the table `cart_items` */
+
+insert  into `cart_items`(`id`,`user_id`,`session_id`,`product_id`,`quantity`,`created_at`,`updated_at`) values 
+(4,4,'0cf7185434342520a6513cec7787d23d',1,1,'2026-05-03 17:25:40','2026-05-03 17:25:40'),
+(5,12,'aae31d25824b7b102a01415b2b3df51f',3,1,'2026-05-04 07:26:21','2026-05-04 07:26:21');
 
 /*Table structure for table `categories` */
 
@@ -51,6 +86,9 @@ CREATE TABLE `categories` (
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 /*Data for the table `categories` */
+
+insert  into `categories`(`id`,`name`,`slug`) values 
+(1,'Electronice','electronice');
 
 /*Table structure for table `contact_submissions` */
 
@@ -167,6 +205,11 @@ CREATE TABLE `order_items` (
 
 /*Data for the table `order_items` */
 
+insert  into `order_items`(`id`,`order_id`,`product_id`,`quantity`,`price`,`discount_price`) values 
+(1,1,1,1,2500.00,NULL),
+(2,2,1,1,2500.00,NULL),
+(3,3,2,1,1000.00,10.00);
+
 /*Table structure for table `orders` */
 
 DROP TABLE IF EXISTS `orders`;
@@ -180,12 +223,11 @@ CREATE TABLE `orders` (
   `shipping_address` text DEFAULT NULL,
   `shipping_city` varchar(100) DEFAULT NULL,
   `total_amount` decimal(10,2) NOT NULL,
-  `shipping_charge` decimal(10,2) DEFAULT 0.00,
   `coupon_code` varchar(50) DEFAULT NULL,
   `discount_amount` decimal(10,2) DEFAULT 0.00,
   `payment_method` enum('COD','eSewa','BankQR') NOT NULL,
   `payment_status` enum('Pending','Paid','Failed') DEFAULT 'Pending',
-  `delivery_status` enum('Pending','Confirmed','Shipped','Out for Delivery','Delivered','Cancelled') DEFAULT 'Pending',
+  `delivery_status` enum('Pending','Confirmed','Shipped','Out for Delivery','Delivered','Cancelled','Return Requested') DEFAULT 'Pending',
   `current_location` varchar(255) DEFAULT 'Preparing for shipment',
   `location_updated_at` timestamp NULL DEFAULT NULL,
   `transaction_id` varchar(100) DEFAULT NULL,
@@ -202,6 +244,11 @@ CREATE TABLE `orders` (
 
 /*Data for the table `orders` */
 
+insert  into `orders`(`id`,`user_id`,`customer_name`,`customer_email`,`customer_phone`,`shipping_address`,`shipping_city`,`total_amount`,`coupon_code`,`discount_amount`,`payment_method`,`payment_status`,`delivery_status`,`current_location`,`location_updated_at`,`transaction_id`,`payment_proof`,`address`,`notes`,`created_at`) values 
+(1,2,'Devbarat Prasad Patel','mind59024@gmail.com','9811144402','Bahudramai-07, Phulkaul, Parsa','Birgunj',2500.00,NULL,0.00,'COD','Pending','Pending','Preparing for shipment',NULL,NULL,NULL,NULL,NULL,'2026-04-12 10:02:17'),
+(2,2,'Devbarat Prasad Patel','mind59024@gmail.com','9811144402','Bahudramai-07, Phulkaul, Parsa','Birgunj',2500.00,NULL,0.00,'COD','Pending','Pending','Preparing for shipment',NULL,NULL,NULL,NULL,NULL,'2026-04-12 13:26:44'),
+(3,2,'Devbarat Prasad Patel','mind59024@gmail.com','9811144402','Bahudramai-07, Phulkaul, Parsa','Birgunj',10.00,NULL,0.00,'eSewa','Pending','Pending','Preparing for shipment',NULL,NULL,'uploads/payments/esewa_1775980091_69db4e3b74888.png',NULL,NULL,'2026-04-12 13:33:11');
+
 /*Table structure for table `product_images` */
 
 DROP TABLE IF EXISTS `product_images`;
@@ -214,9 +261,16 @@ CREATE TABLE `product_images` (
   PRIMARY KEY (`id`),
   KEY `product_id` (`product_id`),
   CONSTRAINT `product_images_ibfk_1` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 /*Data for the table `product_images` */
+
+insert  into `product_images`(`id`,`product_id`,`image_path`,`is_primary`) values 
+(1,1,'prod_69db1b20de730_mouse.jpg',1),
+(2,2,'prod_69db4e1cc7223.png',1),
+(6,3,'prod_69f7f792a8612.png',1),
+(7,3,'prod_69f7f792a942b.png',0),
+(8,3,'prod_69f7f792a99d5.png',0);
 
 /*Table structure for table `product_reviews` */
 
@@ -264,9 +318,14 @@ CREATE TABLE `products` (
   UNIQUE KEY `sku` (`sku`),
   KEY `category_id` (`category_id`),
   CONSTRAINT `products_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 /*Data for the table `products` */
+
+insert  into `products`(`id`,`name`,`slug`,`description`,`price`,`discount_price`,`category_id`,`stock`,`image`,`sku`,`is_featured`,`created_at`) values 
+(1,'Logitech Wireless Master Mouse','logitech-wireless-master-mouse','A premium wireless computer mouse with ergonomic design, fast scrolling, and advanced tracking. Perfect for productivity and gaming.',2500.00,NULL,NULL,50,'prod_69db1b20de730_mouse.jpg','MOUSE-LOGI-01',1,'2026-04-12 09:55:10'),
+(2,'APPLE','apple','this is  a  test product',1000.00,10.00,1,100,'prod_69db4e1cc7223.png',NULL,1,'2026-04-12 13:32:40'),
+(3,'Nepal','nepal','This is a test prduct',150.00,50.00,1,100,'prod_69f7f792a8612.png','NEP',1,'2026-05-04 07:19:10');
 
 /*Table structure for table `site_settings` */
 
@@ -282,13 +341,48 @@ CREATE TABLE `site_settings` (
 
 insert  into `site_settings`(`key`,`value`) values 
 ('admin_email','easyshoppinga.r.s1@gmail.com'),
+('auto_approve_reviews','0'),
+('bank_account_details',''),
+('bank_qr_enabled','0'),
+('cod_enabled','0'),
+('company_address',''),
+('company_email',''),
+('company_name',''),
+('company_phone',''),
+('currency_code',''),
+('currency_symbol',''),
+('esewa_enabled','0'),
+('esewa_merchant_id',''),
+('estimated_delivery_days',''),
+('facebook_pixel_id',''),
+('facebook_url',''),
+('featured_products_limit',''),
+('free_shipping_threshold','1000'),
+('google_analytics_id',''),
+('instagram_url',''),
+('linkedin_url',''),
+('low_stock_threshold',''),
+('maintenance_message',''),
+('maintenance_mode','0'),
+('meta_description',''),
+('meta_keywords',''),
+('meta_title',''),
+('order_prefix',''),
+('products_per_page',''),
+('reviews_enabled','0'),
+('reviews_per_page',''),
+('shipping_cost','100'),
+('site_description',''),
 ('site_name','Easy Shopping A.R.S'),
+('site_url',''),
 ('smtp_encryption','tls'),
 ('smtp_host','smtp.gmail.com'),
 ('smtp_password','vobx mgfp fstc zlhx'),
 ('smtp_port','587'),
 ('smtp_username','easyshoppinga.r.s1@gmail.com'),
-('support_email','easyshoppinga.r.s1@gmail.com');
+('support_email','easyshoppinga.r.s1@gmail.com'),
+('timezone',''),
+('twitter_url','');
 
 /*Table structure for table `user_sessions` */
 
@@ -343,9 +437,15 @@ CREATE TABLE `users` (
   KEY `idx_users_remember_token` (`remember_token`),
   KEY `idx_oauth` (`oauth_provider`,`oauth_provider_id`),
   KEY `idx_users_role_created` (`role`,`created_at`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 /*Data for the table `users` */
+
+insert  into `users`(`id`,`full_name`,`email`,`mobile`,`password`,`address`,`role`,`reset_token`,`reset_expires`,`reset_token_used_at`,`otp_attempts`,`otp_issued_at`,`otp_hash`,`email_verified_at`,`verification_token`,`remember_token`,`oauth_provider`,`oauth_provider_id`,`created_at`) values 
+(1,'Admin','easyshoppinga.r.s1@gmail.com','9820210361','$2y$12$kOPyqRwWW5Eyr6BGc770xuL95ZhbTlw00lBhxmmRqwADbZLSTIZzi',NULL,'admin',NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-11 10:54:28'),
+(2,'Devbarat Prasad Patel','mind59024@gmail.com','9811144402','$2y$12$VPBoIR19Sf70449AXW8D/eO4BWAUX03RSjDF1nRMIz0c/JR0m4C.u','Bahudramai-07, Phulkaul, Parsa','customer',NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-11 15:04:48'),
+(4,'Devbarat Prasad Patel','pdewbrath@gmail.com','9811144403','$2y$12$eiF2G8Bo6YWbEgSXxz3rBO.OcyKkLXyzpuY6ElQNdMhX96zpaU7A.','Birgunj-13,Radhemai','customer',NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-05-03 17:25:24'),
+(12,'Devbarat','smind59024@gmail.com','9811144404','$2y$12$BxYrr20s8FK03xmga4ceXeV9QDG3X/hwq4P..AqAu0xVUzIVagesK','Burgunj','admin',NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,'7dec1ecab6b88db9deb5a296da7ad08141c26a25206013dde93239d9ea4aa5f0',NULL,NULL,'2026-05-04 07:15:19');
 
 /*Table structure for table `wishlist` */
 

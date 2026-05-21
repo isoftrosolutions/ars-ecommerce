@@ -39,6 +39,12 @@ $routes = [
     ['GET',  '/orders/{id}',             'OrderController.php', 'OrderController', 'show'],
     ['GET',  '/orders/{id}/invoice',     'OrderController.php', 'OrderController', 'invoice'],
     ['POST', '/orders/{id}/cancel',      'OrderController.php', 'OrderController', 'cancel'],
+    ['POST', '/orders/{id}/return',      'OrderController.php', 'OrderController', 'returnOrder'],
+    ['POST', '/orders/{id}/payment-proof', 'OrderController.php', 'OrderController', 'uploadPaymentProof'],
+
+    // Reviews (public read, protected create)
+    ['GET',  '/products/{id}/reviews',   'ReviewController.php', 'ReviewController', 'index'],
+    ['POST', '/products/{id}/reviews',   'ReviewController.php', 'ReviewController', 'store'],
 
     // Wishlist (protected)
     ['GET',  '/wishlist',                'WishlistController.php', 'WishlistController', 'index'],

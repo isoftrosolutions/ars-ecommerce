@@ -66,6 +66,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['user']['mobile'] = $mobile;
             $_SESSION['user']['address'] = $address;
             $user = $_SESSION['user'];
+
+            // Save structured address to user_addresses table
+            try {
+                $stmt = $pdo->query("SHOW TABLES LIKE 'user_addresses'");
+                if ($stmt->rowCount() > 0) {
+                    $province = $_POST['address_province'] ?? '';
+                    $district = $_POST['address_district'] ?? '';
+                    $municipality = $_POST['address_municipality'] ?? '';
+                    $ward = $_POST['address_ward'] ?? '';
+                    $street = $_POST['address_street'] ?? '';
+
+                    $stmt = $pdo->prepare("SELECT id FROM user_addresses WHERE user_id = ? AND is_default = 1 LIMIT 1");
+                    $stmt->execute([$user['id']]);
+                    $existingAddress = $stmt->fetch();
+
+                    if ($existingAddress) {
+                        $stmt = $pdo->prepare("UPDATE user_addresses SET full_name = ?, phone = ?, province = ?, district = ?, municipality = ?, ward = ?, street = ?, updated_at = NOW() WHERE id = ?");
+                        $stmt->execute([$name, $mobile, $province, $district, $municipality, $ward, $street, $existingAddress['id']]);
+                    } else {
+                        $stmt = $pdo->prepare("INSERT INTO user_addresses (user_id, full_name, phone, province, district, municipality, ward, street, tag, is_default) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Home', 1)");
+                        $stmt->execute([$user['id'], $name, $mobile, $province, $district, $municipality, $ward, $street]);
+                    }
+                }
+            } catch (PDOException $e) {
+                // Table doesn't exist — skip
+            }
+
             $success = true;
         } catch (Exception $e) {
             $errors[] = "Failed to update profile";
@@ -214,12 +241,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="col-12">
                                 <label class="form-label small fw-bold">Default Address</label>
                                 <?php
+                                $savedAddr = [];
+                                try {
+                                    $chk = $pdo->query("SHOW TABLES LIKE 'user_addresses'");
+                                    if ($chk->rowCount() > 0) {
+                                        $st = $pdo->prepare("SELECT * FROM user_addresses WHERE user_id = ? AND is_default = 1 LIMIT 1");
+                                        $st->execute([$user['id']]);
+                                        $savedAddr = $st->fetch() ?: [];
+                                    }
+                                } catch (PDOException $e) {}
+
                                 $addressData = [
-                                    'province' => $_POST['address_province'] ?? '',
-                                    'district' => $_POST['address_district'] ?? '',
-                                    'municipality' => $_POST['address_municipality'] ?? '',
-                                    'ward' => $_POST['address_ward'] ?? '',
-                                    'street' => $_POST['address_street'] ?? '',
+                                    'province' => $_POST['address_province'] ?? $savedAddr['province'] ?? '',
+                                    'district' => $_POST['address_district'] ?? $savedAddr['district'] ?? '',
+                                    'municipality' => $_POST['address_municipality'] ?? $savedAddr['municipality'] ?? '',
+                                    'ward' => $_POST['address_ward'] ?? $savedAddr['ward'] ?? '',
+                                    'street' => $_POST['address_street'] ?? $savedAddr['street'] ?? '',
                                     'combined' => $user['address'] ?? ''
                                 ];
                                 include 'includes/address-selector.php';

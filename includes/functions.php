@@ -352,12 +352,35 @@ function transfer_guest_cart_to_user($user_id) {
     $session_id = session_id();
 
     try {
-        // Update cart items from session to user
+        $pdo->beginTransaction();
+
+        // Merge guest quantities into user's existing cart items
+        $stmt = $pdo->prepare("
+            UPDATE cart_items target
+            INNER JOIN cart_items guest ON target.product_id = guest.product_id AND guest.session_id = ?
+            SET target.quantity = target.quantity + guest.quantity,
+                target.updated_at = NOW()
+            WHERE target.user_id = ?
+        ");
+        $stmt->execute([$session_id, $user_id]);
+
+        // Delete guest items that were merged (avoid duplicate key on user_id, product_id)
+        $stmt = $pdo->prepare("
+            DELETE guest
+            FROM cart_items guest
+            INNER JOIN cart_items target ON guest.product_id = target.product_id AND target.user_id = ?
+            WHERE guest.session_id = ?
+        ");
+        $stmt->execute([$user_id, $session_id]);
+
+        // Assign remaining non-conflicting guest items to user
         $stmt = $pdo->prepare("UPDATE cart_items SET user_id = ?, session_id = NULL WHERE session_id = ?");
         $stmt->execute([$user_id, $session_id]);
 
+        $pdo->commit();
         return ['success' => true];
     } catch (PDOException $e) {
+        $pdo->rollBack();
         return ['success' => false, 'message' => 'Failed to transfer cart'];
     }
 }

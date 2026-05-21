@@ -31,14 +31,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email          = trim($_POST['email']          ?? '');
     $phone          = trim($_POST['phone']          ?? '');
     $address        = trim($_POST['address']        ?? '');
-    $city           = trim($_POST['city']           ?? '');
     $payment_method = trim($_POST['payment_method'] ?? '');
 
     if (empty($name))           $errors[] = "Name is required";
     if (empty($email))          $errors[] = "Email is required";
     if (empty($phone))          $errors[] = "Phone number is required";
     if (empty($address))        $errors[] = "Address is required";
-    if (empty($city))           $errors[] = "City is required";
     if (empty($payment_method)) $errors[] = "Payment method is required";
     if (empty($cart_items))     $errors[] = "Your cart is empty";
 
@@ -77,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $pdo->beginTransaction();
 
-            $stmt = $pdo->prepare("INSERT INTO orders (user_id, total_amount, shipping_charge, payment_method, payment_proof, delivery_status, shipping_address, shipping_city, customer_name, customer_email, customer_phone, created_at) VALUES (?, ?, ?, ?, ?, 'Pending', ?, ?, ?, ?, ?, NOW())");
+            $stmt = $pdo->prepare("INSERT INTO orders (user_id, total_amount, shipping_charge, payment_method, payment_proof, delivery_status, shipping_address, customer_name, customer_email, customer_phone, created_at) VALUES (?, ?, ?, ?, ?, 'Pending', ?, ?, ?, ?, NOW())");
             $stmt->execute([
                 $user ? $user['id'] : null,
                 $grand_total,
@@ -85,7 +83,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $payment_method,
                 $payment_proof_path,
                 $address,
-                $city,
                 $name,
                 $email,
                 $phone,
@@ -189,10 +186,6 @@ include 'includes/header-bootstrap.php';
                                     <label for="phone" class="form-label">Phone Number *</label>
                                     <input type="tel" class="form-control" id="phone" name="phone" value="<?php echo h($user['mobile'] ?? ''); ?>" required>
                                 </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="city" class="form-label">City *</label>
-                                    <input type="text" class="form-control" id="city" name="city" value="<?php echo h($user['city'] ?? ''); ?>" required>
-                                </div>
                             </div>
 
                             <div class="mb-3">
@@ -201,6 +194,30 @@ include 'includes/header-bootstrap.php';
                                 $addressData = [
                                     'combined' => $user['address'] ?? ''
                                 ];
+
+                                if ($user) {
+                                    try {
+                                        $stmt = $pdo->query("SHOW TABLES LIKE 'user_addresses'");
+                                        if ($stmt->rowCount() > 0) {
+                                            $stmt = $pdo->prepare("SELECT * FROM user_addresses WHERE user_id = ? AND is_default = 1 LIMIT 1");
+                                            $stmt->execute([$user['id']]);
+                                            $savedAddress = $stmt->fetch();
+                                            if ($savedAddress) {
+                                                $addressData = [
+                                                    'province' => $savedAddress['province'],
+                                                    'district' => $savedAddress['district'],
+                                                    'municipality' => $savedAddress['municipality'],
+                                                    'ward' => $savedAddress['ward'],
+                                                    'street' => $savedAddress['street'],
+                                                    'combined' => $user['address'] ?? ''
+                                                ];
+                                            }
+                                        }
+                                    } catch (PDOException $e) {
+                                        // Table doesn't exist — fall back to combined address
+                                    }
+                                }
+
                                 include 'includes/address-selector.php';
                                 ?>
                             </div>

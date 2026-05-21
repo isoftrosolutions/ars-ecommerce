@@ -82,10 +82,13 @@ class WishlistController
             json_error('Product ID is required', 400);
         }
 
-        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM wishlists WHERE user_id = ? AND product_id = ?");
+        $stmt = $this->pdo->prepare("SELECT id FROM wishlists WHERE user_id = ? AND product_id = ?");
         $stmt->execute([$user['id'], $productId]);
-        $count = (int)$stmt->fetchColumn();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        json_success(['wishlisted' => $count > 0]);
+        json_success([
+            'wishlisted' => !!$row,
+            'wishlist_id' => $row ? (int)$row['id'] : null,
+        ]);
     }
 }

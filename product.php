@@ -387,6 +387,8 @@ function doAddToCart() {
         } else if (data.require_login) {
             const modal = new bootstrap.Modal(document.getElementById('loginRequiredModal'));
             modal.show();
+        } else {
+            showToast('Notice', data.message || 'Could not add item', 'warning');
         }
         btn.disabled = false;
     });

@@ -438,11 +438,14 @@ function addToCart(productId, btn) {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            // Redirect to cart page with product details
             window.location.href = '<?php echo url("/cart"); ?>';
         } else if (data.require_login) {
             const modal = new bootstrap.Modal(document.getElementById('loginRequiredModal'));
             modal.show();
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        } else {
+            showToast('Notice', data.message || 'Could not add item', 'warning');
             btn.innerHTML = originalText;
             btn.disabled = false;
         }

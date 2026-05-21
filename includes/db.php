@@ -15,6 +15,7 @@ $host    = env('DB_HOST', 'localhost');
 $db      = env('DB_NAME', 'ektamultp_easyshoping');
 $user    = env('DB_USER', 'ektamultp_easyshopping');
 $pass    = env('DB_PASS', '_Q~tnE4(V8+VqIk}');
+
 $charset = env('DB_CHARSET', 'utf8mb4');
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";

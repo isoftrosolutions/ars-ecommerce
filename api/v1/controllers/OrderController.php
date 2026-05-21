@@ -425,6 +425,121 @@ class OrderController
     }
 
     /**
+     * POST /orders/{id}/return
+     * Request a return on a delivered order (5-day window from delivery).
+     * Mirrors legacy /api/return-order.php behavior.
+     */
+    public function returnOrder($params)
+    {
+        $user = require_auth();
+        $id = (int)($params['id'] ?? 0);
+
+        if (!$id) {
+            json_error('Order ID is required', 400);
+        }
+
+        $stmt = $this->pdo->prepare("SELECT id, delivery_status, location_updated_at FROM orders WHERE id = ? AND user_id = ?");
+        $stmt->execute([$id, $user['id']]);
+        $order = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$order) {
+            json_error('Order not found', 404);
+        }
+
+        if (strtolower($order['delivery_status']) !== 'delivered') {
+            json_error('Only delivered orders can be returned', 400);
+        }
+
+        if (!empty($order['location_updated_at'])) {
+            $deliveredAt = strtotime($order['location_updated_at']);
+            $daysSince = floor((time() - $deliveredAt) / 86400);
+            if ($daysSince > 5) {
+                json_error('Return period has expired (5 days from delivery)', 400);
+            }
+        }
+
+        $this->pdo->beginTransaction();
+        try {
+            $stmt = $this->pdo->prepare("UPDATE orders SET delivery_status = 'Return Requested' WHERE id = ?");
+            $stmt->execute([$id]);
+
+            $stmt = $this->pdo->prepare("INSERT INTO order_status_history (order_id, status, note, created_at) VALUES (?, 'Return Requested', 'Return requested by customer', NOW())");
+            $stmt->execute([$id]);
+
+            $this->pdo->commit();
+            json_success(null, 'Return request submitted');
+        } catch (\Exception $e) {
+            $this->pdo->rollBack();
+            json_error('Failed to request return', 500);
+        }
+    }
+
+    /**
+     * POST /orders/{id}/payment-proof
+     * Upload eSewa payment proof image for an order.
+     */
+    public function uploadPaymentProof($params)
+    {
+        $user = require_auth();
+        $id = (int)($params['id'] ?? 0);
+
+        if (!$id) {
+            json_error('Order ID is required', 400);
+        }
+
+        $stmt = $this->pdo->prepare("SELECT id, user_id, payment_method, payment_proof FROM orders WHERE id = ? AND user_id = ?");
+        $stmt->execute([$id, $user['id']]);
+        $order = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$order) {
+            json_error('Order not found', 404);
+        }
+
+        if (strtolower($order['payment_method']) !== 'esewa') {
+            json_error('Payment proof is only accepted for eSewa orders', 400);
+        }
+
+        if (!isset($_FILES['proof']) || $_FILES['proof']['error'] !== UPLOAD_ERR_OK) {
+            json_error('Payment proof image is required', 400);
+        }
+
+        $file = $_FILES['proof'];
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+        $maxSize = 5 * 1024 * 1024;
+
+        if (!in_array($file['type'], $allowedTypes)) {
+            json_error('Invalid file type. Only JPG and PNG are allowed.', 400);
+        }
+
+        if ($file['size'] > $maxSize) {
+            json_error('File size exceeds 5MB limit', 400);
+        }
+
+        $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $filename = 'esewa_proof_' . $id . '_' . time() . '_' . uniqid() . '.' . $ext;
+        $uploadDir = __DIR__ . '/../../uploads/payments/';
+
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        $destPath = $uploadDir . $filename;
+
+        if (!move_uploaded_file($file['tmp_name'], $destPath)) {
+            json_error('Failed to save payment proof', 500);
+        }
+
+        $relativePath = 'uploads/payments/' . $filename;
+
+        $stmt = $this->pdo->prepare("UPDATE orders SET payment_proof = ? WHERE id = ?");
+        $stmt->execute([$relativePath, $id]);
+
+        json_success([
+            'proof_url' => absolute_image_url($relativePath),
+        ], 'Payment proof uploaded successfully');
+    }
+
+    /**
      * POST /orders/{id}/cancel
      * Cancel an order if its status allows it.
      */

@@ -198,6 +198,11 @@ function addToCart(id) {
         if (data.success) {
             alert('Added to cart!');
             window.dispatchEvent(new Event('cartUpdated'));
+        } else if (data.require_login) {
+            const modal = new bootstrap.Modal(document.getElementById('loginRequiredModal'));
+            modal.show();
+        } else {
+            alert(data.message || 'Could not add item');
         }
     });
 }

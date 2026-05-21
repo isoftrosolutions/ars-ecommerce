@@ -266,6 +266,9 @@ function addToCart(productId) {
     .then(data => {
         if (data.success) {
             window.location.href = '<?php echo url("/cart"); ?>';
+        } else if (data.require_login) {
+            const modal = new bootstrap.Modal(document.getElementById('loginRequiredModal'));
+            modal.show();
         } else {
             alert(data.message || 'Could not add item');
         }
