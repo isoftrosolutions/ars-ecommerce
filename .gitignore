@@ -33,3 +33,6 @@ tmp/
 scratch/
 *.tmp
 *.bak
+
+# ── Automated database backups ──
+backups/
