@@ -225,7 +225,7 @@ CREATE TABLE `orders` (
   `coupon_code` varchar(50) DEFAULT NULL,
   `discount_amount` decimal(10,2) DEFAULT 0.00,
   `payment_method` enum('COD','eSewa','BankQR') NOT NULL,
-  `payment_status` enum('Pending','Paid','Failed') DEFAULT 'Pending',
+  `payment_status` enum('Pending','Paid','Failed','Refunded') DEFAULT 'Pending',
   `delivery_status` enum('Pending','Confirmed','Shipped','Out for Delivery','Delivered','Cancelled','Return Requested') DEFAULT 'Pending',
   `current_location` varchar(255) DEFAULT 'Preparing for shipment',
   `location_updated_at` timestamp NULL DEFAULT NULL,

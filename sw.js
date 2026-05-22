@@ -125,7 +125,7 @@ async function cacheFirstImage(request) {
   try {
     const cachedResponse = await caches.match(request);
     if (cachedResponse) {
-      fetchAndCache(request, IMAGE_CACHE);
+      fetchAndCache(request, IMAGE_CACHE).catch(() => {});
       return cachedResponse;
     }
 
@@ -171,8 +171,11 @@ async function networkFirst(request) {
 // Stale-While-Revalidate Strategy
 async function staleWhileRevalidate(request) {
   const cachedResponse = await caches.match(request);
-  const fetchPromise = fetchAndCache(request, DYNAMIC_CACHE);
-  return cachedResponse || fetchPromise;
+  if (cachedResponse) {
+    fetchAndCache(request, DYNAMIC_CACHE).catch(() => {});
+    return cachedResponse;
+  }
+  return fetchAndCache(request, DYNAMIC_CACHE);
 }
 
 // Network-Only Strategy
@@ -182,16 +185,12 @@ async function networkOnly(request) {
 
 // Fetch and cache helper
 async function fetchAndCache(request, cacheName) {
-  try {
-    const networkResponse = await fetch(request);
-    if (networkResponse.ok) {
-      const cache = await caches.open(cacheName);
-      cache.put(request, networkResponse.clone());
-    }
-    return networkResponse;
-  } catch (error) {
-    throw error;
+  const networkResponse = await fetch(request);
+  if (networkResponse.ok) {
+    const cache = await caches.open(cacheName);
+    cache.put(request, networkResponse.clone());
   }
+  return networkResponse;
 }
 
 function shouldSkipCache(pathname) {
