@@ -245,11 +245,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 try {
                                     $chk = $pdo->query("SHOW TABLES LIKE 'user_addresses'");
                                     if ($chk->rowCount() > 0) {
-                                        $st = $pdo->prepare("SELECT * FROM user_addresses WHERE user_id = ? AND is_default = 1 LIMIT 1");
+                                        $st = $pdo->prepare("SELECT * FROM user_addresses WHERE user_id = ? ORDER BY is_default DESC, created_at DESC LIMIT 1");
                                         $st->execute([$user['id']]);
                                         $savedAddr = $st->fetch() ?: [];
                                     }
                                 } catch (PDOException $e) {}
+
+                                $parts = array_filter([
+                                    $savedAddr['street'] ?? '',
+                                    ($savedAddr['municipality'] ?? '') . (!empty($savedAddr['ward']) ? '-' . $savedAddr['ward'] : ''),
+                                    $savedAddr['district'] ?? '',
+                                    $savedAddr['province'] ?? '',
+                                ]);
+                                $combined = !empty(array_filter($savedAddr))
+                                    ? implode(', ', $parts)
+                                    : ($user['address'] ?? '');
 
                                 $addressData = [
                                     'province' => $_POST['address_province'] ?? $savedAddr['province'] ?? '',
@@ -257,7 +267,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     'municipality' => $_POST['address_municipality'] ?? $savedAddr['municipality'] ?? '',
                                     'ward' => $_POST['address_ward'] ?? $savedAddr['ward'] ?? '',
                                     'street' => $_POST['address_street'] ?? $savedAddr['street'] ?? '',
-                                    'combined' => $user['address'] ?? ''
+                                    'combined' => $_POST['address'] ?? $combined,
                                 ];
                                 include 'includes/address-selector.php';
                                 ?>

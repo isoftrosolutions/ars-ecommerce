@@ -7,7 +7,7 @@
 
 require_once __DIR__ . '/includes/db.php';
 
-$migrationsDir = __DIR__ . '/api/v1/db/migrations';
+$migrationsDir = __DIR__ . '/api/v1/migrations';
 $createTracking = true;
 
 if (!is_dir($migrationsDir)) {

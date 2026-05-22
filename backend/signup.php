@@ -75,6 +75,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Insert user
         $stmt = $pdo->prepare("INSERT INTO users (full_name, email, mobile, password, address, role) VALUES (?, ?, ?, ?, ?, 'customer')");
         $stmt->execute([$full_name, $email, $mobile, $hashed_password, $address]);
+        $userId = $pdo->lastInsertId();
+
+        // Save structured address to user_addresses table
+        if (!empty($addr_province) && !empty($addr_district) && !empty($addr_municipality)) {
+            try {
+                $stmt = $pdo->query("SHOW TABLES LIKE 'user_addresses'");
+                if ($stmt->rowCount() > 0) {
+                    $stmt = $pdo->prepare("INSERT INTO user_addresses (user_id, full_name, phone, province, district, municipality, ward, street, tag, is_default) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Home', 1)");
+                    $stmt->execute([$userId, $full_name, $mobile, $addr_province, $addr_district, $addr_municipality, $addr_ward, $addr_street]);
+                }
+            } catch (PDOException $e) {
+                // Table doesn't exist — skip
+            }
+        }
 
         // Send welcome email
         $emailService = getEmailService();

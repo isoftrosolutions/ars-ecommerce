@@ -75,11 +75,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $pdo->beginTransaction();
 
-            $stmt = $pdo->prepare("INSERT INTO orders (user_id, total_amount, shipping_charge, payment_method, payment_proof, delivery_status, shipping_address, customer_name, customer_email, customer_phone, created_at) VALUES (?, ?, ?, ?, ?, 'Pending', ?, ?, ?, ?, NOW())");
+            $stmt = $pdo->prepare("INSERT INTO orders (user_id, total_amount, payment_method, payment_proof, delivery_status, shipping_address, customer_name, customer_email, customer_phone, created_at) VALUES (?, ?, ?, ?, 'Pending', ?, ?, ?, ?, NOW())");
             $stmt->execute([
                 $user ? $user['id'] : null,
                 $grand_total,
-                $shipping_charge,
                 $payment_method,
                 $payment_proof_path,
                 $address,
@@ -191,25 +190,30 @@ include 'includes/header-bootstrap.php';
                             <div class="mb-3">
                                 <label class="form-label">Shipping Address <span class="text-danger">*</span></label>
                                 <?php
-                                $addressData = [
-                                    'combined' => $user['address'] ?? ''
-                                ];
+                                $addressData = ['combined' => ''];
 
                                 if ($user) {
+                                    $addressData['combined'] = $user['address'] ?? '';
                                     try {
                                         $stmt = $pdo->query("SHOW TABLES LIKE 'user_addresses'");
                                         if ($stmt->rowCount() > 0) {
-                                            $stmt = $pdo->prepare("SELECT * FROM user_addresses WHERE user_id = ? AND is_default = 1 LIMIT 1");
+                                            $stmt = $pdo->prepare("SELECT * FROM user_addresses WHERE user_id = ? ORDER BY is_default DESC, created_at DESC LIMIT 1");
                                             $stmt->execute([$user['id']]);
                                             $savedAddress = $stmt->fetch();
                                             if ($savedAddress) {
+                                                $parts = array_filter([
+                                                    $savedAddress['street'],
+                                                    $savedAddress['municipality'] . ($savedAddress['ward'] ? '-' . $savedAddress['ward'] : ''),
+                                                    $savedAddress['district'],
+                                                    $savedAddress['province'],
+                                                ]);
                                                 $addressData = [
                                                     'province' => $savedAddress['province'],
                                                     'district' => $savedAddress['district'],
                                                     'municipality' => $savedAddress['municipality'],
                                                     'ward' => $savedAddress['ward'],
                                                     'street' => $savedAddress['street'],
-                                                    'combined' => $user['address'] ?? ''
+                                                    'combined' => implode(', ', $parts),
                                                 ];
                                             }
                                         }

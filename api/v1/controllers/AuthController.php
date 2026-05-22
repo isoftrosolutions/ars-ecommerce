@@ -71,6 +71,25 @@ class AuthController
             "INSERT INTO users (full_name, email, mobile, address, password, role, status, created_at) VALUES (?, ?, ?, ?, ?, 'customer', 'active', NOW())"
         );
         $stmt->execute([$name, $email, $phone, $address, $hashedPassword]);
+        $userId = $this->pdo->lastInsertId();
+
+        // Save structured address to user_addresses table
+        $province = $data['province'] ?? '';
+        $district = $data['district'] ?? '';
+        $municipality = $data['municipality'] ?? '';
+        $ward = $data['ward'] ?? '';
+        $street = $data['street'] ?? '';
+        if (!empty($province) && !empty($district) && !empty($municipality)) {
+            try {
+                $stmt = $this->pdo->query("SHOW TABLES LIKE 'user_addresses'");
+                if ($stmt->rowCount() > 0) {
+                    $stmt = $this->pdo->prepare("INSERT INTO user_addresses (user_id, full_name, phone, province, district, municipality, ward, street, tag, is_default) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Home', 1)");
+                    $stmt->execute([$userId, $name, $phone, $province, $district, $municipality, $ward, $street]);
+                }
+            } catch (PDOException $e) {
+                // Table doesn't exist — skip
+            }
+        }
 
         json_success(null, 'Registration successful. Please login.', 201);
     }
