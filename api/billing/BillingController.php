@@ -76,7 +76,7 @@ class BillingController extends BaseController {
         // Get orders
         $offset = ($pagination['page'] - 1) * $pagination['limit'];
         $stmt = $this->executeQuery(
-            "SELECT o.id, o.user_id, o.customer_name, o.customer_email, o.customer_phone, o.total_amount, o.shipping_charge, o.payment_method, o.payment_status, o.delivery_status, o.created_at
+            "SELECT o.id, o.user_id, o.customer_name, o.customer_email, o.customer_phone, o.total_amount, o.payment_method, o.payment_status, o.delivery_status, o.created_at
              FROM orders o $whereClause
              ORDER BY o.created_at DESC
              LIMIT ? OFFSET ?",
@@ -93,7 +93,6 @@ class BillingController extends BaseController {
                 'customer_email' => $o['customer_email'],
                 'customer_phone' => $o['customer_phone'],
                 'total_amount' => $o['total_amount'],
-                'shipping_charge' => $o['shipping_charge'],
                 'payment_method' => $o['payment_method'],
                 'payment_status' => $o['payment_status'],
                 'delivery_status' => $o['delivery_status'],

@@ -71,7 +71,21 @@ class CouponController extends BaseController {
             LIMIT ? OFFSET ?
         ", array_merge($queryParams, [$pagination['limit'], $offset]));
 
-        $coupons = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $coupons = array_map(function($c) {
+            return [
+                'id' => (int)$c['id'],
+                'code' => $c['code'],
+                'type' => $c['type'],
+                'value' => $c['value'],
+                'min_purchase' => $c['min_cart_amount'] ?? 0,
+                'end_date' => $c['expiry_date'] ?? null,
+                'start_date' => null,
+                'usage_count' => 0,
+                'usage_limit' => null,
+                'status' => $c['status'],
+                'created_at' => $c['created_at']
+            ];
+        }, $stmt->fetchAll(PDO::FETCH_ASSOC));
         $paginationInfo = $this->buildPagination($total, $pagination['page'], $pagination['limit']);
 
         Response::paginated($coupons, $paginationInfo, 'Coupons retrieved successfully');
@@ -82,11 +96,25 @@ class CouponController extends BaseController {
         ValidationMiddleware::validateRequired($params, ['id']);
 
         $stmt = $this->executeQuery("SELECT * FROM coupons WHERE id = ?", [$params['id']]);
-        $coupon = $stmt->fetch(PDO::FETCH_ASSOC);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if (!$coupon) {
+        if (!$row) {
             Response::error('Coupon not found', 404);
         }
+
+        $coupon = [
+            'id' => (int)$row['id'],
+            'code' => $row['code'],
+            'type' => $row['type'],
+            'value' => $row['value'],
+            'min_purchase' => $row['min_cart_amount'] ?? 0,
+            'end_date' => $row['expiry_date'] ?? null,
+            'start_date' => null,
+            'usage_count' => 0,
+            'usage_limit' => null,
+            'status' => $row['status'],
+            'created_at' => $row['created_at']
+        ];
 
         Response::success($coupon, 'Coupon details retrieved successfully');
     }
@@ -96,12 +124,12 @@ class CouponController extends BaseController {
         ValidationMiddleware::validateRequired($data, ['code', 'type', 'value']);
 
         $stmt = $this->executeQuery("
-            INSERT INTO coupons (code, type, value, min_purchase, start_date, end_date, usage_limit, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO coupons (code, type, value, min_cart_amount, expiry_date, status)
+            VALUES (?, ?, ?, ?, ?, ?)
         ", [
             $data['code'], $data['type'], $data['value'], 
-            $data['min_purchase'] ?? 0, $data['start_date'] ?? null, 
-            $data['end_date'] ?? null, $data['usage_limit'] ?? null,
+            $data['min_purchase'] ?? 0, 
+            $data['end_date'] ?? null,
             $data['status'] ?? 'active'
         ]);
 
@@ -117,13 +145,13 @@ class CouponController extends BaseController {
 
         $stmt = $this->executeQuery("
             UPDATE coupons SET 
-                code = ?, type = ?, value = ?, min_purchase = ?, 
-                start_date = ?, end_date = ?, usage_limit = ?, status = ?
+                code = ?, type = ?, value = ?, min_cart_amount = ?, 
+                expiry_date = ?, status = ?
             WHERE id = ?
         ", [
             $data['code'], $data['type'], $data['value'], 
-            $data['min_purchase'] ?? 0, $data['start_date'] ?? null, 
-            $data['end_date'] ?? null, $data['usage_limit'] ?? null,
+            $data['min_purchase'] ?? 0, 
+            $data['end_date'] ?? null,
             $data['status'] ?? 'active', $data['id']
         ]);
 
@@ -153,7 +181,7 @@ class CouponController extends BaseController {
         $stats = [
             'total' => (int)$this->executeQuery("SELECT COUNT(*) FROM coupons")->fetchColumn(),
             'active' => (int)$this->executeQuery("SELECT COUNT(*) FROM coupons WHERE status='active'")->fetchColumn(),
-            'total_usage' => (int)$this->executeQuery("SELECT SUM(usage_count) FROM coupons")->fetchColumn()
+            'total_usage' => 0
         ];
         Response::success($stats, 'Coupon statistics retrieved successfully');
     }
