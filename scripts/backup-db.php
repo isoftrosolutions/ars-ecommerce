@@ -2,21 +2,19 @@
 /**
  * Database Backup Script
  * Usage: php scripts/backup-db.php
- * Set up as a cron job on production:
- *   0 2 * * * /usr/bin/php /path/to/scripts/backup-db.php
+ * Saves db-back.sql to the backup directory every run (overwrites).
  *
  * Environment variables (from .env or actual env):
  *   DB_HOST, DB_NAME, DB_USER, DB_PASS
- *   BACKUP_DIR, BACKUP_RETENTION_DAYS (optional)
+ *   BACKUP_DIR (optional, default: <project>/backups)
  */
 
 $backupDir = getenv('BACKUP_DIR') ?: __DIR__ . '/../backups';
-$retentionDays = (int)(getenv('BACKUP_RETENTION_DAYS') ?: 30);
 
-$host  = getenv('DB_HOST') ?: 'localhost';
-$db    = getenv('DB_NAME');
-$user  = getenv('DB_USER');
-$pass  = getenv('DB_PASS');
+$host = getenv('DB_HOST') ?: 'localhost';
+$db   = getenv('DB_NAME');
+$user = getenv('DB_USER');
+$pass = getenv('DB_PASS');
 
 // Try loading from .env if not set via environment
 if (empty($db) || empty($user)) {
@@ -41,7 +39,7 @@ if (empty($db) || empty($user)) {
 }
 
 if (empty($db) || empty($user)) {
-    fwrite(STDERR, "ERROR: Database credentials not found. Set DB_HOST, DB_NAME, DB_USER, DB_PASS.\n");
+    fwrite(STDERR, "ERROR: Database credentials not found.\n");
     exit(1);
 }
 
@@ -49,12 +47,10 @@ if (!is_dir($backupDir)) {
     mkdir($backupDir, 0755, true);
 }
 
-$timestamp = date('Y-m-d_H-i-s');
-$filename = "{$db}_{$timestamp}.sql.gz";
-$filepath = rtrim($backupDir, '/') . '/' . $filename;
+$filepath = rtrim($backupDir, '/') . '/db-back.sql';
 
 $command = sprintf(
-    'mysqldump --host=%s --user=%s --password=%s --single-transaction --routines --triggers --events %s | gzip > %s',
+    'mysqldump --host=%s --user=%s --password=%s --single-transaction --routines --triggers --events %s > %s',
     escapeshellarg($host),
     escapeshellarg($user),
     escapeshellarg($pass),
@@ -72,19 +68,5 @@ if ($exitCode !== 0) {
     exit(1);
 }
 
-$size = file_exists($filepath) ? round(filesize($filepath) / 1024 / 1024, 2) : 0;
-echo "OK: $filename ({$size}MB)\n";
-
-// Rotate old backups
-$files = glob(rtrim($backupDir, '/') . "/{$db}_*.sql.gz");
-$cutoff = time() - ($retentionDays * 86400);
-$deleted = 0;
-foreach ($files as $f) {
-    if (filemtime($f) < $cutoff) {
-        unlink($f);
-        $deleted++;
-    }
-}
-if ($deleted > 0) {
-    echo "Cleaned up $deleted old backup(s)\n";
-}
+$size = round(filesize($filepath) / 1024, 2);
+echo "OK: db-back.sql ({$size}KB)\n";
