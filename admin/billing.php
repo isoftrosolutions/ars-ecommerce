@@ -36,9 +36,12 @@ include __DIR__ . '/includes/header.php';
         <select id="filter-delivery" class="form-control" style="max-width: 180px;">
             <option value="">All Delivery Status</option>
             <option value="Pending">Pending</option>
-            <option value="Processing">Processing</option>
+            <option value="Confirmed">Confirmed</option>
             <option value="Shipped">Shipped</option>
+            <option value="Out for Delivery">Out for Delivery</option>
             <option value="Delivered">Delivered</option>
+            <option value="Return Requested">Return Requested</option>
+            <option value="Returned">Returned</option>
             <option value="Cancelled">Cancelled</option>
         </select>
         <input type="date" id="filter-date-from" class="form-control" style="max-width: 160px;" placeholder="From Date">
@@ -157,9 +160,12 @@ function getBadgeClass(status) {
 function getDeliveryBadge(status) {
     const map = {
         'Pending': 'bg-secondary',
-        'Processing': 'bg-info',
+        'Confirmed': 'bg-info',
         'Shipped': 'bg-primary',
+        'Out for Delivery': 'bg-primary',
         'Delivered': 'bg-success',
+        'Return Requested': 'bg-warning',
+        'Returned': 'bg-danger',
         'Cancelled': 'bg-danger'
     };
     return map[status] || 'bg-secondary';

@@ -85,11 +85,16 @@ try {
                                 <h4 class="fw-bold mb-1">Order #<?php echo $order['id']; ?></h4>
                                 <div class="text-muted small">Placed on <?php echo date('M d, Y', strtotime($order['created_at'])); ?></div>
                             </div>
-                            <?php
-                                $s = $order['delivery_status'] ?? 'Pending';
-                                $c = (strtolower($s) == 'delivered') ? 'success' : ((strtolower($s) == 'cancelled') ? 'danger' : 'warning');
-                            ?>
-                             <span class="badge rounded-pill bg-<?php echo $c; ?> px-3 py-2"><?php echo ucfirst($s); ?></span>
+                             <?php
+                                 $s = $order['delivery_status'] ?? 'Pending';
+                                 $sl = strtolower($s);
+                                 if (in_array($sl, ['delivered'])) $c = 'success';
+                                 elseif (in_array($sl, ['cancelled', 'returned'])) $c = 'danger';
+                                 elseif (in_array($sl, ['return requested'])) $c = 'warning';
+                                 elseif (in_array($sl, ['shipped', 'out for delivery', 'confirmed'])) $c = 'info';
+                                 else $c = 'secondary';
+                             ?>
+                              <span class="badge rounded-pill bg-<?php echo $c; ?> px-3 py-2"><?php echo htmlspecialchars($s); ?></span>
                          </div>
                          <div class="mb-3 d-flex gap-2 flex-wrap">
                              <a href="<?php echo url('/invoice?id=' . $order['id']); ?>" target="_blank" class="btn btn-outline-dark btn-sm rounded-pill">
@@ -142,28 +147,42 @@ try {
                             <div class="fw-bold small">Order Placed</div>
                             <div class="text-muted x-small"><?php echo date('M d, Y', strtotime($order['created_at'])); ?></div>
                         </div>
-                        <div class="timeline-item <?php echo in_array(strtolower($order['delivery_status']), ['confirmed', 'shipped', 'out for delivery', 'delivered']) ? 'active' : ''; ?>">
-                            <span class="timeline-dot"></span>
-                            <div class="fw-bold small">Confirmed</div>
-                            <div class="text-muted x-small">Your order is being prepared.</div>
-                        </div>
-                        <div class="timeline-item <?php echo in_array(strtolower($order['delivery_status']), ['shipped', 'out for delivery', 'delivered']) ? 'active' : ''; ?>">
-                            <span class="timeline-dot"></span>
-                            <div class="fw-bold small">Shipped</div>
-                            <div class="text-muted x-small">Package has left our facility.</div>
-                        </div>
-                         <div class="timeline-item <?php echo (strtolower($order['delivery_status']) == 'delivered') ? 'active' : ''; ?>">
+                         <div class="timeline-item <?php echo in_array(strtolower($order['delivery_status']), ['confirmed', 'shipped', 'out for delivery', 'delivered', 'return requested', 'returned']) ? 'active' : ''; ?>">
                              <span class="timeline-dot"></span>
-                             <div class="fw-bold small">Delivered</div>
-                             <div class="text-muted x-small">Successfully reached your doorstep.</div>
+                             <div class="fw-bold small">Confirmed</div>
+                             <div class="text-muted x-small">Your order is being prepared.</div>
                          </div>
-                         <?php if (strtolower($order['delivery_status']) === 'cancelled'): ?>
-                         <div class="timeline-item active">
-                             <span class="timeline-dot" style="background:#dc3545; box-shadow:0 0 0 2px #dc3545;"></span>
-                             <div class="fw-bold small text-danger">Cancelled</div>
-                             <div class="text-muted x-small">This order has been cancelled.</div>
+                         <div class="timeline-item <?php echo in_array(strtolower($order['delivery_status']), ['shipped', 'out for delivery', 'delivered', 'return requested', 'returned']) ? 'active' : ''; ?>">
+                             <span class="timeline-dot"></span>
+                             <div class="fw-bold small">Shipped</div>
+                             <div class="text-muted x-small">Package has left our facility.</div>
                          </div>
-                         <?php endif; ?>
+                          <div class="timeline-item <?php echo in_array(strtolower($order['delivery_status']), ['delivered', 'returned']) ? 'active' : ''; ?>">
+                              <span class="timeline-dot"></span>
+                              <div class="fw-bold small">Delivered</div>
+                              <div class="text-muted x-small">Successfully reached your doorstep.</div>
+                          </div>
+
+                          <?php $dsLower = strtolower($order['delivery_status'] ?? ''); ?>
+                          <?php if ($dsLower === 'return requested'): ?>
+                          <div class="timeline-item active">
+                              <span class="timeline-dot" style="background:#f59e0b; box-shadow:0 0 0 2px #f59e0b;"></span>
+                              <div class="fw-bold small text-warning">Return Requested</div>
+                              <div class="text-muted x-small">Customer has requested a return.</div>
+                          </div>
+                          <?php elseif ($dsLower === 'returned'): ?>
+                          <div class="timeline-item active">
+                              <span class="timeline-dot" style="background:#dc3545; box-shadow:0 0 0 2px #dc3545;"></span>
+                              <div class="fw-bold small text-danger">Returned</div>
+                              <div class="text-muted x-small">Item has been returned and processed.</div>
+                          </div>
+                          <?php elseif ($dsLower === 'cancelled'): ?>
+                          <div class="timeline-item active">
+                              <span class="timeline-dot" style="background:#dc3545; box-shadow:0 0 0 2px #dc3545;"></span>
+                              <div class="fw-bold small text-danger">Cancelled</div>
+                              <div class="text-muted x-small">This order has been cancelled.</div>
+                          </div>
+                          <?php endif; ?>
                     </div>
                 </div>
             </div>

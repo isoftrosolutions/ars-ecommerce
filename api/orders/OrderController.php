@@ -146,18 +146,56 @@ class OrderController extends BaseController {
         $data = $this->getInputData();
         ValidationMiddleware::validateRequired($data, ['order_id', 'status']);
         
+        $orderId = (int)$data['order_id'];
+        $newStatus = $data['status'];
         $location = $data['current_location'] ?? null;
+
+        // Get previous status for audit + conditional restock
+        $oldStmt = $this->executeQuery("SELECT delivery_status FROM orders WHERE id = ?", [$orderId]);
+        $oldStatus = $oldStmt->fetchColumn();
+
+        if ($oldStatus === false) {
+            Response::error('Order not found', 404);
+        }
 
         $stmt = $this->executeQuery(
             "UPDATE orders SET delivery_status = ?, current_location = ?, location_updated_at = NOW() WHERE id = ?",
-            [$data['status'], $location, $data['order_id']]
+            [$newStatus, $location, $orderId]
         );
 
         if ($stmt->rowCount() === 0) {
             Response::error('Order not found or no changes made', 404);
         }
 
-        $this->logAction('update_order_status', ['order_id' => $data['order_id'], 'status' => $data['status']]);
+        // Production-grade: Restock inventory when order is marked Returned (only on transition)
+        if ($newStatus === 'Returned' && $oldStatus !== 'Returned') {
+            $itemsStmt = $this->executeQuery(
+                "SELECT product_id, quantity FROM order_items WHERE order_id = ?",
+                [$orderId]
+            );
+            $items = $itemsStmt->fetchAll();
+
+            foreach ($items as $item) {
+                $this->executeQuery(
+                    "UPDATE products SET stock = stock + ? WHERE id = ?",
+                    [$item['quantity'], $item['product_id']]
+                );
+            }
+
+            $this->logAction('restock_on_return', [
+                'order_id' => $orderId,
+                'items_restocked' => count($items)
+            ]);
+        }
+
+        // Audit trail - always record status changes
+        $note = 'Status changed from ' . ($oldStatus ?? 'unknown') . ' to ' . $newStatus . ' by admin';
+        $this->executeQuery(
+            "INSERT INTO order_status_history (order_id, status, note, created_at) VALUES (?, ?, ?, NOW())",
+            [$orderId, $newStatus, $note]
+        );
+
+        $this->logAction('update_order_status', ['order_id' => $orderId, 'status' => $newStatus, 'previous' => $oldStatus]);
         Response::success(null, 'Order status updated successfully');
     }
 
@@ -168,16 +206,30 @@ class OrderController extends BaseController {
         $data = $this->getInputData();
         ValidationMiddleware::validateRequired($data, ['order_id', 'payment_status']);
 
+        $orderId = (int)$data['order_id'];
+        $newPaymentStatus = $data['payment_status'];
+
+        // Get old for audit
+        $oldStmt = $this->executeQuery("SELECT payment_status FROM orders WHERE id = ?", [$orderId]);
+        $oldPaymentStatus = $oldStmt->fetchColumn() ?: 'unknown';
+
         $stmt = $this->executeQuery(
             "UPDATE orders SET payment_status = ? WHERE id = ?",
-            [$data['payment_status'], $data['order_id']]
+            [$newPaymentStatus, $orderId]
         );
 
         if ($stmt->rowCount() === 0) {
             Response::error('Order not found or no changes made', 404);
         }
 
-        $this->logAction('update_payment_status', ['order_id' => $data['order_id'], 'status' => $data['payment_status']]);
+        // Audit trail for payment changes too
+        $note = 'Payment status changed from ' . $oldPaymentStatus . ' to ' . $newPaymentStatus . ' by admin';
+        $this->executeQuery(
+            "INSERT INTO order_status_history (order_id, status, note, created_at) VALUES (?, ?, ?, NOW())",
+            [$orderId, 'Payment: ' . $newPaymentStatus, $note]
+        );
+
+        $this->logAction('update_payment_status', ['order_id' => $orderId, 'status' => $newPaymentStatus, 'previous' => $oldPaymentStatus]);
         Response::success(null, 'Payment status updated successfully');
     }
 

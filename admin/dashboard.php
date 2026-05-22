@@ -178,7 +178,8 @@ function getBadgeClass(status) {
     if (['paid','delivered','approved'].includes(s)) return 'badge-success';
     if (['pending'].includes(s)) return 'badge-warning';
     if (['shipped','confirmed','out for delivery'].includes(s)) return 'badge-info';
-    if (['failed','cancelled','rejected'].includes(s)) return 'badge-danger';
+    if (['return requested'].includes(s)) return 'badge-warning';
+    if (['returned','failed','cancelled','rejected'].includes(s)) return 'badge-danger';
     return 'badge-primary';
 }
 

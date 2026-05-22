@@ -205,8 +205,9 @@ function badge(status) {
     const s = (status || '').toLowerCase();
     if (['paid','delivered'].includes(s)) return 'badge-success';
     if (s === 'pending') return 'badge-warning';
-    if (['shipped','confirmed'].includes(s)) return 'badge-info';
-    if (['failed','cancelled'].includes(s)) return 'badge-danger';
+    if (['shipped','confirmed','out for delivery'].includes(s)) return 'badge-info';
+    if (['return requested'].includes(s)) return 'badge-warning';
+    if (['returned','failed','cancelled'].includes(s)) return 'badge-danger';
     return 'badge-primary';
 }
 

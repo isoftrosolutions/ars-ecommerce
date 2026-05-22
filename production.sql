@@ -226,7 +226,7 @@ CREATE TABLE `orders` (
   `discount_amount` decimal(10,2) DEFAULT 0.00,
   `payment_method` enum('COD','eSewa','BankQR') NOT NULL,
   `payment_status` enum('Pending','Paid','Failed','Refunded') DEFAULT 'Pending',
-  `delivery_status` enum('Pending','Confirmed','Shipped','Out for Delivery','Delivered','Cancelled','Return Requested') DEFAULT 'Pending',
+  `delivery_status` enum('Pending','Confirmed','Shipped','Out for Delivery','Delivered','Cancelled','Return Requested','Returned') DEFAULT 'Pending',
   `current_location` varchar(255) DEFAULT 'Preparing for shipment',
   `location_updated_at` timestamp NULL DEFAULT NULL,
   `transaction_id` varchar(100) DEFAULT NULL,
@@ -246,7 +246,20 @@ CREATE TABLE `orders` (
 insert  into `orders`(`id`,`user_id`,`customer_name`,`customer_email`,`customer_phone`,`shipping_address`,`total_amount`,`coupon_code`,`discount_amount`,`payment_method`,`payment_status`,`delivery_status`,`current_location`,`location_updated_at`,`transaction_id`,`payment_proof`,`address`,`notes`,`created_at`) values 
 (1,2,'Devbarat Prasad Patel','mind59024@gmail.com','9811144402','Bahudramai-07, Phulkaul, Parsa',2500.00,NULL,0.00,'COD','Pending','Pending','Preparing for shipment',NULL,NULL,NULL,NULL,NULL,'2026-04-12 10:02:17'),
 (2,2,'Devbarat Prasad Patel','mind59024@gmail.com','9811144402','Bahudramai-07, Phulkaul, Parsa',2500.00,NULL,0.00,'COD','Pending','Pending','Preparing for shipment',NULL,NULL,NULL,NULL,NULL,'2026-04-12 13:26:44'),
-(3,2,'Devbarat Prasad Patel','mind59024@gmail.com','9811144402','Bahudramai-07, Phulkaul, Parsa',10.00,NULL,0.00,'eSewa','Pending','Pending','Preparing for shipment',NULL,NULL,'uploads/payments/esewa_1775980091_69db4e3b74888.png',NULL,NULL,'2026-04-12 13:33:11');
+ (3,2,'Devbarat Prasad Patel','mind59024@gmail.com','9811144402','Bahudramai-07, Phulkaul, Parsa',10.00,NULL,0.00,'eSewa','Pending','Pending','Preparing for shipment',NULL,NULL,'uploads/payments/esewa_1775980091_69db4e3b74888.png',NULL,NULL,'2026-04-12 13:33:11');
+
+ /*Table structure for table `order_status_history` */
+DROP TABLE IF EXISTS `order_status_history`;
+CREATE TABLE `order_status_history` (
+    `id` INT(11) NOT NULL AUTO_INCREMENT,
+    `order_id` INT(11) NOT NULL,
+    `status` VARCHAR(50) NOT NULL,
+    `note` TEXT DEFAULT NULL,
+    `created_at` TIMESTAMP NULL DEFAULT current_timestamp(),
+    PRIMARY KEY (`id`),
+    KEY `idx_osh_order` (`order_id`),
+    CONSTRAINT `fk_osh_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 /*Table structure for table `product_images` */
 

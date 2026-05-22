@@ -188,12 +188,15 @@ $pay_method = $pay_method_map[$order['payment_method']] ?? strtoupper($order['pa
         background: #f3f3f3;
         color: #444;
     }
-    .badge.paid     { background: #d1fae5; color: #065f46; }
-    .badge.pending  { background: #fef3c7; color: #92400e; }
-    .badge.failed   { background: #fee2e2; color: #991b1b; }
-    .badge.delivered{ background: #dbeafe; color: #1e40af; }
-    .badge.shipped  { background: #e0e7ff; color: #3730a3; }
-    .badge.cancelled{ background: #fee2e2; color: #991b1b; }
+    .badge.paid             { background: #d1fae5; color: #065f46; }
+    .badge.pending          { background: #fef3c7; color: #92400e; }
+    .badge.failed           { background: #fee2e2; color: #991b1b; }
+    .badge.delivered        { background: #dbeafe; color: #1e40af; }
+    .badge.shipped          { background: #e0e7ff; color: #3730a3; }
+    .badge.cancelled        { background: #fee2e2; color: #991b1b; }
+    .badge.confirmed        { background: #dbeafe; color: #1e40af; }
+    .badge.return-requested { background: #fef3c7; color: #92400e; }
+    .badge.returned         { background: #fee2e2; color: #991b1b; }
 
     /* ── Items table ── */
     table {
@@ -388,7 +391,16 @@ $pay_method = $pay_method_map[$order['payment_method']] ?? strtoupper($order['pa
     <!-- Status badges -->
     <div class="status-badges">
         <?php
-        $d_class = ['Delivered' => 'delivered', 'Shipped' => 'shipped', 'Cancelled' => 'cancelled', 'Pending' => 'pending', 'Confirmed' => 'delivered', 'Out for Delivery' => 'shipped'];
+        $d_class = [
+            'Delivered' => 'delivered', 
+            'Shipped' => 'shipped', 
+            'Cancelled' => 'cancelled', 
+            'Pending' => 'pending', 
+            'Confirmed' => 'confirmed',
+            'Out for Delivery' => 'shipped',
+            'Return Requested' => 'return-requested',
+            'Returned' => 'returned'
+        ];
         $p_class = ['Paid' => 'paid', 'Pending' => 'pending', 'Failed' => 'failed'];
         ?>
         <span class="badge <?php echo $d_class[$order['delivery_status']] ?? ''; ?>">

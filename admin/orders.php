@@ -180,7 +180,7 @@ async function viewOrder(id) {
             <div class="form-group">
                 <label class="form-label">Delivery Status</label>
                 <select id="update-delivery-status" class="form-control">
-                    ${['Pending','Processing','Shipped','Delivered','Cancelled'].map(s =>
+                    ${['Pending','Confirmed','Shipped','Out for Delivery','Delivered','Return Requested','Returned','Cancelled'].map(s =>
                         `<option ${o.delivery_status === s ? 'selected' : ''}>${s}</option>`
                     ).join('')}
                 </select>
@@ -265,7 +265,8 @@ function badge(status) {
     if (['paid','delivered','approved'].includes(s)) return 'badge-success';
     if (['pending'].includes(s)) return 'badge-warning';
     if (['shipped','confirmed','out for delivery'].includes(s)) return 'badge-info';
-    if (['failed','cancelled','rejected'].includes(s)) return 'badge-danger';
+    if (['return requested'].includes(s)) return 'badge-warning';
+    if (['returned','failed','cancelled','rejected'].includes(s)) return 'badge-danger';
     return 'badge-primary';
 }
 
