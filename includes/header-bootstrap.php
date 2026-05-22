@@ -1049,8 +1049,17 @@ $_seo_canonical = rtrim($_seo_canonical, '?&');
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 window.BASE_URL = '<?php echo rtrim(url(''), '/'); ?>';
+
+function arsAlert(msg, icon = 'error') {
+  Swal.fire({ icon, title: icon === 'success' ? 'Success' : icon === 'warning' ? 'Warning' : 'Error', text: msg });
+}
+
+function arsConfirm(msg) {
+  return Swal.fire({ title: 'Are you sure?', text: msg, icon: 'warning', showCancelButton: true, confirmButtonColor: '#dc3545', cancelButtonColor: '#6c757d', confirmButtonText: 'Yes' }).then(r => r.isConfirmed);
+}
 </script>
 <script>
 // Dynamic login status synchronization logic

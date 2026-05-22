@@ -370,8 +370,8 @@ function submitForm() {
     });
 }
 
-function deleteMember(id) {
-    if (!confirm('Delete this team member permanently?')) return;
+async function deleteMember(id) {
+    if (!await arsConfirm('Delete this team member permanently?')) return;
     fetch(window.BASE_URL + '/admin/api/team-members.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

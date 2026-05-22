@@ -270,7 +270,7 @@ function addToCart(productId) {
             const modal = new bootstrap.Modal(document.getElementById('loginRequiredModal'));
             modal.show();
         } else {
-            alert(data.message || 'Could not add item');
+            arsAlert(data.message || 'Could not add item');
         }
     });
 }

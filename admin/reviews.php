@@ -156,7 +156,7 @@ async function updateStatus(id, status) {
 }
 
 async function deleteReview(id) {
-    if (!confirm('Delete this review?')) return;
+    if (!await arsConfirm('Delete this review?')) return;
     const json = await apiFetch('/api/reviews/delete', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -173,7 +173,7 @@ async function applyBulkAction() {
     if (!ids.length) { Toast.error('Select at least one review.'); return; }
 
     if (action === 'delete') {
-        if (!confirm(`Delete ${ids.length} review(s)?`)) return;
+        if (!await arsConfirm(`Delete ${ids.length} review(s)?`)) return;
         const json = await apiFetch('/api/reviews/bulk-delete', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},

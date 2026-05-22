@@ -460,7 +460,7 @@ async function applyBulkAction() {
     const ids = [...document.querySelectorAll('.row-check:checked')].map(c => c.value);
     if (!ids.length) { Toast.error('Select at least one product.'); return; }
 
-    if (action === 'delete' && confirm(`Delete ${ids.length} product(s)?`)) {
+    if (action === 'delete' && await arsConfirm(`Delete ${ids.length} product(s)?`)) {
         const json = await apiFetch('/api/products/bulk-delete', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},

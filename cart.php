@@ -172,18 +172,18 @@ function updateQuantity(productId, quantity) {
         if (data.success) {
             location.reload();
         } else {
-            alert(data.message || 'Failed to update quantity');
+            arsAlert(data.message || 'Failed to update quantity');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('An error occurred while updating the cart');
+        arsAlert('An error occurred while updating the cart');
     });
 }
 
 // Remove item function
-function removeItem(productId) {
-    if (!confirm('Are you sure you want to remove this item from your cart?')) {
+async function removeItem(productId) {
+    if (!await arsConfirm('Are you sure you want to remove this item from your cart?')) {
         return;
     }
 
@@ -193,18 +193,18 @@ function removeItem(productId) {
         if (data.success) {
             location.reload();
         } else {
-            alert(data.message || 'Failed to remove item');
+            arsAlert(data.message || 'Failed to remove item');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('An error occurred while removing the item');
+        arsAlert('An error occurred while removing the item');
     });
 }
 
 // Clear cart function
-function clearCart() {
-    if (!confirm('Are you sure you want to clear your entire cart?')) {
+async function clearCart() {
+    if (!await arsConfirm('Are you sure you want to clear your entire cart?')) {
         return;
     }
 
@@ -214,12 +214,12 @@ function clearCart() {
         if (data.success) {
             location.reload();
         } else {
-            alert(data.message || 'Failed to clear cart');
+            arsAlert(data.message || 'Failed to clear cart');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('An error occurred while clearing the cart');
+        arsAlert('An error occurred while clearing the cart');
     });
 }
 </script>

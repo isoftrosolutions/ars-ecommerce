@@ -214,8 +214,8 @@ try {
  </div>
 
   <script>
-  function cancelOrder(orderId) {
-      if (!confirm('Cancel this order? This cannot be undone.')) return;
+  async function cancelOrder(orderId) {
+      if (!await arsConfirm('Cancel this order? This cannot be undone.')) return;
       fetch('/api/cancel-order.php', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -226,14 +226,14 @@ try {
           if (data.success) {
               location.reload();
           } else {
-              alert(data.message || 'Failed to cancel order');
+              arsAlert(data.message || 'Failed to cancel order');
           }
       })
-      .catch(() => alert('Network error'));
+      .catch(() => arsAlert('Network error'));
   }
 
-  function returnOrder(orderId) {
-      if (!confirm('Request a return for this order?')) return;
+  async function returnOrder(orderId) {
+      if (!await arsConfirm('Request a return for this order?')) return;
       fetch('/api/return-order.php', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -244,10 +244,10 @@ try {
           if (data.success) {
               location.reload();
           } else {
-              alert(data.message || 'Failed to request return');
+              arsAlert(data.message || 'Failed to request return');
           }
       })
-      .catch(() => alert('Network error'));
+      .catch(() => arsAlert('Network error'));
   }
   </script>
  

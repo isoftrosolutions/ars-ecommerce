@@ -396,7 +396,7 @@ function doAddToCart() {
 
 function toggleWish(id) {
     fetch('<?php echo url("/wishlist"); ?>?action=add&product_id=' + id)
-    .then(() => alert('Added to wishlist!'));
+    .then(() => arsAlert('Added to wishlist!', 'success'));
 }
 </script>
 

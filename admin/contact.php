@@ -224,7 +224,7 @@ async function markCurrentReplied() {
 }
 
 async function deleteSubmission(id) {
-    if (!confirm('Delete this submission?')) return;
+    if (!await arsConfirm('Delete this submission?')) return;
     const json = await apiFetch('/api/contact/delete', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -241,7 +241,7 @@ async function applyBulkAction() {
     if (!ids.length) { Toast.error('Select at least one submission.'); return; }
 
     if (action === 'delete') {
-        if (!confirm(`Delete ${ids.length} submission(s)?`)) return;
+        if (!await arsConfirm(`Delete ${ids.length} submission(s)?`)) return;
         const json = await apiFetch('/api/contact/bulk-delete', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},

@@ -198,8 +198,8 @@ function capitalizeFirst(str) {
     return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-function deleteTeamMember(id) {
-    if (confirm('Are you sure you want to delete this team member?')) {
+async function deleteTeamMember(id) {
+    if (await arsConfirm('Are you sure you want to delete this team member?')) {
         fetch(`${window.BASE_URL}/admin/api/team-members.php`, {
             method: 'POST',
             headers: {
@@ -232,7 +232,7 @@ function toggleSelectAll(checkbox) {
     checkboxes.forEach(cb => cb.checked = checkbox.checked);
 }
 
-function applyBulkAction() {
+async function applyBulkAction() {
     const action = document.getElementById('bulk-action').value;
     const selectedIds = Array.from(document.querySelectorAll('.member-checkbox:checked')).map(cb => cb.value);
 
@@ -241,7 +241,7 @@ function applyBulkAction() {
         return;
     }
 
-    if (action === 'delete' && !confirm(`Are you sure you want to delete ${selectedIds.length} team member(s)?`)) {
+    if (action === 'delete' && !await arsConfirm(`Are you sure you want to delete ${selectedIds.length} team member(s)?`)) {
         return;
     }
 

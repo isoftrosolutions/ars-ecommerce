@@ -207,27 +207,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (otp.length !== 6) {
             e.preventDefault();
-            alert('Please enter the complete 6-digit OTP');
+            arsAlert('Please enter the complete 6-digit OTP', 'warning');
             return;
         }
 
         if (newPassword.length < 8) {
             e.preventDefault();
-            alert('Password must be at least 8 characters long');
+            arsAlert('Password must be at least 8 characters long', 'warning');
             return;
         }
 
         if (newPassword !== confirmPassword) {
             e.preventDefault();
-            alert('Passwords do not match');
+            arsAlert('Passwords do not match', 'warning');
             return;
         }
     });
 });
 
-function resendOTP() {
+async function resendOTP() {
     const userEmail = <?php echo json_encode($email); ?>;
-    if (!confirm('Resend OTP to ' + userEmail + '?')) {
+    if (!await arsConfirm('Resend OTP to ' + userEmail + '?')) {
         return;
     }
 
@@ -249,13 +249,13 @@ function resendOTP() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('OTP sent successfully!');
+            arsAlert('OTP sent successfully!', 'success');
         } else {
-            alert('Failed to send OTP: ' + data.message);
+            arsAlert('Failed to send OTP: ' + data.message);
         }
     })
     .catch(error => {
-        alert('An error occurred. Please try again.');
+        arsAlert('An error occurred. Please try again.');
     })
     .finally(() => {
         btn.innerHTML = originalText;
