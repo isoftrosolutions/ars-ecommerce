@@ -386,8 +386,8 @@ class AuthController
         error_log($log, 3, __DIR__ . '/../../logs/api-v1.log');
 
         // Use existing email service for SMS if available
-        if (file_exists(__DIR__ . '/../../includes/email-service.php')) {
-            require_once __DIR__ . '/../../includes/email-service.php';
+        if (file_exists(__DIR__ . '/../../../includes/email-service.php')) {
+            require_once __DIR__ . '/../../../includes/email-service.php';
             $emailService = getEmailService();
             $emailService->sendSMSOTP($phone, $otp);
         }
