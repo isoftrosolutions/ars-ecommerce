@@ -65,9 +65,22 @@ $order_discount = $order['discount_amount'] ?? 0;
 $shipping       = $order['shipping_charge'] ?? 0;
 $total_amount   = $order['total_amount'];
 
+// For cancelled unpaid orders, amount due is zero
+$is_cancelled = strtolower($order['delivery_status']) === 'cancelled';
+$is_paid      = strtolower($order['payment_status']) === 'paid';
+$display_amount = ($is_cancelled && !$is_paid) ? 0.00 : (float)$total_amount;
+
 // Payment method label
 $pay_method_map = ['cod' => 'Cash on Delivery', 'COD' => 'Cash on Delivery', 'esewa' => 'eSewa', 'BankQR' => 'Bank QR'];
 $pay_method = $pay_method_map[$order['payment_method']] ?? strtoupper($order['payment_method']);
+
+// Sanitize payment status display for COD
+$is_cod = strtolower($order['payment_method']) === 'cod' || strtolower($order['payment_method']) === 'cash on delivery';
+$display_payment_status = $order['payment_status'];
+if ($is_cod && strtolower($display_payment_status) === 'failed') {
+    // COD cannot logically be "Failed" — treat as pending
+    $display_payment_status = 'Pending';
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -385,7 +398,13 @@ $pay_method = $pay_method_map[$order['payment_method']] ?? strtoupper($order['pa
 
     <!-- Amount Due -->
     <div class="amount-due">
-        <h2>Rs. <?php echo number_format($total_amount, 2); ?> due <?php echo $invoice_date; ?></h2>
+        <?php if ($is_cancelled): ?>
+            <h2>Cancelled — No payment due</h2>
+        <?php elseif ($is_paid): ?>
+            <h2>Paid — Rs. <?php echo number_format($display_amount, 2); ?></h2>
+        <?php else: ?>
+            <h2>Rs. <?php echo number_format($display_amount, 2); ?> due <?php echo $invoice_date; ?></h2>
+        <?php endif; ?>
     </div>
 
     <!-- Status badges -->
@@ -406,8 +425,8 @@ $pay_method = $pay_method_map[$order['payment_method']] ?? strtoupper($order['pa
         <span class="badge <?php echo $d_class[$order['delivery_status']] ?? ''; ?>">
             Delivery: <?php echo $order['delivery_status']; ?>
         </span>
-        <span class="badge <?php echo $p_class[$order['payment_status']] ?? ''; ?>">
-            Payment: <?php echo $order['payment_status']; ?>
+        <span class="badge <?php echo $p_class[$display_payment_status] ?? ''; ?>">
+            Payment: <?php echo $display_payment_status; ?>
         </span>
     </div>
 
@@ -479,8 +498,8 @@ $pay_method = $pay_method_map[$order['payment_method']] ?? strtoupper($order['pa
                 <?php endif; ?>
             </div>
             <div class="t-row grand">
-                <span>Amount due</span>
-                <span class="t-val">Rs. <?php echo number_format($total_amount, 2); ?></span>
+                <span><?php echo $is_cancelled ? 'Original total' : 'Amount due'; ?></span>
+                <span class="t-val">Rs. <?php echo number_format($display_amount, 2); ?></span>
             </div>
         </div>
     </div>
@@ -488,11 +507,15 @@ $pay_method = $pay_method_map[$order['payment_method']] ?? strtoupper($order['pa
     <!-- Payment Note -->
     <div class="pay-note">
         <strong>Payment method:</strong> <?php echo h($pay_method); ?><br>
-        <?php if (!empty($order['transaction_id'])): ?>
+        <?php if ($is_cod && !$is_paid && !$is_cancelled): ?>
+        <strong>Status:</strong> Pay on Delivery<br>
+        <?php elseif (!empty($order['transaction_id'])): ?>
         <strong>Transaction ID:</strong> <?php echo h($order['transaction_id']); ?><br>
         <?php endif; ?>
+        <?php if (!$is_cancelled): ?>
         For any discrepancies, please contact us within 48 hours of delivery at
         <strong><?php echo h($site_email); ?></strong> or <strong><?php echo h($site_phone); ?></strong>.
+        <?php endif; ?>
     </div>
 
     <!-- Footer -->

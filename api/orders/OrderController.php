@@ -209,9 +209,19 @@ class OrderController extends BaseController {
         $orderId = (int)$data['order_id'];
         $newPaymentStatus = $data['payment_status'];
 
-        // Get old for audit
-        $oldStmt = $this->executeQuery("SELECT payment_status FROM orders WHERE id = ?", [$orderId]);
-        $oldPaymentStatus = $oldStmt->fetchColumn() ?: 'unknown';
+        // Get old + payment method for validation
+        $oldStmt = $this->executeQuery("SELECT payment_status, payment_method FROM orders WHERE id = ?", [$orderId]);
+        $row = $oldStmt->fetch(PDO::FETCH_ASSOC);
+        if (!$row) {
+            Response::error('Order not found', 404);
+        }
+        $oldPaymentStatus = $row['payment_status'] ?: 'unknown';
+        $paymentMethod = strtolower($row['payment_method']);
+
+        // COD orders cannot logically be "Failed"
+        if ($paymentMethod === 'cod' && strtolower($newPaymentStatus) === 'failed') {
+            Response::error('Cash on Delivery orders cannot be marked as Failed. Use Pending.', 400);
+        }
 
         $stmt = $this->executeQuery(
             "UPDATE orders SET payment_status = ? WHERE id = ?",

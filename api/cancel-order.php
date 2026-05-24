@@ -50,10 +50,14 @@ try {
     ");
     $stmt->execute([$orderId]);
 
-    // Update payment status to Refunded if it was Paid
     $oldPaymentStatus = $order['payment_status'];
     if (strtolower($oldPaymentStatus) === 'paid') {
+        // Paid → refund, keep total_amount for record
         $stmt = $pdo->prepare("UPDATE orders SET payment_status = 'Refunded' WHERE id = ?");
+        $stmt->execute([$orderId]);
+    } else {
+        // Unpaid cancellation (COD/Pending/Failed) → zero out the balance
+        $stmt = $pdo->prepare("UPDATE orders SET total_amount = 0.00 WHERE id = ?");
         $stmt->execute([$orderId]);
     }
 

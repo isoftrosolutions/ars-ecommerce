@@ -75,13 +75,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $pdo->beginTransaction();
 
-            $stmt = $pdo->prepare("INSERT INTO orders (user_id, total_amount, payment_method, payment_proof, delivery_status, shipping_address, customer_name, customer_email, customer_phone, created_at) VALUES (?, ?, ?, ?, 'Pending', ?, ?, ?, ?, NOW())");
+            $stmt = $pdo->prepare("INSERT INTO orders (user_id, total_amount, shipping_charge, payment_method, payment_proof, delivery_status, shipping_address, shipping_city, customer_name, customer_email, customer_phone, created_at) VALUES (?, ?, ?, ?, ?, 'Pending', ?, ?, ?, ?, ?, NOW())");
             $stmt->execute([
                 $user ? $user['id'] : null,
                 $grand_total,
+                $shipping_charge,
                 $payment_method,
                 $payment_proof_path,
                 $address,
+                $_POST['city'] ?? '',
                 $name,
                 $email,
                 $phone,

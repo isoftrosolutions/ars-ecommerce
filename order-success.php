@@ -129,7 +129,14 @@ if (!$order) {
                                 <tfoot>
                                     <tr>
                                         <td colspan="3" class="text-end">Subtotal:</td>
-                                        <td class="text-end">Rs. <?php echo format_price($order['total_amount']); ?></td>
+                                        <td class="text-end">Rs. <?php
+                                            $computed_subtotal = 0;
+                                            foreach ($order['items'] as $oi) {
+                                                $unit = $oi['discount_price'] ?? $oi['price'];
+                                                $computed_subtotal += $unit * $oi['quantity'];
+                                            }
+                                            echo format_price($computed_subtotal);
+                                        ?></td>
                                     </tr>
                                     <tr>
                                         <td colspan="3" class="text-end">Shipping:</td>
@@ -137,7 +144,7 @@ if (!$order) {
                                     </tr>
                                     <tr>
                                         <td colspan="3" class="text-end fw-bold">Total Amount:</td>
-                                        <td class="text-end fw-bold fs-5 text-success">Rs. <?php echo format_price(($order['total_amount'] ?? 0) + ($order['shipping_charge'] ?? 0)); ?></td>
+                                        <td class="text-end fw-bold fs-5 text-success">Rs. <?php echo format_price($order['total_amount'] ?? 0); ?></td>
                                     </tr>
                                 </tfoot>
                             </table>
