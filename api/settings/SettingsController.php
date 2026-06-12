@@ -208,7 +208,11 @@ class SettingsController extends BaseController {
             'products_per_page', 'featured_products_limit', 'low_stock_threshold', 'order_prefix',
 
             // Reviews
-            'reviews_enabled', 'auto_approve_reviews', 'reviews_per_page'
+            'reviews_enabled', 'auto_approve_reviews', 'reviews_per_page',
+
+            // SMTP / Email
+            'smtp_host', 'smtp_port', 'smtp_username', 'smtp_password', 'smtp_encryption',
+            'from_email',
         ];
 
         if (!in_array($key, $allowedKeys)) {
