@@ -658,6 +658,69 @@ $_seo_canonical = rtrim($_seo_canonical, '?&');
                 font-size: 0.75rem;
             }
         }
+
+        /* ═══ Search Suggestions Dropdown ═══ */
+        .search-suggestions {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 0 0 16px 16px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+            z-index: 2000;
+            max-height: 420px;
+            overflow-y: auto;
+            margin-top: 2px;
+        }
+        .search-suggestions.show { display: block; }
+        .suggestion-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            cursor: pointer;
+            transition: background 0.15s;
+            text-decoration: none;
+            color: #1e293b;
+        }
+        .suggestion-item:hover { background: #f8fafc; }
+        .suggestion-item:not(:last-child) { border-bottom: 1px solid #f1f5f9; }
+        .suggestion-img {
+            width: 40px; height: 40px; border-radius: 8px; object-fit: cover;
+            background: #f1f5f9; flex-shrink: 0;
+        }
+        .suggestion-info { flex: 1; min-width: 0; }
+        .suggestion-name { font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .suggestion-price { font-size: 0.8rem; font-weight: 700; color: var(--primary-color); }
+        .suggestion-type { font-size: 0.7rem; color: #94a3b8; font-weight: 500;text-transform: uppercase;letter-spacing:0.3px; }
+        .suggestion-category {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 16px; cursor: pointer; transition: background 0.15s;
+            text-decoration: none; color: #1e293b;
+        }
+        .suggestion-category:hover { background: #f8fafc; }
+        .suggestion-header {
+            padding: 8px 16px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.5px; color: #94a3b8; background: #f8fafc;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .suggestion-recent {
+            display: flex; align-items: center; gap: 10px; padding: 8px 16px;
+            cursor: pointer; transition: background 0.15s; color: #64748b;
+            font-size: 0.85rem; text-decoration: none;
+        }
+        .suggestion-recent:hover { background: #f8fafc; }
+        .suggestion-recent i { font-size: 0.9rem; color: #94a3b8; }
+        .suggestion-view-all {
+            display: block; text-align: center; padding: 10px;
+            font-size: 0.8rem; font-weight: 600; color: var(--primary-color);
+            background: #fafafa; text-decoration: none;
+            border-radius: 0 0 16px 16px;
+        }
+        .suggestion-view-all:hover { background: #f1f5f9; }
     </style>
 </head>
 <body>
@@ -681,9 +744,10 @@ $_seo_canonical = rtrim($_seo_canonical, '?&');
             </div>
         </div>
         <div class="mobile-search-row">
-            <form action="<?php echo url('/shop'); ?>" method="GET">
-                <div class="search-container">
-                    <input type="text" name="q" class="search-input" placeholder="Search ARS Shopping..." value="<?php echo h($_GET['q'] ?? ''); ?>" required>
+            <form action="<?php echo url('/shop'); ?>" method="GET" autocomplete="off">
+                <div class="search-container" style="position:relative;">
+                    <input type="text" name="q" class="search-input" id="mobileSearchInput" placeholder="Search ARS Shopping..." value="<?php echo h($_GET['q'] ?? ''); ?>" required autocomplete="off">
+                    <div class="search-suggestions" id="mobileSuggestions"></div>
                     <button type="submit" class="search-btn">
                         <i class="bi bi-search"></i>
                     </button>
@@ -821,8 +885,8 @@ $_seo_canonical = rtrim($_seo_canonical, '?&');
                     <span style="font-weight: 800; font-size: 1.5rem; vertical-align: middle;">ARS <span style="color: var(--primary-color);">Shopping</span></span>
                 </a>
 
-                <!-- 🔍 Seamless Search Engine -->
-                <form action="<?php echo url('/shop'); ?>" method="GET" class="search-container">
+                <!-- 🔍 Seamless Search Engine with Autocomplete -->
+                <form action="<?php echo url('/shop'); ?>" method="GET" class="search-container" id="desktopSearchForm" autocomplete="off">
                     <select class="search-cat" name="category">
                         <option value="">All Categories</option>
                         <?php 
@@ -834,7 +898,10 @@ $_seo_canonical = rtrim($_seo_canonical, '?&');
                             </option>
                         <?php endforeach; ?>
                     </select>
-                    <input type="text" name="q" class="search-input" placeholder="Search for products, brands and more..." value="<?php echo h($_GET['q'] ?? ''); ?>" required>
+                    <div style="position:relative;flex-grow:1;display:flex;">
+                        <input type="text" name="q" class="search-input" id="desktopSearchInput" placeholder="Search for products, brands and more..." value="<?php echo h($_GET['q'] ?? ''); ?>" required autocomplete="off">
+                        <div class="search-suggestions" id="desktopSuggestions"></div>
+                    </div>
                     <button type="submit" class="search-btn">
                         <i class="bi bi-search"></i>
                     </button>
@@ -1324,6 +1391,173 @@ function showToast(title, message, type = 'success') {
     // Auto remove from DOM after hidden
     toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
 }
+
+/**
+ * ═══ Search Autocomplete System ═══
+ */
+(function() {
+    const SEARCH_KEY = 'ars_recent_searches';
+    const MAX_RECENT = 5;
+    let debounceTimer = null;
+    let activeSearch = '';
+
+    function getRecentSearches() {
+        try { return JSON.parse(localStorage.getItem(SEARCH_KEY) || '[]'); } catch { return []; }
+    }
+
+    function addRecentSearch(term) {
+        term = term.trim().toLowerCase();
+        if (!term) return;
+        let searches = getRecentSearches().filter(s => s !== term);
+        searches.unshift(term);
+        localStorage.setItem(SEARCH_KEY, JSON.stringify(searches.slice(0, MAX_RECENT)));
+    }
+
+    function renderSuggestions(data, inputId, suggestionsId) {
+        const container = document.getElementById(suggestionsId);
+        const input = document.getElementById(inputId);
+        if (!container || !input) return;
+
+        let html = '';
+
+        // Recent searches (only when no query or short query)
+        if ((!activeSearch || activeSearch.length < 2) && data.length === 0) {
+            const recent = getRecentSearches();
+            if (recent.length > 0) {
+                html += '<div class="suggestion-header"><i class="bi bi-clock-history me-1"></i>Recent Searches</div>';
+                recent.forEach(term => {
+                    html += `<div class="suggestion-recent" onclick="submitSearch('${term.replace(/'/g, "\\'")}')">
+                        <i class="bi bi-clock"></i> ${term}
+                    </div>`;
+                });
+                html += '<div class="suggestion-header" style="border-top:1px solid #f1f5f9;">Popular Products</div>';
+            }
+        }
+
+        data.forEach((item, idx) => {
+            if (item.type === 'product') {
+                const price = 'Rs. ' + Number(item.price).toLocaleString();
+                html += `<a href="${item.url}" class="suggestion-item">
+                    <img src="${item.image}" class="suggestion-img" alt="" onerror="this.src='https://placehold.co/40x40/f1f5f9/94a3b8?text=N/A'">
+                    <div class="suggestion-info">
+                        <div class="suggestion-name">${highlightMatch(item.name, activeSearch)}</div>
+                        <div class="suggestion-price">${price}</div>
+                    </div>
+                    <span class="suggestion-type">Product</span>
+                </a>`;
+            } else if (item.type === 'category') {
+                html += `<a href="${item.url}" class="suggestion-category">
+                    <span><i class="bi bi-tag me-2 text-muted"></i>${highlightMatch(item.name, activeSearch)}</span>
+                    <span class="badge bg-light text-muted">${item.count || 0}</span>
+                </a>`;
+            }
+        });
+
+        if (activeSearch.length >= 1) {
+            html += `<a href="${window.BASE_URL}/shop?q=${encodeURIComponent(activeSearch)}" class="suggestion-view-all">
+                <i class="bi bi-search me-1"></i> Search for "${activeSearch}"
+            </a>`;
+        }
+
+        if (!html) {
+            container.classList.remove('show');
+            return;
+        }
+
+        container.innerHTML = html;
+        container.classList.add('show');
+    }
+
+    function highlightMatch(text, query) {
+        if (!query || query.length < 1) return text;
+        const words = query.split(' ').filter(w => w.length > 0);
+        if (words.length === 0) return text;
+        const pattern = '(' + words.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')';
+        return text.replace(new RegExp(pattern, 'gi'), '<strong style="color:#ea6c00;">$1</strong>');
+    }
+
+    function fetchSuggestions(query, inputId, suggestionsId) {
+        if (query.length < 1) {
+            // Show recent searches
+            const container = document.getElementById(suggestionsId);
+            if (container) {
+                const recent = getRecentSearches();
+                if (recent.length > 0) {
+                    let html = '<div class="suggestion-header"><i class="bi bi-clock-history me-1"></i>Recent Searches</div>';
+                    recent.forEach(term => {
+                        html += `<div class="suggestion-recent" onclick="submitSearch('${term.replace(/'/g, "\\'")}')">
+                            <i class="bi bi-clock"></i> ${term}
+                        </div>`;
+                    });
+                    container.innerHTML = html;
+                    container.classList.add('show');
+                } else {
+                    container.classList.remove('show');
+                }
+            }
+            return;
+        }
+
+        fetch(`${window.BASE_URL}/search-suggestions.php?q=${encodeURIComponent(query)}`)
+            .then(r => r.json())
+            .then(data => renderSuggestions(data.suggestions || [], inputId, suggestionsId))
+            .catch(() => {
+                const container = document.getElementById(suggestionsId);
+                if (container) container.classList.remove('show');
+            });
+    }
+
+    function setupSearchInput(inputId, suggestionsId) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+
+        input.addEventListener('input', function() {
+            const val = this.value.trim();
+            activeSearch = val;
+
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                fetchSuggestions(val, inputId, suggestionsId);
+            }, val.length < 2 ? 0 : 200);
+        });
+
+        input.addEventListener('focus', function() {
+            // Show suggestions on focus if there's any data
+            activeSearch = this.value.trim();
+            fetchSuggestions(activeSearch, inputId, suggestionsId);
+        });
+
+        // Close when clicking outside
+        document.addEventListener('click', function(e) {
+            const container = document.getElementById(suggestionsId);
+            const searchForm = input.closest('form') || input.closest('.search-container');
+            if (container && searchForm && !searchForm.contains(e.target)) {
+                container.classList.remove('show');
+            }
+        });
+
+        // Track search submissions
+        const form = input.closest('form');
+        if (form) {
+            form.addEventListener('submit', function() {
+                const val = input.value.trim();
+                if (val) addRecentSearch(val);
+            });
+        }
+    }
+
+    // Init
+    document.addEventListener('DOMContentLoaded', function() {
+        setupSearchInput('desktopSearchInput', 'desktopSuggestions');
+        setupSearchInput('mobileSearchInput', 'mobileSuggestions');
+    });
+
+    // Expose for inline use
+    window.submitSearch = function(term) {
+        addRecentSearch(term);
+        window.location.href = window.BASE_URL + '/shop?q=' + encodeURIComponent(term);
+    };
+})();
 </script>
 
 <style>
