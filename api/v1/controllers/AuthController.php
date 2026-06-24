@@ -321,7 +321,11 @@ class AuthController
             );
             $stmt->execute([$email, $otp, $hashedOtp, $expiresAt]);
 
-            $this->sendOtpSms($email, $otp);
+            // Send email OTP
+            $name = $user['name'] ?? $user['full_name'] ?? 'Valued Customer';
+            require_once __DIR__ . '/../../../includes/email-service.php';
+            $emailService = getEmailService();
+            $emailService->sendOTP($email, $otp, $name);
         }
 
         json_success(null, 'If your email is registered, you will receive an OTP');
