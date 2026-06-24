@@ -323,6 +323,7 @@ class AuthController
 
             // Send email OTP
             $name = $user['name'] ?? $user['full_name'] ?? 'Valued Customer';
+            require_once __DIR__ . '/../../../includes/functions.php';
             require_once __DIR__ . '/../../../includes/email-service.php';
             $emailService = getEmailService();
             $emailService->sendOTP($email, $otp, $name);
