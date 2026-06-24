@@ -25,6 +25,7 @@ $routes = [
     ['GET',  '/products',                'ProductController.php', 'ProductController', 'index'],
     ['GET',  '/products/featured',       'ProductController.php', 'ProductController', 'featured'],
     ['GET',  '/products/new-arrivals',   'ProductController.php', 'ProductController', 'newArrivals'],
+    ['GET',  '/products/suggestions',    'ProductController.php', 'ProductController', 'suggestions'],
     ['GET',  '/products/{id}',           'ProductController.php', 'ProductController', 'show'],
 
     // Categories (public)

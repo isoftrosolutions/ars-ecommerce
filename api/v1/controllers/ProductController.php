@@ -94,6 +94,38 @@ class ProductController
     }
 
     /**
+     * GET /products/suggestions?q=term
+     * Lightweight autocomplete — returns id, name, image, price for top 7 matches.
+     */
+    public function suggestions($params)
+    {
+        $q = $_GET['q'] ?? '';
+        $q = trim($q);
+        if (strlen($q) < 2) {
+            json_success([]);
+            return;
+        }
+
+        $stmt = $this->pdo->prepare("
+            SELECT id, name, price, discount_price, image
+            FROM products
+            WHERE name LIKE ?
+            ORDER BY is_featured DESC, created_at DESC
+            LIMIT 7
+        ");
+        $term = '%' . $q . '%';
+        $stmt->execute([$term]);
+        $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($products as &$product) {
+            $product['image'] = product_image_url($product['image']);
+        }
+        unset($product);
+
+        json_success($products);
+    }
+
+    /**
      * GET /products/{id}
      */
     public function show($params)
