@@ -17,6 +17,7 @@ header('Content-Type: application/json');
 
 $action = $_GET['action'] ?? '';
 $product_id = (int)($_GET['id'] ?? 0);
+$variant_id = (int)($_GET['variant_id'] ?? 0);
 $quantity = (int)($_POST['quantity'] ?? 1);
 
 $response = ['success' => false, 'message' => 'Invalid action'];
@@ -37,7 +38,7 @@ try {
             $add_quantity = (int)($_GET['quantity'] ?? 1);
             if ($add_quantity <= 0) $add_quantity = 1;
 
-            $result = add_to_cart($product_id, $add_quantity);
+            $result = add_to_cart($product_id, $add_quantity, $variant_id ?: null);
             $response = $result;
             break;
 
@@ -47,7 +48,7 @@ try {
                 break;
             }
 
-            $result = update_cart_quantity($product_id, $quantity);
+            $result = update_cart_quantity($product_id, $quantity, $variant_id ?: null);
             $response = $result;
             break;
 
@@ -57,7 +58,7 @@ try {
                 break;
             }
 
-            $result = remove_from_cart($product_id);
+            $result = remove_from_cart($product_id, $variant_id ?: null);
             $response = $result;
             break;
 

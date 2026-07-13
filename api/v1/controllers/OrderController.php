@@ -80,6 +80,7 @@ class OrderController
 
             foreach ($data['items'] as $item) {
                 $productId = (int)($item['product_id'] ?? 0);
+                $variantId = isset($item['variant_id']) ? (int)$item['variant_id'] : null;
                 $quantity = max(1, (int)($item['quantity'] ?? 1));
 
                 if (!$productId) {
@@ -95,17 +96,34 @@ class OrderController
                     throw new \Exception("Product ID $productId not found");
                 }
 
-                if ($product['stock'] < $quantity) {
-                    throw new \Exception("Insufficient stock for {$product['name']}");
+                $unitPrice = $product['discount_price'] ?: $product['price'];
+
+                if ($variantId) {
+                    // Check variant stock and pricing
+                    $stmt = $this->pdo->prepare("SELECT price, discount_price, stock FROM product_variants WHERE id = ? AND product_id = ?");
+                    $stmt->execute([$variantId, $productId]);
+                    $variant = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                    if (!$variant) {
+                        throw new \Exception("Variant ID $variantId not found for product {$product['name']}");
+                    }
+                    if ($variant['stock'] < $quantity) {
+                        throw new \Exception("Insufficient stock for {$product['name']} (selected variant)");
+                    }
+
+                    $unitPrice = $variant['discount_price'] ?: $variant['price'] ?: $unitPrice;
+                } else {
+                    if ($product['stock'] < $quantity) {
+                        throw new \Exception("Insufficient stock for {$product['name']}");
+                    }
                 }
 
-                // Use discount_price if available, else price
-                $unitPrice = $product['discount_price'] ?: $product['price'];
                 $lineTotal = $unitPrice * $quantity;
                 $totalAmount += $lineTotal;
 
                 $orderItems[] = [
                     'product_id' => $productId,
+                    'variant_id' => $variantId,
                     'product_name' => $product['name'],
                     'product_image' => $product['image'],
                     'quantity' => $quantity,
@@ -154,20 +172,26 @@ class OrderController
             // Insert order items
             foreach ($orderItems as $oi) {
                 $stmt = $this->pdo->prepare("
-                    INSERT INTO order_items (order_id, product_id, quantity, price, discount_price)
-                    VALUES (?, ?, ?, ?, ?)
+                    INSERT INTO order_items (order_id, product_id, variant_id, quantity, price, discount_price)
+                    VALUES (?, ?, ?, ?, ?, ?)
                 ");
                 $stmt->execute([
                     $orderId,
                     $oi['product_id'],
+                    $oi['variant_id'],
                     $oi['quantity'],
                     $oi['price'],
                     $oi['discount_price'],
                 ]);
 
                 // Decrement stock atomically
-                $stmt = $this->pdo->prepare("UPDATE products SET stock = stock - ? WHERE id = ? AND stock >= ?");
-                $stmt->execute([$oi['quantity'], $oi['product_id'], $oi['quantity']]);
+                if ($oi['variant_id']) {
+                    $stmt = $this->pdo->prepare("UPDATE product_variants SET stock = stock - ? WHERE id = ? AND stock >= ?");
+                    $stmt->execute([$oi['quantity'], $oi['variant_id'], $oi['quantity']]);
+                } else {
+                    $stmt = $this->pdo->prepare("UPDATE products SET stock = stock - ? WHERE id = ? AND stock >= ?");
+                    $stmt->execute([$oi['quantity'], $oi['product_id'], $oi['quantity']]);
+                }
                 if ($stmt->rowCount() === 0) {
                     throw new \Exception("Stock update failed for {$oi['product_name']}");
                 }

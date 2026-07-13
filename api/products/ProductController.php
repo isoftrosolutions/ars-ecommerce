@@ -88,10 +88,11 @@ class ProductController extends BaseController {
 
         $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Add image URLs
+        // Add image URLs + attributes + variants
         foreach ($products as &$product) {
             $product['image_url'] = $product['image'] ? url('/uploads/products/' . $product['image']) : null;
             $product['images'] = $this->getProductImages($product['id']);
+            $product['has_variants'] = $this->productHasVariants($product['id']);
         }
 
         $paginationInfo = $this->buildPagination($total, $pagination['page'], $pagination['limit']);
@@ -122,6 +123,8 @@ class ProductController extends BaseController {
 
         $product['image_url'] = $product['image'] ? url('/uploads/products/' . $product['image']) : null;
         $product['images'] = $this->getProductImages($product['id']);
+        $product['attributes'] = $this->getProductAttributes($product['id']);
+        $product['variants'] = $this->getProductVariants($product['id']);
 
         Response::success($product, 'Product retrieved successfully');
     }
@@ -131,11 +134,14 @@ class ProductController extends BaseController {
      */
     private function createProduct() {
         $data = $this->getInputData();
+        $attrJson = null;
         if (isset($data['product'])) {
             $productData = $data['product'];
             $productData['images'] = $this->parseFormDataImages($data);
+            $attrJson = $data['attr_json'] ?? $productData['attr_json'] ?? null;
             $data = $productData;
         }
+        $data['attr_json'] = $attrJson;
 
         $this->validateProductData($data);
 
@@ -165,6 +171,11 @@ class ProductController extends BaseController {
                 $this->handleProductImages($productId, $data['images']);
             }
 
+            // Handle attributes & variants
+            if (!empty($data['attr_json'])) {
+                $this->handleProductVariantsData($productId, $data['attr_json']);
+            }
+
             $this->commit();
             $this->logAction('create_product', ['product_id' => $productId, 'name' => $data['name']]);
 
@@ -181,11 +192,14 @@ class ProductController extends BaseController {
      */
     private function updateProduct() {
         $data = $this->getInputData();
+        $attrJson = null;
         if (isset($data['product'])) {
             $productData = $data['product'];
             $productData['images'] = $this->parseFormDataImages($data);
+            $attrJson = $data['attr_json'] ?? $productData['attr_json'] ?? null;
             $data = $productData;
         }
+        $data['attr_json'] = $attrJson;
 
         ValidationMiddleware::validateRequired($data, ['id']);
         $this->validateProductData($data);
@@ -217,7 +231,12 @@ class ProductController extends BaseController {
                 $this->handleProductImages($data['id'], $data['images']);
             }
 
-$this->commit();
+            // Handle attributes & variants
+            if (!empty($data['attr_json'])) {
+                $this->handleProductVariantsData($data['id'], $data['attr_json']);
+            }
+
+            $this->commit();
             $this->logAction('update_product', ['product_id' => $data['id'], 'name' => $data['name']]);
 
             Response::success(null, 'Product updated successfully');
@@ -494,6 +513,168 @@ $this->commit();
             }
         }
         return $images;
+    }
+
+    // ── Variant / Attribute Methods ─────────────────────────────────
+
+    private function productHasVariants($productId) {
+        $stmt = $this->executeQuery(
+            "SELECT COUNT(*) FROM product_variants WHERE product_id = ?", [$productId]
+        );
+        return (int)$stmt->fetchColumn() > 0;
+    }
+
+    private function getProductAttributes($productId) {
+        $stmt = $this->executeQuery(
+            "SELECT a.id, a.name FROM product_attributes a
+             WHERE a.product_id = ? ORDER BY a.sort_order, a.id",
+            [$productId]
+        );
+        $attributes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($attributes as &$attr) {
+            $stmt = $this->executeQuery(
+                "SELECT id, `value`, sort_order, image_path
+                 FROM product_attribute_values
+                 WHERE attribute_id = ? ORDER BY sort_order, id",
+                [$attr['id']]
+            );
+            $values = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($values as &$v) {
+                $v['image_url'] = $v['image_path']
+                    ? url('/uploads/products/' . $v['image_path'])
+                    : null;
+            }
+            $attr['values'] = $values;
+        }
+
+        return $attributes;
+    }
+
+    private function getProductVariants($productId) {
+        $stmt = $this->executeQuery(
+            "SELECT * FROM product_variants WHERE product_id = ? ORDER BY sort_order, id",
+            [$productId]
+        );
+        $variants = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($variants as &$variant) {
+            $stmt = $this->executeQuery(
+                "SELECT attribute_value_id FROM product_variant_values WHERE variant_id = ?",
+                [$variant['id']]
+            );
+            $variant['value_ids'] = array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'attribute_value_id');
+            $variant['image_url'] = $variant['image']
+                ? url('/uploads/products/' . $variant['image'])
+                : null;
+        }
+
+        return $variants;
+    }
+
+    /**
+     * Parse attr_json from form data and save all attributes/values/variants.
+     * Replaces all existing data for the product (delete + recreate).
+     */
+    private function handleProductVariantsData($productId, $attrJson) {
+        $data = json_decode($attrJson, true);
+        if (!$data || empty($data['attributes'])) {
+            // Clear all existing attributes/variants
+            $this->executeQuery("DELETE FROM product_attributes WHERE product_id = ?", [$productId]);
+            return;
+        }
+
+        // Delete existing (cascade removes values, variants, variant_values)
+        $this->executeQuery("DELETE FROM product_attributes WHERE product_id = ?", [$productId]);
+
+        $attrIndexMap = []; // old temp index → new attribute DB id
+        $valueIndexMap = []; // "attrIdx:valIdx" → new attribute_value DB id
+
+        // 1. Create attributes and values
+        foreach ($data['attributes'] as $aIdx => $attr) {
+            $stmt = $this->executeQuery(
+                "INSERT INTO product_attributes (product_id, name, sort_order) VALUES (?, ?, ?)",
+                [$productId, $attr['name'], $aIdx]
+            );
+            $attrId = $this->pdo->lastInsertId();
+            $attrIndexMap[$aIdx] = $attrId;
+
+            if (!empty($attr['values'])) {
+                foreach ($attr['values'] as $vIdx => $val) {
+                    $imagePath = null;
+
+                    // Check for uploaded file for this value
+                    $tempId = $val['image_temp_id'] ?? null;
+                    if ($tempId !== null && isset($_FILES["attr_value_img_$tempId"])) {
+                        $imagePath = $this->handleAttributeValueFileUpload($_FILES["attr_value_img_$tempId"]);
+                    } elseif (!empty($val['image_path'])) {
+                        // Keep existing image path
+                        $imagePath = basename($val['image_path']);
+                    }
+
+                    $stmt = $this->executeQuery(
+                        "INSERT INTO product_attribute_values (attribute_id, `value`, sort_order, image_path) VALUES (?, ?, ?, ?)",
+                        [$attrId, $val['value'], $vIdx, $imagePath]
+                    );
+                    $valueIndexMap["$aIdx:$vIdx"] = $this->pdo->lastInsertId();
+                }
+            }
+        }
+
+        // 2. Create variants
+        if (!empty($data['variants'])) {
+            foreach ($data['variants'] as $vIdx => $variant) {
+                $stmt = $this->executeQuery(
+                    "INSERT INTO product_variants (product_id, sku, price, discount_price, stock, image, is_default, sort_order)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    [
+                        $productId,
+                        !empty($variant['sku']) ? $variant['sku'] : null,
+                        !empty($variant['price']) ? $variant['price'] : null,
+                        !empty($variant['discount_price']) ? $variant['discount_price'] : null,
+                        isset($variant['stock']) ? (int)$variant['stock'] : 0,
+                        null,
+                        !empty($variant['is_default']) ? 1 : 0,
+                        $vIdx
+                    ]
+                );
+                $variantId = $this->pdo->lastInsertId();
+
+                // Link variant to attribute values via value_refs
+                if (!empty($variant['value_refs'])) {
+                    foreach ($variant['value_refs'] as $ref) {
+                        $valueId = $valueIndexMap[$ref] ?? null;
+                        if ($valueId) {
+                            $this->executeQuery(
+                                "INSERT INTO product_variant_values (variant_id, attribute_value_id) VALUES (?, ?)",
+                                [$variantId, $valueId]
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private function handleAttributeValueFileUpload($file) {
+        $uploadDir = __DIR__ . '/../../uploads/products/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        $allowed = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+        if (!in_array($ext, $allowed)) {
+            return null;
+        }
+
+        $fileName = uniqid('attr_') . '.' . $ext;
+        if (move_uploaded_file($file['tmp_name'], $uploadDir . $fileName)) {
+            chmod($uploadDir . $fileName, 0644);
+            return $fileName;
+        }
+
+        return null;
     }
 }
 ?>

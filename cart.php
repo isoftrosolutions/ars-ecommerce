@@ -59,12 +59,15 @@ $grand_total = $cart_total + $shipping_charge;
                                                     <?php echo h($item['name']); ?>
                                                 </a>
                                             </h6>
-                                            <small class="text-muted">Stock: <?php echo $item['stock']; ?> available</small>
+                                            <?php if ($item['variant_label']): ?>
+                                                <small class="text-muted d-block"><?php echo h($item['variant_label']); ?></small>
+                                            <?php endif; ?>
+                                            <small class="text-muted">Stock: <?php echo $item['effective_stock']; ?> available</small>
                                         </div>
                                         <div class="col-md-2">
                                             <div class="d-flex align-items-center">
-                                                <span class="fw-bold"><?php echo format_price($item['discount_price'] ?: $item['price']); ?></span>
-                                                <?php if ($item['discount_price']): ?>
+                                                <span class="fw-bold"><?php echo format_price($item['effective_price']); ?></span>
+                                                <?php if ($item['discount_price'] && $item['effective_price'] < $item['price']): ?>
                                                     <small class="text-muted text-decoration-line-through ms-2">
                                                         <?php echo format_price($item['price']); ?>
                                                     </small>
@@ -74,27 +77,27 @@ $grand_total = $cart_total + $shipping_charge;
                                         <div class="col-md-2">
                                             <div class="input-group input-group-sm" style="width: 120px;">
                                                 <button class="btn btn-outline-secondary btn-sm quantity-btn"
-                                                        onclick="updateQuantity(<?php echo $item['product_id']; ?>, <?php echo $item['quantity'] - 1; ?>)">
+                                                        onclick="updateQuantity(<?php echo $item['product_id']; ?>, <?php echo $item['quantity'] - 1; ?>, <?php echo $item['variant_id'] ?: 'null'; ?>)">
                                                     <i class="bi bi-dash"></i>
                                                 </button>
                                                 <input type="number" class="form-control text-center quantity-input"
                                                        value="<?php echo $item['quantity']; ?>"
-                                                       min="1" max="<?php echo $item['stock']; ?>"
-                                                       onchange="updateQuantity(<?php echo $item['product_id']; ?>, this.value)">
+                                                       min="1" max="<?php echo $item['effective_stock']; ?>"
+                                                       onchange="updateQuantity(<?php echo $item['product_id']; ?>, this.value, <?php echo $item['variant_id'] ?: 'null'; ?>)">
                                                 <button class="btn btn-outline-secondary btn-sm quantity-btn"
-                                                        onclick="updateQuantity(<?php echo $item['product_id']; ?>, <?php echo $item['quantity'] + 1; ?>)">
+                                                        onclick="updateQuantity(<?php echo $item['product_id']; ?>, <?php echo $item['quantity'] + 1; ?>, <?php echo $item['variant_id'] ?: 'null'; ?>)">
                                                     <i class="bi bi-plus"></i>
                                                 </button>
                                             </div>
                                         </div>
                                         <div class="col-md-1">
                                             <span class="fw-bold">
-                                                <?php echo format_price(($item['discount_price'] ?: $item['price']) * $item['quantity']); ?>
+                                                <?php echo format_price($item['effective_price'] * $item['quantity']); ?>
                                             </span>
                                         </div>
                                         <div class="col-md-1">
                                             <button class="btn btn-outline-danger btn-sm"
-                                                    onclick="removeItem(<?php echo $item['product_id']; ?>)">
+                                                    onclick="removeItem(<?php echo $item['product_id']; ?>, <?php echo $item['variant_id'] ?: 'null'; ?>)">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </div>
@@ -157,10 +160,12 @@ $grand_total = $cart_total + $shipping_charge;
 
 <script>
 // Update quantity function
-function updateQuantity(productId, quantity) {
+function updateQuantity(productId, quantity, variantId) {
     if (quantity < 1) return;
+    var url = '<?php echo url("/cart-action"); ?>?action=update&id=' + productId;
+    if (variantId) url += '&variant_id=' + variantId;
 
-    fetch('<?php echo url("/cart-action"); ?>?action=update&id=' + productId, {
+    fetch(url, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -182,12 +187,15 @@ function updateQuantity(productId, quantity) {
 }
 
 // Remove item function
-async function removeItem(productId) {
+async function removeItem(productId, variantId) {
     if (!await arsConfirm('Are you sure you want to remove this item from your cart?')) {
         return;
     }
 
-    fetch('<?php echo url("/cart-action"); ?>?action=remove&id=' + productId)
+    var url = '<?php echo url("/cart-action"); ?>?action=remove&id=' + productId;
+    if (variantId) url += '&variant_id=' + variantId;
+
+    fetch(url)
     .then(response => response.json())
     .then(data => {
         if (data.success) {

@@ -129,6 +129,54 @@ function h($string) {
 }
 
 /**
+ * Get variant label for display (e.g., "Color: Red, Size: M")
+ */
+function get_variant_label($variant_id) {
+    global $pdo;
+    try {
+        $stmt = $pdo->prepare("
+            SELECT pav.value, pa.name
+            FROM product_variant_values pvv
+            JOIN product_attribute_values pav ON pvv.attribute_value_id = pav.id
+            JOIN product_attributes pa ON pav.attribute_id = pa.id
+            WHERE pvv.variant_id = ?
+            ORDER BY pa.sort_order, pav.sort_order
+        ");
+        $stmt->execute([$variant_id]);
+        $rows = $stmt->fetchAll();
+        $parts = array_map(function($r) { return $r['name'] . ': ' . $r['value']; }, $rows);
+        return implode(', ', $parts);
+    } catch (PDOException $e) {
+        return '';
+    }
+}
+
+/**
+ * Get the effective price and stock for a product+variant combo
+ */
+function get_variant_pricing($product_id, $variant_id = null) {
+    global $pdo;
+    try {
+        if ($variant_id) {
+            $stmt = $pdo->prepare("
+                SELECT p.price as base_price, p.discount_price as base_discount,
+                       v.price, v.discount_price, v.stock, v.sku
+                FROM products p
+                LEFT JOIN product_variants v ON v.id = ? AND v.product_id = p.id
+                WHERE p.id = ?
+            ");
+            $stmt->execute([$variant_id, $product_id]);
+        } else {
+            $stmt = $pdo->prepare("SELECT price, discount_price, stock, sku FROM products WHERE id = ?");
+            $stmt->execute([$product_id]);
+        }
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+    } catch (PDOException $e) {
+        return [];
+    }
+}
+
+/**
  * Get cart items for current user/session
  */
 function get_cart() {
@@ -138,9 +186,12 @@ function get_cart() {
     $session_id = session_id();
 
     try {
-        $query = "SELECT ci.*, p.name, p.price, p.discount_price, p.image, p.slug, p.stock
+        $query = "SELECT ci.*, p.name, p.price, p.discount_price, p.image, p.slug, p.stock,
+                         v.price as variant_price, v.discount_price as variant_discount,
+                         v.stock as variant_stock, v.sku as variant_sku, v.image as variant_image
                   FROM cart_items ci
                   JOIN products p ON ci.product_id = p.id
+                  LEFT JOIN product_variants v ON ci.variant_id = v.id
                   WHERE 1=1";
 
         $params = [];
@@ -152,9 +203,28 @@ function get_cart() {
             $params[] = $session_id;
         }
 
+        $query .= " ORDER BY ci.created_at ASC";
+
         $stmt = $pdo->prepare($query);
         $stmt->execute($params);
-        return $stmt->fetchAll();
+        $items = $stmt->fetchAll();
+
+        // Enrich with variant labels
+        foreach ($items as &$item) {
+            if ($item['variant_id']) {
+                $item['variant_label'] = get_variant_label($item['variant_id']);
+                $item['effective_price'] = $item['variant_discount'] ?: $item['variant_price'] ?: $item['discount_price'] ?: $item['price'];
+                $item['effective_stock'] = $item['variant_stock'] ?? $item['stock'];
+                $item['display_sku'] = $item['variant_sku'] ?: $item['sku'];
+            } else {
+                $item['variant_label'] = null;
+                $item['effective_price'] = $item['discount_price'] ?: $item['price'];
+                $item['effective_stock'] = $item['stock'];
+                $item['display_sku'] = $item['sku'];
+            }
+        }
+
+        return $items;
     } catch (PDOException $e) {
         return [];
     }
@@ -176,7 +246,7 @@ function get_cart_total() {
     $total = 0;
 
     foreach ($cart_items as $item) {
-        $price = $item['discount_price'] ?: $item['price'];
+        $price = $item['effective_price'] ?? ($item['discount_price'] ?: $item['price']);
         $total += $price * $item['quantity'];
     }
 
@@ -186,25 +256,46 @@ function get_cart_total() {
 /**
  * Add item to cart
  */
-function add_to_cart($product_id, $quantity = 1) {
+function add_to_cart($product_id, $quantity = 1, $variant_id = null) {
     global $pdo;
 
     $user_id = $_SESSION['user']['id'] ?? null;
     $session_id = session_id();
 
     try {
-        // Check if product exists and has stock
-        $stmt = $pdo->prepare("SELECT stock FROM products WHERE id = ?");
-        $stmt->execute([$product_id]);
-        $product = $stmt->fetch();
+        if ($variant_id) {
+            // Check variant stock
+            $stmt = $pdo->prepare("SELECT v.stock, v.price, v.discount_price FROM product_variants v WHERE v.id = ? AND v.product_id = ?");
+            $stmt->execute([$variant_id, $product_id]);
+            $variant = $stmt->fetch();
 
-        if (!$product || $product['stock'] < $quantity) {
-            return ['success' => false, 'message' => 'Product not available or insufficient stock'];
+            if (!$variant) {
+                return ['success' => false, 'message' => 'Variant not found'];
+            }
+            if ($variant['stock'] < $quantity) {
+                return ['success' => false, 'message' => 'Insufficient stock for selected variant'];
+            }
+        } else {
+            // Check product stock
+            $stmt = $pdo->prepare("SELECT stock FROM products WHERE id = ?");
+            $stmt->execute([$product_id]);
+            $product = $stmt->fetch();
+
+            if (!$product || $product['stock'] < $quantity) {
+                return ['success' => false, 'message' => 'Product not available or insufficient stock'];
+            }
         }
 
-        // Check if item already in cart
+        // Check if item already in cart (same product + same variant)
         $query = "SELECT id, quantity FROM cart_items WHERE product_id = ?";
         $params = [$product_id];
+
+        if ($variant_id) {
+            $query .= " AND COALESCE(variant_id, 0) = ?";
+            $params[] = $variant_id;
+        } else {
+            $query .= " AND variant_id IS NULL";
+        }
 
         if ($user_id) {
             $query .= " AND user_id = ?";
@@ -218,21 +309,19 @@ function add_to_cart($product_id, $quantity = 1) {
         $stmt->execute($params);
         $existing = $stmt->fetch();
 
+        $maxStock = $variant_id ? $variant['stock'] : $product['stock'];
+
         if ($existing) {
-            // Update quantity
             $new_quantity = $existing['quantity'] + $quantity;
-            if ($new_quantity > $product['stock']) {
-                $new_quantity = $product['stock'];
+            if ($new_quantity > $maxStock) {
+                $new_quantity = $maxStock;
             }
 
-            $update_query = "UPDATE cart_items SET quantity = ?, updated_at = NOW() WHERE id = ?";
-            $stmt = $pdo->prepare($update_query);
+            $stmt = $pdo->prepare("UPDATE cart_items SET quantity = ?, updated_at = NOW() WHERE id = ?");
             $stmt->execute([$new_quantity, $existing['id']]);
         } else {
-            // Insert new item
-            $insert_query = "INSERT INTO cart_items (user_id, session_id, product_id, quantity) VALUES (?, ?, ?, ?)";
-            $stmt = $pdo->prepare($insert_query);
-            $stmt->execute([$user_id, $session_id, $product_id, $quantity]);
+            $stmt = $pdo->prepare("INSERT INTO cart_items (user_id, session_id, product_id, variant_id, quantity) VALUES (?, ?, ?, ?, ?)");
+            $stmt->execute([$user_id, $session_id, $product_id, $variant_id, $quantity]);
         }
 
         return ['success' => true, 'message' => 'Item added to cart'];
@@ -244,28 +333,42 @@ function add_to_cart($product_id, $quantity = 1) {
 /**
  * Update cart item quantity
  */
-function update_cart_quantity($product_id, $quantity) {
+function update_cart_quantity($product_id, $quantity, $variant_id = null) {
     global $pdo;
 
     if ($quantity <= 0) {
-        return remove_from_cart($product_id);
+        return remove_from_cart($product_id, $variant_id);
     }
 
     $user_id = $_SESSION['user']['id'] ?? null;
     $session_id = session_id();
 
     try {
-        // Check stock
-        $stmt = $pdo->prepare("SELECT stock FROM products WHERE id = ?");
-        $stmt->execute([$product_id]);
-        $product = $stmt->fetch();
-
-        if (!$product || $product['stock'] < $quantity) {
-            return ['success' => false, 'message' => 'Insufficient stock'];
+        if ($variant_id) {
+            $stmt = $pdo->prepare("SELECT stock FROM product_variants WHERE id = ? AND product_id = ?");
+            $stmt->execute([$variant_id, $product_id]);
+            $v = $stmt->fetch();
+            if (!$v || $v['stock'] < $quantity) {
+                return ['success' => false, 'message' => 'Insufficient stock'];
+            }
+        } else {
+            $stmt = $pdo->prepare("SELECT stock FROM products WHERE id = ?");
+            $stmt->execute([$product_id]);
+            $product = $stmt->fetch();
+            if (!$product || $product['stock'] < $quantity) {
+                return ['success' => false, 'message' => 'Insufficient stock'];
+            }
         }
 
         $query = "UPDATE cart_items SET quantity = ?, updated_at = NOW() WHERE product_id = ?";
         $params = [$quantity, $product_id];
+
+        if ($variant_id) {
+            $query .= " AND variant_id = ?";
+            $params[] = $variant_id;
+        } else {
+            $query .= " AND variant_id IS NULL";
+        }
 
         if ($user_id) {
             $query .= " AND user_id = ?";
@@ -287,7 +390,7 @@ function update_cart_quantity($product_id, $quantity) {
 /**
  * Remove item from cart
  */
-function remove_from_cart($product_id) {
+function remove_from_cart($product_id, $variant_id = null) {
     global $pdo;
 
     $user_id = $_SESSION['user']['id'] ?? null;
@@ -296,6 +399,13 @@ function remove_from_cart($product_id) {
     try {
         $query = "DELETE FROM cart_items WHERE product_id = ?";
         $params = [$product_id];
+
+        if ($variant_id) {
+            $query .= " AND variant_id = ?";
+            $params[] = $variant_id;
+        } else {
+            $query .= " AND variant_id IS NULL";
+        }
 
         if ($user_id) {
             $query .= " AND user_id = ?";

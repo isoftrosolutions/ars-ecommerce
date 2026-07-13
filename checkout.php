@@ -91,13 +91,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $order_id = $pdo->lastInsertId();
 
-            $stmt = $pdo->prepare("INSERT INTO order_items (order_id, product_id, quantity, price, discount_price) VALUES (?, ?, ?, ?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO order_items (order_id, product_id, variant_id, quantity, price, discount_price) VALUES (?, ?, ?, ?, ?, ?)");
             foreach ($cart_items as $item) {
                 $stmt->execute([
                     $order_id,
                     $item['product_id'],
+                    $item['variant_id'] ?: null,
                     $item['quantity'],
-                    $item['price'],
+                    $item['effective_price'],
                     $item['discount_price'] ?? null,
                 ]);
             }

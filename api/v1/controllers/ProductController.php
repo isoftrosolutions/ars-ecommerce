@@ -87,6 +87,7 @@ class ProductController
             $product['in_stock'] = (int)$product['stock'] > 0;
             $product['rating'] = $this->getProductRating($product['id']);
             $product['review_count'] = $this->getReviewCount($product['id']);
+            $product['has_variants'] = $this->productHasVariants($product['id']);
         }
         unset($product);
 
@@ -156,6 +157,9 @@ class ProductController
         $product['rating'] = $this->getProductRating($id);
         $product['review_count'] = $this->getReviewCount($id);
 
+        $product['attributes'] = $this->getProductAttributes($id);
+        $product['variants'] = $this->getProductVariants($id);
+
         // Get reviews
         $stmt = $this->pdo->prepare("
             SELECT pr.rating, pr.comment, pr.created_at, u.full_name as user_name
@@ -198,6 +202,7 @@ class ProductController
             $product['in_stock'] = (int)$product['stock'] > 0;
             $product['rating'] = $this->getProductRating($product['id']);
             $product['review_count'] = $this->getReviewCount($product['id']);
+            $product['has_variants'] = $this->productHasVariants($product['id']);
         }
         unset($product);
 
@@ -227,6 +232,7 @@ class ProductController
             $product['in_stock'] = (int)$product['stock'] > 0;
             $product['rating'] = $this->getProductRating($product['id']);
             $product['review_count'] = $this->getReviewCount($product['id']);
+            $product['has_variants'] = $this->productHasVariants($product['id']);
         }
         unset($product);
 
@@ -274,5 +280,61 @@ class ProductController
             return round((($price - $discountPrice) / $price) * 100);
         }
         return 0;
+    }
+
+    private function productHasVariants($productId)
+    {
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM product_variants WHERE product_id = ?");
+        $stmt->execute([$productId]);
+        return (int)$stmt->fetchColumn() > 0;
+    }
+
+    // ── Variant support ───────────────────────────────────────────
+
+    private function getProductAttributes($productId)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT id, name FROM product_attributes WHERE product_id = ? ORDER BY sort_order, id
+        ");
+        $stmt->execute([$productId]);
+        $attributes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($attributes as &$attr) {
+            $stmt = $this->pdo->prepare("
+                SELECT id, `value`, sort_order, image_path
+                FROM product_attribute_values
+                WHERE attribute_id = ? ORDER BY sort_order, id
+            ");
+            $stmt->execute([$attr['id']]);
+            $values = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($values as &$v) {
+                $v['image_url'] = $v['image_path'] ? product_image_url($v['image_path']) : null;
+            }
+            $attr['values'] = $values;
+        }
+
+        return $attributes;
+    }
+
+    private function getProductVariants($productId)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT id, sku, price, discount_price, stock, image, is_default
+            FROM product_variants WHERE product_id = ? ORDER BY sort_order, id
+        ");
+        $stmt->execute([$productId]);
+        $variants = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($variants as &$variant) {
+            $stmt = $this->pdo->prepare("
+                SELECT attribute_value_id FROM product_variant_values WHERE variant_id = ?
+            ");
+            $stmt->execute([$variant['id']]);
+            $variant['value_ids'] = array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'attribute_value_id');
+            $variant['image'] = $variant['image'] ? product_image_url($variant['image']) : null;
+            $variant['in_stock'] = (int)$variant['stock'] > 0;
+        }
+
+        return $variants;
     }
 }

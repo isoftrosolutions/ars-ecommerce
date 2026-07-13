@@ -47,6 +47,25 @@ try {
     $stmt->execute([$product['id']]);
     $gallery_images = $stmt->fetchAll();
 
+    // Variants
+    $stmt = $pdo->prepare("SELECT * FROM product_attributes WHERE product_id = ? ORDER BY sort_order, id");
+    $stmt->execute([$product['id']]);
+    $attributes = $stmt->fetchAll();
+    foreach ($attributes as &$attr) {
+        $stmt = $pdo->prepare("SELECT * FROM product_attribute_values WHERE attribute_id = ? ORDER BY sort_order, id");
+        $stmt->execute([$attr['id']]);
+        $attr['values'] = $stmt->fetchAll();
+    }
+    $stmt = $pdo->prepare("SELECT * FROM product_variants WHERE product_id = ? ORDER BY sort_order, id");
+    $stmt->execute([$product['id']]);
+    $variants = $stmt->fetchAll();
+    foreach ($variants as &$v) {
+        $stmt = $pdo->prepare("SELECT attribute_value_id FROM product_variant_values WHERE variant_id = ?");
+        $stmt->execute([$v['id']]);
+        $v['value_ids'] = array_column($stmt->fetchAll(), 'attribute_value_id');
+    }
+    unset($attr, $v);
+
 } catch (PDOException $e) { $error = $e->getMessage(); $product = null; }
 
 // ── SEO meta — set BEFORE header include ─────────────────────
@@ -262,31 +281,77 @@ $_schema_rcount = (int)($product['review_count'] ?? 0);
             <div class="ps-lg-4">
                 <div class="d-flex align-items-center justify-content-between mb-2">
                     <div class="text-uppercase small fw-bold text-primary"><?php echo h($product['category_name']); ?></div>
-                    <?php if ($product['stock'] > 0): ?>
-                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 rounded-pill"><i class="bi bi-check-circle me-1"></i>In Stock (<?php echo $product['stock']; ?>)</span>
-                    <?php else: ?>
-                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 rounded-pill"><i class="bi bi-x-circle me-1"></i>Out of Stock</span>
-                    <?php endif; ?>
+                    <span id="variant-stock-badge">
+                        <?php if ($product['stock'] > 0): ?>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 rounded-pill"><i class="bi bi-check-circle me-1"></i>In Stock (<span id="variant-stock-qty"><?php echo $product['stock']; ?></span>)</span>
+                        <?php else: ?>
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 rounded-pill"><i class="bi bi-x-circle me-1"></i>Out of Stock</span>
+                        <?php endif; ?>
+                    </span>
                 </div>
                 
                 <h1 class="product-title mb-2"><?php echo h($product['name']); ?></h1>
                 
-                <?php if ($product['sku']): ?>
-                    <div class="small text-muted mb-3 fw-medium">SKU: <?php echo h($product['sku']); ?></div>
-                <?php endif; ?>
+                <div id="variant-sku-wrap" class="small text-muted mb-3 fw-medium" style="<?php echo $product['sku'] ? '' : 'display:none;'; ?>">
+                    SKU: <span id="variant-sku"><?php echo h($product['sku'] ?: ''); ?></span>
+                </div>
 
                 <div class="d-flex align-items-center mb-4 p-3 rounded-3" style="background-color: #f8fafc; border-left: 4px solid var(--primary-color);">
                     <div class="price-tag me-3" style="font-size: 2.2rem; color: #b12704;">
-                        Rs. <?php echo number_format($product['discount_price'] ?: $product['price'], 0); ?>
+                        Rs. <span id="variant-price"><?php echo number_format($product['discount_price'] ?: $product['price'], 0); ?></span>
                     </div>
-                    <?php if ($product['discount_price']): ?>
-                        <div class="text-muted text-decoration-line-through fs-6">Rs. <?php echo number_format($product['price'], 0); ?></div>
-                    <?php endif; ?>
+                    <div id="variant-original-price" style="<?php echo $product['discount_price'] ? '' : 'display:none;'; ?>" class="text-muted text-decoration-line-through fs-6">
+                        Rs. <span id="variant-original-price-val"><?php echo number_format($product['price'], 0); ?></span>
+                    </div>
                 </div>
 
                 <div class="product-description text-secondary mb-4" style="line-height: 1.7; font-size: 0.95rem;">
                     <?php echo nl2br(h($product['description'])); ?>
                 </div>
+
+                <?php if (!empty($attributes)): ?>
+                <!-- ═══ Variant Selectors ═══ -->
+                <div id="variant-selectors" class="mb-4">
+                    <input type="hidden" id="selected-variant-id" value="">
+                    <?php foreach ($attributes as $attr):
+                        $isColor = strtolower($attr['name']) === 'color';
+                    ?>
+                    <div class="mb-3" data-attr-id="<?php echo $attr['id']; ?>">
+                        <label class="fw-semibold small text-uppercase mb-2 d-block">
+                            <?php echo h($attr['name']); ?>:
+                            <span class="fw-normal text-muted" id="selected-<?php echo $attr['id']; ?>">
+                                <?php echo h($attr['values'][0]['value'] ?? ''); ?>
+                            </span>
+                        </label>
+                        <div class="d-flex flex-wrap gap-2">
+                            <?php foreach ($attr['values'] as $val):
+                                $hasImage = $isColor && $val['image_path'];
+                                $imgUrl = $hasImage ? getProductImage($val['image_path']) : null;
+                            ?>
+                                <button type="button"
+                                    class="variant-btn <?php echo $isColor ? 'variant-color' : 'variant-text'; ?> <?php echo $val === $attr['values'][0] ? 'active' : ''; ?>"
+                                    data-attr-id="<?php echo $attr['id']; ?>"
+                                    data-value-id="<?php echo $val['id']; ?>"
+                                    data-image="<?php echo $imgUrl ? h($imgUrl) : ''; ?>"
+                                    onclick="selectVariantValue(<?php echo $attr['id']; ?>, <?php echo $val['id']; ?>, this)"
+                                    style="border:2px solid #ddd; border-radius:8px; padding:<?php echo $isColor ? '3px' : '8px 16px'; ?>; background:#fff; cursor:pointer; transition:all 0.15s; <?php echo $isColor ? 'width:44px;height:44px;' : ''; ?>">
+                                    <?php if ($imgUrl): ?>
+                                        <img src="<?php echo $imgUrl; ?>" alt="<?php echo h($val['value']); ?>" style="width:100%;height:100%;object-fit:cover;border-radius:6px;" title="<?php echo h($val['value']); ?>">
+                                    <?php else: ?>
+                                        <?php echo h($val['value']); ?>
+                                    <?php endif; ?>
+                                </button>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                <style>
+                    .variant-btn.active { border-color: var(--primary-color) !important; box-shadow: 0 0 0 2px rgba(234,108,0,0.25); }
+                    .variant-btn:hover { border-color: #aaa; }
+                    .variant-color.active { border-color: var(--primary-color) !important; }
+                </style>
+                <?php endif; ?>
 
                 <!-- Desktop Only Actions -->
                 <div class="desktop-actions p-4 rounded-4" style="background-color: #fff; border: 1px solid #eaeaea; box-shadow: 0 8px 24px rgba(0,0,0,0.04);">
@@ -351,16 +416,29 @@ $_schema_rcount = (int)($product['review_count'] ?? 0);
 </div>
 
 <script>
+// ═══ Variant Data (from server) ═══
+const variantData = {
+    attributes: <?php echo json_encode($attributes ?? []); ?>,
+    variants: <?php echo json_encode($variants ?? []); ?>,
+    baseStock: <?php echo $product['stock']; ?>,
+    basePrice: <?php echo $product['price']; ?>,
+    baseDiscountPrice: <?php echo json_encode($product['discount_price']); ?>,
+    baseSku: <?php echo json_encode($product['sku']); ?>,
+    baseImage: <?php echo json_encode(getProductImage($product['image'])); ?>
+};
+let currentSelection = {}; // attribute_value_id → attribute_id mapping
+
 function changeMainImage(src, element) {
     const mainImg = document.getElementById('mainProductImage');
-    mainImg.style.opacity = '0.7'; // Small flash effect
+    mainImg.style.opacity = '0.7';
     setTimeout(() => {
         mainImg.src = src;
         mainImg.style.opacity = '1';
     }, 50);
-    
-    document.querySelectorAll('.thumbnail-item').forEach(item => item.classList.remove('active'));
-    element.classList.add('active');
+    if (element) {
+        document.querySelectorAll('.thumbnail-item').forEach(item => item.classList.remove('active'));
+        element.classList.add('active');
+    }
 }
 
 function updateQty(delta) {
@@ -368,17 +446,144 @@ function updateQty(delta) {
     const mobileSpan = document.getElementById('qty-mobile');
     let val = parseInt(input.value) + delta;
     if (val < 1) val = 1;
-    if (val > <?php echo $product['stock']; ?>) val = <?php echo $product['stock']; ?>;
+    const maxStock = variantData.variants.length > 0
+        ? (getSelectedVariant()?.stock || 0)
+        : variantData.baseStock;
+    if (val > maxStock) val = Math.max(1, maxStock);
     input.value = val;
-    mobileSpan.innerText = val;
+    if (mobileSpan) mobileSpan.innerText = val;
+}
+
+// ═══ Variant Selection ═══
+function selectVariantValue(attrId, valueId, btn) {
+    // Update selection map
+    currentSelection[attrId] = valueId;
+
+    // Update active button styling
+    const group = btn.closest('[data-attr-id]');
+    group.querySelectorAll('.variant-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    // Update label text
+    const label = document.getElementById('selected-' + attrId);
+    if (label) label.textContent = btn.textContent.trim() || (btn.querySelector('img')?.title || '');
+
+    // Find matching variant
+    const variant = getSelectedVariant();
+    applyVariant(variant);
+}
+
+function getSelectedVariant() {
+    const selectedIds = Object.values(currentSelection).sort();
+    if (selectedIds.length === 0) return null;
+
+    return variantData.variants.find(v => {
+        const vIds = (v.value_ids || []).map(Number).sort();
+        return vIds.length === selectedIds.length && vIds.every((id, i) => id === selectedIds[i]);
+    }) || null;
+}
+
+function applyVariant(variant) {
+    const priceEl = document.getElementById('variant-price');
+    const origPriceEl = document.getElementById('variant-original-price');
+    const origPriceValEl = document.getElementById('variant-original-price-val');
+    const skuEl = document.getElementById('variant-sku');
+    const skuWrap = document.getElementById('variant-sku-wrap');
+    const stockBadge = document.getElementById('variant-stock-badge');
+    const stockQty = document.getElementById('variant-stock-qty');
+    const mainImg = document.getElementById('mainProductImage');
+    const addBtn = document.querySelector('.desktop-actions .btn-primary');
+    const variantIdEl = document.getElementById('selected-variant-id');
+
+    if (variant) {
+        variantIdEl.value = variant.id;
+
+        // Price
+        const price = variant.discount_price || variant.price || variantData.basePrice;
+        const discountPrice = variant.discount_price || null;
+        priceEl.textContent = Number(price).toLocaleString('en-IN');
+        if (discountPrice && discountPrice < price) {
+            origPriceValEl.textContent = Number(variant.price).toLocaleString('en-IN');
+            origPriceEl.style.display = '';
+        } else {
+            origPriceEl.style.display = 'none';
+        }
+
+        // SKU
+        if (variant.sku) {
+            skuEl.textContent = variant.sku;
+            skuWrap.style.display = '';
+        } else {
+            skuWrap.style.display = 'none';
+        }
+
+        // Stock
+        const stock = parseInt(variant.stock) || 0;
+        stockBadge.innerHTML = stock > 0
+            ? '<span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 rounded-pill"><i class="bi bi-check-circle me-1"></i>In Stock (<span id="variant-stock-qty">' + stock + '</span>)</span>'
+            : '<span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 rounded-pill"><i class="bi bi-x-circle me-1"></i>Out of Stock</span>';
+
+        // Image — look for a matching attribute value with an image (usually color)
+        let variantImage = null;
+        if (variantData.attributes) {
+            for (const attr of variantData.attributes) {
+                for (const val of attr.values || []) {
+                    if (variant.value_ids && variant.value_ids.includes(val.id) && val.image_path) {
+                        variantImage = '<?php echo url('/uploads/products/'); ?>' + val.image_path;
+                        break;
+                    }
+                }
+                if (variantImage) break;
+            }
+        }
+        if (variantImage) mainImg.src = variantImage;
+    } else {
+        // No variant selected — use base values
+        variantIdEl.value = '';
+        priceEl.textContent = Number(variantData.baseDiscountPrice || variantData.basePrice).toLocaleString('en-IN');
+        if (variantData.baseDiscountPrice) {
+            origPriceValEl.textContent = Number(variantData.basePrice).toLocaleString('en-IN');
+            origPriceEl.style.display = '';
+        } else {
+            origPriceEl.style.display = 'none';
+        }
+        skuEl.textContent = variantData.baseSku || '';
+        skuWrap.style.display = variantData.baseSku ? '' : 'none';
+        stockBadge.innerHTML = variantData.baseStock > 0
+            ? '<span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 rounded-pill"><i class="bi bi-check-circle me-1"></i>In Stock (<span id="variant-stock-qty">' + variantData.baseStock + '</span>)</span>'
+            : '<span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 rounded-pill"><i class="bi bi-x-circle me-1"></i>Out of Stock</span>';
+        mainImg.src = variantData.baseImage;
+    }
+
+    // Update add-to-cart button state
+    const currentStock = variant ? (parseInt(variant.stock) || 0) : variantData.baseStock;
+    if (addBtn) {
+        addBtn.disabled = currentStock < 1;
+        addBtn.innerHTML = currentStock < 1
+            ? '<i class="bi bi-cart-plus me-2"></i> Out of Stock'
+            : '<i class="bi bi-cart-plus me-2"></i> Add to Cart';
+    }
+
+    // Reset qty if current exceeds stock
+    const qtyInput = document.getElementById('qty');
+    const qtyMobile = document.getElementById('qty-mobile');
+    if (parseInt(qtyInput.value) > Math.max(1, currentStock)) {
+        qtyInput.value = Math.max(1, currentStock);
+        if (qtyMobile) qtyMobile.innerText = qtyInput.value;
+    }
+    qtyInput.max = Math.max(1, currentStock);
 }
 
 function doAddToCart() {
     const qty = document.getElementById('qty').value;
+    const variantId = document.getElementById('selected-variant-id')?.value || '';
     const btn = event.target;
     btn.disabled = true;
-    
-    fetch('<?php echo url("/cart-action"); ?>?action=add&id=<?php echo $product["id"]; ?>&quantity=' + qty)
+
+    let url = '<?php echo url("/cart-action"); ?>?action=add&id=<?php echo $product["id"]; ?>&quantity=' + qty;
+    if (variantId) url += '&variant_id=' + variantId;
+
+    fetch(url)
     .then(res => res.json())
     .then(data => {
         if (data.success) {
@@ -398,6 +603,23 @@ function toggleWish(id) {
     fetch('<?php echo url("/wishlist"); ?>?action=add&product_id=' + id)
     .then(() => arsAlert('Added to wishlist!', 'success'));
 }
+
+// Auto-select first value for each attribute to get initial variant
+document.addEventListener('DOMContentLoaded', function() {
+    const selectors = document.getElementById('variant-selectors');
+    if (!selectors) return;
+    selectors.querySelectorAll('[data-attr-id]').forEach(group => {
+        const firstBtn = group.querySelector('.variant-btn');
+        if (firstBtn) {
+            const attrId = parseInt(group.dataset.attrId);
+            const valId = parseInt(firstBtn.dataset.valueId);
+            currentSelection[attrId] = valId;
+        }
+    });
+    // Apply initial variant
+    const variant = getSelectedVariant();
+    if (variant) applyVariant(variant);
+});
 </script>
 
 <?php include 'includes/footer-bootstrap.php'; ?>

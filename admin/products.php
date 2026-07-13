@@ -137,6 +137,59 @@ include __DIR__ . '/includes/header.php';
                 <input type="checkbox" id="product-featured" style="width:16px; height:16px;">
                 <label class="form-label" style="margin-bottom:0;">Mark as Featured</label>
             </div>
+
+            <!-- ═══ Variants Section ═══ -->
+            <hr style="margin:20px 0;">
+            <div class="form-group">
+                <button type="button" class="btn btn-ghost" onclick="toggleVariantsSection()" style="width:100%; text-align:left; display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border:1px solid var(--border-color); border-radius:8px;">
+                    <span><i class="fa-solid fa-layer-group"></i> Product Variants</span>
+                    <span id="variants-toggle-icon"><i class="fa-solid fa-chevron-down"></i></span>
+                </button>
+            </div>
+            <div id="variants-section" style="display:none; padding-top:10px;">
+                <p class="text-sm" style="color:var(--text-secondary); margin-bottom:12px;">
+                    Define attributes like Color and Size. Each combination becomes a variant with its own SKU, price, and stock.
+                    Upload images per color value so customers see the right image when they pick a color.
+                </p>
+
+                <!-- Attribute List -->
+                <div id="attributes-container"></div>
+
+                <button type="button" class="btn btn-ghost btn-sm" onclick="addAttribute()" style="margin-bottom:12px;">
+                    <i class="fa-solid fa-plus"></i> Add Attribute
+                </button>
+
+                <!-- Generate Variants -->
+                <div id="variants-generate-area" style="display:none; margin-bottom:12px;">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="generateVariants()">
+                        <i class="fa-solid fa-table-cells"></i> Generate Variants
+                    </button>
+                </div>
+
+                <!-- Variant Grid -->
+                <div id="variants-grid" style="display:none;">
+                    <label class="form-label">Variant Combinations</label>
+                    <div style="overflow-x:auto; border:1px solid var(--border-color); border-radius:8px;">
+                        <table class="table" style="margin-bottom:0; min-width:500px;">
+                            <thead>
+                                <tr>
+                                    <th style="width:30px;">#</th>
+                                    <th>Variant</th>
+                                    <th style="width:130px;">SKU</th>
+                                    <th style="width:100px;">Price</th>
+                                    <th style="width:100px;">Disc. Price</th>
+                                    <th style="width:70px;">Stock</th>
+                                    <th style="width:50px;">Default</th>
+                                </tr>
+                            </thead>
+                            <tbody id="variants-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Hidden input for attribute/variant JSON data -->
+                <input type="hidden" id="attr-json" name="attr_json" value="">
+            </div>
         </div>
         <div class="modal-footer">
             <button class="btn btn-ghost" onclick="closeProductModal()">Cancel</button>
@@ -325,6 +378,9 @@ function openProductModal() {
     document.getElementById('product-category').value = '';
     document.getElementById('modal-title').textContent = 'Add Product';
     renderImageList();
+    resetVariantState();
+    document.getElementById('variants-section').style.display = 'none';
+    document.getElementById('variants-toggle-icon').innerHTML = '<i class="fa-solid fa-chevron-down"></i>';
     document.getElementById('product-modal').classList.add('open');
 }
 
@@ -352,6 +408,60 @@ async function editProduct(id) {
         productImages = [{ type: 'url', path: p.image_url, file: null, preview: null }];
     }
     renderImageList();
+
+    // Load variants if they exist
+    resetVariantState();
+    if (p.attributes && p.attributes.length > 0) {
+        variantState.attributes = p.attributes.map(a => ({
+            id: a.id,
+            name: a.name,
+            values: (a.values || []).map(v => ({
+                id: v.id,
+                value: v.value,
+                image_path: v.image_path || null,
+                image_temp_id: null
+            }))
+        }));
+        renderAttributes();
+        document.getElementById('variants-section').style.display = 'block';
+        document.getElementById('variants-toggle-icon').innerHTML = '<i class="fa-solid fa-chevron-up"></i>';
+    }
+    if (p.variants && p.variants.length > 0) {
+        variantState.variants = p.variants.map(v => ({
+            sku: v.sku || '',
+            price: v.price || '',
+            discount_price: v.discount_price || '',
+            stock: v.stock || '0',
+            is_default: v.is_default ? 1 : 0,
+            value_refs: (v.value_ids || []).map(() => ''), // filled below
+            _label: ''
+        }));
+        // Map value_refs by matching attribute value IDs
+        const allValIds = [];
+        variantState.attributes.forEach((a, ai) => {
+            a.values.forEach((v, vi) => {
+                if (v.id) allValIds[ai + ':' + vi] = v.id;
+            });
+        });
+        // Invert: valueId → ref string
+        const idToRef = {};
+        Object.keys(allValIds).forEach(k => { idToRef[allValIds[k]] = k; });
+        p.variants.forEach((v, idx) => {
+            if (v.value_ids) {
+                variantState.variants[idx].value_refs = v.value_ids.map(id => idToRef[id] || '');
+                const parts = [];
+                variantState.variants[idx].value_refs.forEach(ref => {
+                    const [ai, vi] = ref.split(':');
+                    const attr = variantState.attributes[parseInt(ai)];
+                    const val = attr ? attr.values[parseInt(vi)] : null;
+                    if (attr && val) parts.push(`${attr.name}: ${val.value}`);
+                });
+                variantState.variants[idx]._label = parts.join(', ');
+            }
+        });
+        renderVariantsGrid();
+    }
+
     document.getElementById('product-modal').classList.add('open');
 }
 
@@ -389,6 +499,19 @@ async function saveProduct() {
             formData.append('img_order[]', `url:${i}`);
             formData.append(`img_url_${i}`, img.path);
         }
+    });
+
+    // Append variant data
+    const attrJson = buildAttrJson();
+    formData.append('attr_json', attrJson);
+
+    // Append attribute value image files
+    variantState.attributes.forEach((attr, ai) => {
+        attr.values.forEach((val, vi) => {
+            if (val._file && val.image_temp_id) {
+                formData.append(`attr_value_img_${val.image_temp_id}`, val._file, val._file.name);
+            }
+        });
     });
 
     try {
@@ -478,6 +601,282 @@ async function applyBulkAction() {
 function escHtml(str) {
     if (!str) return '';
     return str.toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ═══ Variant Management ═══════════════════════════════════════════
+
+// In-memory state for the variant builder
+let variantState = { attributes: [], variants: [] };
+let attrImgCounter = 0;
+
+function toggleVariantsSection() {
+    const section = document.getElementById('variants-section');
+    const icon = document.getElementById('variants-toggle-icon');
+    const isOpen = section.style.display !== 'none';
+    section.style.display = isOpen ? 'none' : 'block';
+    icon.innerHTML = isOpen ? '<i class="fa-solid fa-chevron-down"></i>' : '<i class="fa-solid fa-chevron-up"></i>';
+}
+
+function addAttribute(name, values) {
+    const container = document.getElementById('attributes-container');
+    const idx = variantState.attributes.length;
+
+    variantState.attributes.push({ id: null, name: name || '', values: values || [] });
+
+    const div = document.createElement('div');
+    div.className = 'attribute-block';
+    div.style.cssText = 'border:1px solid var(--border-color); border-radius:8px; padding:12px; margin-bottom:10px;';
+    div.dataset.idx = idx;
+    div.innerHTML = `
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+            <input type="text" class="form-control attr-name" value="${escHtml(name || '')}" placeholder="Attribute name (e.g. Color, Size)" style="flex:1; font-weight:600;">
+            <button type="button" class="btn btn-danger btn-sm" onclick="removeAttribute(${idx})"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="attr-values"></div>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="addValue(${idx})"><i class="fa-solid fa-plus"></i> Add Value</button>
+    `;
+    container.appendChild(div);
+
+    // Add existing values
+    (values || []).forEach(v => addValueRow(idx, v));
+
+    updateGenerateButton();
+    updateAttrNameListeners();
+}
+
+function removeAttribute(idx) {
+    variantState.attributes.splice(idx, 1);
+    renderAttributes();
+    updateGenerateButton();
+}
+
+function addValue(attrIdx) {
+    variantState.attributes[attrIdx].values.push({ id: null, value: '', image_path: null, image_temp_id: null });
+    addValueRow(attrIdx, { id: null, value: '', image_path: null, image_temp_id: null });
+    updateGenerateButton();
+}
+
+function addValueRow(attrIdx, val) {
+    const container = document.querySelectorAll('.attribute-block')[attrIdx];
+    if (!container) return;
+    const valuesDiv = container.querySelector('.attr-values');
+    const vIdx = container.querySelectorAll('.value-row').length;
+
+    const row = document.createElement('div');
+    row.className = 'value-row';
+    row.style.cssText = 'display:flex; align-items:center; gap:6px; margin-bottom:6px;';
+    row.dataset.vi = vIdx;
+
+    let imgHtml = '';
+    const previewSrc = val.image_url || (val.image_path ? window.BASE_URL + '/uploads/products/' + val.image_path : null);
+    if (previewSrc) {
+        imgHtml = `<img src="${escHtml(previewSrc)}" style="width:32px;height:32px;object-fit:cover;border-radius:4px;border:1px solid var(--border-color);">`;
+    }
+
+    row.innerHTML = `
+        <input type="text" class="form-control attr-val" value="${escHtml(val.value || '')}" placeholder="Value" style="flex:1;">
+        <label class="btn btn-ghost btn-sm" style="cursor:pointer; margin-bottom:0; white-space:nowrap;">
+            ${imgHtml || '<i class="fa-solid fa-image"></i>'}
+            <input type="file" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handleAttrValueImage(this, ${attrIdx}, ${vIdx})">
+        </label>
+        <button type="button" class="btn btn-danger btn-sm" onclick="removeValue(${attrIdx}, ${vIdx})"><i class="fa-solid fa-xmark"></i></button>
+    `;
+    valuesDiv.appendChild(row);
+}
+
+function removeValue(attrIdx, vIdx) {
+    variantState.attributes[attrIdx].values.splice(vIdx, 1);
+    renderAttributes();
+    updateGenerateButton();
+}
+
+function handleAttrValueImage(input, attrIdx, vIdx) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const tempId = 'img_' + (attrImgCounter++);
+    variantState.attributes[attrIdx].values[vIdx].image_temp_id = tempId;
+    variantState.attributes[attrIdx].values[vIdx]._file = file;
+
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const row = document.querySelectorAll('.attribute-block')[attrIdx]
+            ?.querySelectorAll('.value-row')[vIdx];
+        if (row) {
+            const btn = row.querySelector('label.btn');
+            if (btn) btn.innerHTML = `<img src="${e.target.result}" style="width:32px;height:32px;object-fit:cover;border-radius:4px;border:1px solid var(--border-color);">`;
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+function updateAttrNameListeners() {
+    document.querySelectorAll('.attribute-block').forEach((block, idx) => {
+        const input = block.querySelector('.attr-name');
+        if (input) {
+            input.addEventListener('input', function() {
+                variantState.attributes[idx].name = this.value;
+                updateGenerateButton();
+            });
+        }
+        block.querySelectorAll('.attr-val').forEach((inp, vi) => {
+            inp.addEventListener('input', function() {
+                if (variantState.attributes[idx] && variantState.attributes[idx].values[vi]) {
+                    variantState.attributes[idx].values[vi].value = this.value;
+                }
+                updateGenerateButton();
+            });
+        });
+    });
+}
+
+function updateGenerateButton() {
+    const area = document.getElementById('variants-generate-area');
+    const hasAttrs = variantState.attributes.some(a => a.name && a.values.some(v => v.value));
+    area.style.display = hasAttrs ? 'block' : 'none';
+}
+
+function renderAttributes() {
+    const container = document.getElementById('attributes-container');
+    container.innerHTML = '';
+    variantState.attributes.forEach((attr, idx) => addAttribute(attr.name, attr.values));
+    // Re-bind value files
+    variantState.attributes.forEach((attr, idx) => {
+        attr.values.forEach((val, vi) => {
+            if (val._file) {
+                const row = document.querySelectorAll('.attribute-block')[idx]
+                    ?.querySelectorAll('.value-row')[vi];
+                if (row) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const btn = row.querySelector('label.btn');
+                        if (btn) btn.innerHTML = `<img src="${e.target.result}" style="width:32px;height:32px;object-fit:cover;border-radius:4px;border:1px solid var(--border-color);">`;
+                    };
+                    reader.readAsDataURL(val._file);
+                }
+            }
+        });
+    });
+}
+
+function generateVariants() {
+    // Read current attribute values from state
+    const attrs = variantState.attributes.filter(a => a.name && a.values.some(v => v.value));
+    if (attrs.length === 0) {
+        Toast.error('Add at least one attribute with values first.');
+        return;
+    }
+
+    // Build combinations (cartesian product)
+    const valueLists = attrs.map(a => a.values.filter(v => v.value));
+    const combos = cartesian(valueLists);
+
+    variantState.variants = combos.map((combo, idx) => {
+        const valueRefs = [];
+        const labelParts = [];
+        combo.forEach((val, ai) => {
+            // Find the index of this value in its attribute
+            const aIdx = variantState.attributes.indexOf(attrs[ai]);
+            const vIdx = variantState.attributes[aIdx].values.indexOf(val);
+            valueRefs.push(`${aIdx}:${vIdx}`);
+            labelParts.push(`${attrs[ai].name}: ${val.value}`);
+        });
+        return {
+            sku: '',
+            price: '',
+            discount_price: '',
+            stock: '0',
+            is_default: idx === 0 ? 1 : 0,
+            value_refs: valueRefs,
+            _label: labelParts.join(', ')
+        };
+    });
+
+    renderVariantsGrid();
+}
+
+function cartesian(lists) {
+    if (lists.length === 0) return [[]];
+    const result = [];
+    const remaining = cartesian(lists.slice(1));
+    for (const item of lists[0]) {
+        for (const combo of remaining) {
+            result.push([item, ...combo]);
+        }
+    }
+    return result;
+}
+
+function renderVariantsGrid() {
+    const grid = document.getElementById('variants-grid');
+    const tbody = document.getElementById('variants-tbody');
+    grid.style.display = 'block';
+
+    tbody.innerHTML = variantState.variants.map((v, idx) => `
+        <tr>
+            <td style="color:var(--text-secondary);">${idx + 1}</td>
+            <td><span class="text-sm">${escHtml(v._label)}</span></td>
+            <td><input type="text" class="form-control" value="${escHtml(v.sku || '')}" placeholder="Auto" style="width:120px;" data-vidx="${idx}" onchange="updateVariantField(${idx}, 'sku', this.value)"></td>
+            <td><input type="number" step="0.01" class="form-control" value="${v.price || ''}" placeholder="Base" style="width:90px;" data-vidx="${idx}" onchange="updateVariantField(${idx}, 'price', this.value)"></td>
+            <td><input type="number" step="0.01" class="form-control" value="${v.discount_price || ''}" placeholder="Base" style="width:90px;" data-vidx="${idx}" onchange="updateVariantField(${idx}, 'discount_price', this.value)"></td>
+            <td><input type="number" class="form-control" value="${v.stock}" min="0" style="width:65px;" data-vidx="${idx}" onchange="updateVariantField(${idx}, 'stock', this.value)"></td>
+            <td style="text-align:center;">
+                <input type="radio" name="default-variant" ${v.is_default ? 'checked' : ''} onclick="setDefaultVariant(${idx})">
+            </td>
+        </tr>
+    `).join('');
+}
+
+function updateVariantField(idx, field, value) {
+    if (variantState.variants[idx]) {
+        variantState.variants[idx][field] = value;
+    }
+}
+
+function setDefaultVariant(idx) {
+    variantState.variants.forEach((v, i) => v.is_default = i === idx ? 1 : 0);
+}
+
+function resetVariantState() {
+    variantState = { attributes: [], variants: [] };
+    attrImgCounter = 0;
+    document.getElementById('attributes-container').innerHTML = '';
+    document.getElementById('variants-grid').style.display = 'none';
+    document.getElementById('variants-generate-area').style.display = 'none';
+    document.getElementById('attr-json').value = '';
+}
+
+/**
+ * Build the attr_json payload from current variantState
+ */
+function buildAttrJson() {
+    // Clean up: only keep attributes with a name
+    const attrs = variantState.attributes
+        .filter(a => a.name)
+        .map(a => ({
+            id: a.id || null,
+            name: a.name,
+            values: a.values
+                .filter(v => v.value)
+                .map(v => ({
+                    id: v.id || null,
+                    value: v.value,
+                    image_path: v.image_path || null,
+                    image_temp_id: v.image_temp_id || null
+                }))
+        }));
+
+    const variants = variantState.variants.map(v => ({
+        sku: v.sku || '',
+        price: v.price || '',
+        discount_price: v.discount_price || '',
+        stock: v.stock || '0',
+        is_default: v.is_default ? 1 : 0,
+        value_refs: v.value_refs || []
+    }));
+
+    return JSON.stringify({ attributes: attrs, variants: variants });
 }
 
 // Init
