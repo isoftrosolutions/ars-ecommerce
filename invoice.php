@@ -140,7 +140,7 @@ if ($is_cod && strtolower($display_payment_status) === 'failed') {
     hr.divider {
         border: none;
         border-top: 1px solid #ddd;
-        margin: 0 0 32px;
+        margin: 0 0 24px;
     }
 
     /* ── From / Bill to ── */
@@ -244,7 +244,7 @@ if ($is_cod && strtolower($display_payment_status) === 'failed') {
         display: flex;
         justify-content: flex-end;
         margin-top: 4px;
-        margin-bottom: 36px;
+        margin-bottom: 20px;
     }
     .totals {
         width: 280px;
@@ -298,7 +298,7 @@ if ($is_cod && strtolower($display_payment_status) === 'failed') {
         margin-bottom: 16px;
     }
     .qr-section img {
-        max-width: 100px;
+        max-width: 64px;
         height: auto;
     }
     .qr-section .qr-label {
@@ -347,7 +347,14 @@ if ($is_cod && strtolower($display_payment_status) === 'failed') {
 
     @media print {
         body { background: #fff; }
-        .page { box-shadow: none; margin: 0; max-width: 100%; padding: 40px 50px; }
+        .page { box-shadow: none; margin: 0; max-width: 100%; padding: 20px 30px; }
+        .inv-header { margin-bottom: 20px; }
+        .inv-meta { margin-bottom: 18px; }
+        .address-row { margin-bottom: 18px; }
+        .totals-wrap { margin-bottom: 10px; }
+        .pay-note { margin-bottom: 10px; }
+        .qr-section { margin-bottom: 6px; }
+        .qr-section img { max-width: 48px; }
         .btn-print, .btn-back { display: none; }
     }
 </style>
