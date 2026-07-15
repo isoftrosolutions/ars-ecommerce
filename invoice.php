@@ -293,20 +293,6 @@ if ($is_cod && strtolower($display_payment_status) === 'failed') {
         font-size: 12px;
         color: #888;
     }
-    .qr-section {
-        text-align: right;
-        margin-bottom: 16px;
-    }
-    .qr-section img {
-        max-width: 100px;
-        height: auto;
-    }
-    .qr-section .qr-label {
-        font-size: 10px;
-        color: #999;
-        margin-top: 4px;
-    }
-
     /* ── Print button ── */
     .btn-print {
         position: fixed;
@@ -525,14 +511,6 @@ if ($is_cod && strtolower($display_payment_status) === 'failed') {
         <strong><?php echo h($site_email); ?></strong> or <strong><?php echo h($site_phone); ?></strong>.
         <?php endif; ?>
     </div>
-
-    <!-- QR Code -->
-    <?php if (file_exists(__DIR__ . '/uploads/qr-code.jpeg')): ?>
-    <div class="qr-section">
-        <img src="<?php echo url('/uploads/qr-code.jpeg'); ?>" alt="Scan to pay">
-        <div class="qr-label">Scan to pay</div>
-    </div>
-    <?php endif; ?>
 
     <!-- Footer -->
     <div class="inv-footer">
