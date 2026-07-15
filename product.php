@@ -409,7 +409,11 @@ $_schema_rcount = (int)($product['review_count'] ?? 0);
         <div class="modal-content border-0 bg-transparent shadow-none">
             <div class="modal-body p-0 text-center">
                 <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close" style="z-index:10;"></button>
-                <img id="attrImageModalImg" src="" alt="Attribute image" style="max-width:100%; max-height:90vh; border-radius:12px; box-shadow:0 8px 40px rgba(0,0,0,0.3);">
+                <img id="attrImageModalImg" src="" alt="Product image" style="max-width:100%; max-height:70vh; border-radius:12px; box-shadow:0 8px 40px rgba(0,0,0,0.3);">
+                <div class="mt-3">
+                    <a href="<?php echo url('/cart'); ?>" class="btn btn-dark btn-lg rounded-pill px-5">View Cart</a>
+                    <button type="button" class="btn btn-outline-light btn-lg rounded-pill px-4 ms-2" data-bs-dismiss="modal">Continue Shopping</button>
+                </div>
             </div>
         </div>
     </div>
@@ -479,14 +483,6 @@ function selectVariantValue(attrId, valueId, btn) {
     // Update label text
     const label = document.getElementById('selected-' + attrId);
     if (label) label.textContent = btn.textContent.trim() || (btn.querySelector('img')?.title || '');
-
-    // Open attribute image in modal if this value has one
-    const attrValImage = btn.dataset.image;
-    if (attrValImage) {
-        document.getElementById('attrImageModalImg').src = attrValImage;
-        const modal = new bootstrap.Modal(document.getElementById('attrImageModal'));
-        modal.show();
-    }
 
     // Find matching variant and apply full variant data (price, stock, etc.)
     const variant = getSelectedVariant();
@@ -608,7 +604,9 @@ function doAddToCart() {
     .then(data => {
         if (data.success) {
             window.dispatchEvent(new Event('cartUpdated'));
-            window.location.href = '<?php echo url("/cart"); ?>';
+            document.getElementById('attrImageModalImg').src = document.getElementById('mainProductImage').src;
+            const modal = new bootstrap.Modal(document.getElementById('attrImageModal'));
+            modal.show();
         } else if (data.require_login) {
             const modal = new bootstrap.Modal(document.getElementById('loginRequiredModal'));
             modal.show();
