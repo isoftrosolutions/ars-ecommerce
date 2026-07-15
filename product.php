@@ -486,7 +486,6 @@ function selectVariantValue(attrId, valueId, btn) {
         document.getElementById('attrImageModalImg').src = attrValImage;
         const modal = new bootstrap.Modal(document.getElementById('attrImageModal'));
         modal.show();
-        return;
     }
 
     // Find matching variant and apply full variant data (price, stock, etc.)
