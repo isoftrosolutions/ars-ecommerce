@@ -913,7 +913,7 @@ $_seo_canonical = rtrim($_seo_canonical, '?&');
                     <a href="<?php echo is_logged_in() ? url('/profile') : url('/auth/login.php'); ?>" class="meta-link">
                         <div class="meta-icon"><i class="bi bi-person-circle fs-4"></i></div>
                         <div class="meta-text">
-                            <span class="meta-label">Hello, <?php echo is_logged_in() ? explode(' ', $_SESSION['user']['full_name'])[0] : 'Sign In'; ?></span>
+                            <span class="meta-label">Hello, <?php echo is_logged_in() ? (explode(' ', $_SESSION['user']['full_name'] ?? 'User')[0]) : 'Sign In'; ?></span>
                             <span class="meta-value">Account & Lists</span>
                         </div>
                     </a>

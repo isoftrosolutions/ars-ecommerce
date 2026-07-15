@@ -403,6 +403,18 @@ $_schema_rcount = (int)($product['review_count'] ?? 0);
     </div>
 </div>
 
+<!-- Attribute Image Modal -->
+<div class="modal fade" id="attrImageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 bg-transparent shadow-none">
+            <div class="modal-body p-0 text-center">
+                <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close" style="z-index:10;"></button>
+                <img id="attrImageModalImg" src="" alt="Attribute image" style="max-width:100%; max-height:90vh; border-radius:12px; box-shadow:0 8px 40px rgba(0,0,0,0.3);">
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- 📱 Sticky Bottom Action Bar for Mobile -->
 <div class="sticky-mobile-actions">
     <div class="d-flex align-items-center border rounded-pill px-2 py-1 bg-light" style="width:120px;">
@@ -468,7 +480,16 @@ function selectVariantValue(attrId, valueId, btn) {
     const label = document.getElementById('selected-' + attrId);
     if (label) label.textContent = btn.textContent.trim() || (btn.querySelector('img')?.title || '');
 
-    // Find matching variant
+    // Open attribute image in modal if this value has one
+    const attrValImage = btn.dataset.image;
+    if (attrValImage) {
+        document.getElementById('attrImageModalImg').src = attrValImage;
+        const modal = new bootstrap.Modal(document.getElementById('attrImageModal'));
+        modal.show();
+        return;
+    }
+
+    // Find matching variant and apply full variant data (price, stock, etc.)
     const variant = getSelectedVariant();
     applyVariant(variant);
 }

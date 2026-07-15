@@ -682,6 +682,15 @@ function addValueRow(attrIdx, val) {
         <button type="button" class="btn btn-danger btn-sm" onclick="removeValue(${attrIdx}, ${vIdx})"><i class="fa-solid fa-xmark"></i></button>
     `;
     valuesDiv.appendChild(row);
+    const valInput = row.querySelector('.attr-val');
+    if (valInput) {
+        valInput.addEventListener('input', function() {
+            if (variantState.attributes[attrIdx] && variantState.attributes[attrIdx].values[vIdx]) {
+                variantState.attributes[attrIdx].values[vIdx].value = this.value;
+            }
+            updateGenerateButton();
+        });
+    }
 }
 
 function removeValue(attrIdx, vIdx) {

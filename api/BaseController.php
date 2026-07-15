@@ -29,7 +29,12 @@ abstract class BaseController {
             $data = $_POST;
         }
 
-        return ValidationMiddleware::sanitizeArray($data);
+        $attrJson = $data['attr_json'] ?? null;
+        $result = ValidationMiddleware::sanitizeArray($data);
+        if ($attrJson !== null) {
+            $result['attr_json'] = $attrJson;
+        }
+        return $result;
     }
 
     /**

@@ -19,6 +19,7 @@ function route($url) {
     }
     
     // Trim slashes
+    $parsed_url = rawurldecode($parsed_url);
     $path = trim($parsed_url, '/');
 
     // 2. Define Routes
@@ -71,7 +72,7 @@ function route($url) {
     }
 
     // 4. Handle Dynamic Routes (e.g., product/leather-bag, order/123, cart-action)
-    if (preg_match('/^product\/([a-zA-Z0-9-]+)$/', $path, $matches)) {
+    if (preg_match('/^product\/([a-zA-Z0-9\s-]+)$/', $path, $matches)) {
         $_GET['slug'] = $matches[1];
         return 'product.php';
     }

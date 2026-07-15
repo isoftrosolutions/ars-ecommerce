@@ -121,15 +121,10 @@ if ($is_cod && strtolower($display_payment_status) === 'failed') {
         letter-spacing: -0.5px;
         color: #111;
     }
-    .site-logo {
-        font-size: 28px;
-        font-weight: 800;
-        color: #111;
-        letter-spacing: -1px;
-        text-align: right;
-        line-height: 1;
+    .site-logo img {
+        max-height: 56px;
+        width: auto;
     }
-    .site-logo span { color: #ea6c00; }
 
     /* ── Meta info ── */
     .inv-meta {
@@ -298,6 +293,19 @@ if ($is_cod && strtolower($display_payment_status) === 'failed') {
         font-size: 12px;
         color: #888;
     }
+    .qr-section {
+        text-align: right;
+        margin-bottom: 16px;
+    }
+    .qr-section img {
+        max-width: 100px;
+        height: auto;
+    }
+    .qr-section .qr-label {
+        font-size: 10px;
+        color: #999;
+        margin-top: 4px;
+    }
 
     /* ── Print button ── */
     .btn-print {
@@ -352,7 +360,7 @@ if ($is_cod && strtolower($display_payment_status) === 'failed') {
     <div class="inv-header">
         <h1>Invoice</h1>
         <div class="site-logo">
-            A<span>.</span>R<span>.</span>S
+            <img src="<?php echo url('/public/assets/img/logo.jpg'); ?>" alt="<?php echo h($site_name); ?>">
         </div>
     </div>
 
@@ -517,6 +525,14 @@ if ($is_cod && strtolower($display_payment_status) === 'failed') {
         <strong><?php echo h($site_email); ?></strong> or <strong><?php echo h($site_phone); ?></strong>.
         <?php endif; ?>
     </div>
+
+    <!-- QR Code -->
+    <?php if (file_exists(__DIR__ . '/uploads/qr-code.jpeg')): ?>
+    <div class="qr-section">
+        <img src="<?php echo url('/uploads/qr-code.jpeg'); ?>" alt="Scan to pay">
+        <div class="qr-label">Scan to pay</div>
+    </div>
+    <?php endif; ?>
 
     <!-- Footer -->
     <div class="inv-footer">

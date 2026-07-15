@@ -584,7 +584,8 @@ class ProductController extends BaseController {
             return;
         }
 
-        // Delete existing (cascade removes values, variants, variant_values)
+        // Delete existing variants and attributes (cascade removes values, variant_values)
+        $this->executeQuery("DELETE FROM product_variants WHERE product_id = ?", [$productId]);
         $this->executeQuery("DELETE FROM product_attributes WHERE product_id = ?", [$productId]);
 
         $attrIndexMap = []; // old temp index → new attribute DB id
